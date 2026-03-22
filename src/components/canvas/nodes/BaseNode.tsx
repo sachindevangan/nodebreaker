@@ -25,8 +25,8 @@ const HANDLE_ANCHOR = {
     '!absolute !right-0 !top-1/2 !left-auto !bottom-auto translate-x-1/2 -translate-y-1/2',
 } as const;
 
-function getBorderColor(defaultColor: string, utilization: number, isRunning: boolean): string {
-  if (!isRunning) return defaultColor;
+function getBorderColor(defaultColor: string, utilization: number, sessionActive: boolean): string {
+  if (!sessionActive) return defaultColor;
   if (utilization > 0.8) return '#ef4444';
   if (utilization > 0.5) return '#f59e0b';
   return '#22c55e';
@@ -67,26 +67,26 @@ function PlusHandle({
 }
 
 export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNodeProps) {
-  const isRunning = useSimStore((s) => s.isRunning);
+  const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
   const entryNodeIds = useSimStore((s) => s.entryNodeIds);
   const nodeMetrics = useSimStore((s) => s.nodeMetrics);
   const metrics = nodeMetrics.get(id);
 
   const simStatus = useMemo((): NodeStatus => {
-    if (!isRunning || !metrics) return data.status ?? 'healthy';
+    if (!simulationSessionActive || !metrics) return data.status ?? 'healthy';
     if (metrics.utilization > 0.8) return 'down';
     if (metrics.utilization > 0.5) return 'degraded';
     return 'healthy';
-  }, [isRunning, metrics, data.status]);
+  }, [simulationSessionActive, metrics, data.status]);
 
   const dotStyle = useMemo(() => simStatusDotStyle(simStatus), [simStatus]);
 
-  const showEntryBadge = isRunning && entryNodeIds.includes(id);
-  const dropPulse = isRunning && (metrics?.droppedInLastTick ?? 0) > 0;
+  const showEntryBadge = simulationSessionActive && entryNodeIds.includes(id);
+  const dropPulse = simulationSessionActive && (metrics?.droppedInLastTick ?? 0) > 0;
 
   const utilization = metrics?.utilization ?? 0;
   const glowColor =
-    isRunning && metrics ? getBorderColor(accentColor, utilization, true) : accentColor;
+    simulationSessionActive && metrics ? getBorderColor(accentColor, utilization, true) : accentColor;
 
   const borderGlow = selected ? 0.55 : 0.32;
   const spread = selected ? 22 : 14;
@@ -129,14 +129,16 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
         </div>
         <div className="mt-1.5 flex flex-wrap justify-center gap-1">
           <span
-            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${isRunning && metrics ? 'text-cyan-300' : 'text-zinc-400'}`}
+            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${simulationSessionActive && metrics ? 'text-cyan-300' : 'text-zinc-400'}`}
             title={
-              isRunning && metrics
+              simulationSessionActive && metrics
                 ? 'Processed throughput (this tick, req/s)'
                 : 'Configured throughput'
             }
           >
-            {isRunning && metrics ? formatThroughput(metrics.currentLoad) : formatThroughput(data.throughput)}
+            {simulationSessionActive && metrics
+              ? formatThroughput(metrics.currentLoad)
+              : formatThroughput(data.throughput)}
           </span>
           <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
             {formatLatencyMs(data.latency)}

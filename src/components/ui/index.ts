@@ -8,3 +8,4 @@ export { TextInput } from './TextInput';
 export type { TextInputProps } from './TextInput';
 export { ToggleInput } from './ToggleInput';
 export type { ToggleInputProps } from './ToggleInput';
+export { ToastViewport } from './Toast';

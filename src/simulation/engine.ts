@@ -128,11 +128,19 @@ export interface RunTickInput {
   prevMetrics: Map<string, NodeMetrics>;
 }
 
+/** Cumulative counters for a single tick (feeds global dashboard metrics). */
+export interface TickGlobalStats {
+  completed: number;
+  completedLatencySum: number;
+  dropped: number;
+}
+
 export interface RunTickOutput {
   state: SimulationEngineState;
   activeRequests: SimulationRequest[];
   nodeMetrics: Map<string, NodeMetrics>;
   edgeTraffic: Map<string, EdgeTrafficVisual>;
+  tickStats: TickGlobalStats;
 }
 
 function toPublicRequest(r: InternalRequest): SimulationRequest {
@@ -164,7 +172,9 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
   }
 
   const droppedByNode = new Map<string, number>();
+  let tickDropped = 0;
   const addDrop = (nodeId: string) => {
+    tickDropped += 1;
     droppedByNode.set(nodeId, (droppedByNode.get(nodeId) ?? 0) + 1);
     const m = accMetrics.get(nodeId);
     if (m) m.totalDropped += 1;
@@ -267,6 +277,9 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     servedThisTick.set(n.id, 0);
   }
 
+  let tickCompleted = 0;
+  let tickCompletedLatencySum = 0;
+
   const sortedNodeIds = [...nodes.map((n) => n.id)].sort();
 
   for (const nodeId of sortedNodeIds) {
@@ -302,6 +315,8 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
       m.avgLatency = (m.avgLatency * (tp - 1) + req.totalLatency) / tp;
 
       if (!edge) {
+        tickCompleted += 1;
+        tickCompletedLatencySum += req.totalLatency;
         state.requests.delete(rid);
         continue;
       }
@@ -374,5 +389,10 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     activeRequests,
     nodeMetrics,
     edgeTraffic,
+    tickStats: {
+      completed: tickCompleted,
+      completedLatencySum: tickCompletedLatencySum,
+      dropped: tickDropped,
+    },
   };
 }

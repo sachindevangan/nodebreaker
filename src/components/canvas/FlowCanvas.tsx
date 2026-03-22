@@ -71,7 +71,7 @@ function FlowCanvasInner() {
       onDrop={onDrop}
       onPaneClick={onPaneClick}
       colorMode="dark"
-      deleteKeyCode={['Backspace', 'Delete']}
+      deleteKeyCode={null}
       multiSelectionKeyCode="Shift"
       proOptions={{ hideAttribution: true }}
       className="bg-zinc-950"

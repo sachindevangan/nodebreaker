@@ -28,20 +28,20 @@ export function PropertiesPanel() {
     return nodes.find((n) => n.id === selectedNodeId) ?? null;
   }, [nodes, selectedNodeId]);
 
-  const simRunning = useSimStore((s) => s.isRunning);
+  const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
   const nodeMetricsMap = useSimStore((s) => s.nodeMetrics);
   const selectedMetrics = selectedNodeId ? nodeMetricsMap.get(selectedNodeId) : undefined;
 
   const simDerivedStatus = useMemo((): NodeStatus | null => {
-    if (!simRunning || !selectedMetrics) return null;
+    if (!simulationSessionActive || !selectedMetrics) return null;
     if (selectedMetrics.utilization > 0.8) return 'down';
     if (selectedMetrics.utilization > 0.5) return 'degraded';
     return 'healthy';
-  }, [simRunning, selectedMetrics]);
+  }, [simulationSessionActive, selectedMetrics]);
 
   const statusDropdownValue: NodeStatus =
     simDerivedStatus !== null ? simDerivedStatus : (node?.data.status ?? 'healthy');
-  const statusControlledBySim = simRunning && selectedMetrics !== undefined;
+  const statusControlledBySim = simulationSessionActive && selectedMetrics !== undefined;
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 

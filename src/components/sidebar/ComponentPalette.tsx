@@ -54,10 +54,11 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
 export function ComponentPalette() {
   const [tab, setTab] = useState<PaletteTab>('components');
   const [query, setQuery] = useState('');
-  const isRunning = useSimStore((s) => s.isRunning);
+  const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
+  const isPlaying = useSimStore((s) => s.isPlaying);
   const speed = useSimStore((s) => s.speed);
-  const start = useSimStore((s) => s.start);
-  const pause = useSimStore((s) => s.pause);
+  const startSession = useSimStore((s) => s.startSession);
+  const stopSession = useSimStore((s) => s.stopSession);
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -166,14 +167,22 @@ export function ComponentPalette() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => (isRunning ? pause() : start())}
-            className={`min-w-0 flex-1 rounded-full py-3 text-xs font-bold uppercase tracking-wide text-white shadow-lg transition-colors ${
-              isRunning
+            onClick={() => (simulationSessionActive ? stopSession() : startSession())}
+            className={`relative min-w-0 flex-1 rounded-full py-3 text-xs font-bold uppercase tracking-wide text-white shadow-lg transition-colors ${
+              simulationSessionActive
                 ? 'bg-red-600 shadow-red-950/30 hover:bg-red-500'
                 : 'bg-blue-600 shadow-blue-900/20 hover:bg-blue-500'
             }`}
           >
-            {isRunning ? 'STOP SIMULATION' : 'START SIMULATION'}
+            {simulationSessionActive && isPlaying ? (
+              <span
+                className="absolute left-3 top-1/2 h-2 w-2 -translate-y-1/2 animate-pulse rounded-full bg-white/90 shadow-[0_0_8px_rgba(255,255,255,0.8)]"
+                aria-hidden
+              />
+            ) : null}
+            <span className={simulationSessionActive && isPlaying ? 'pl-4' : ''}>
+              {simulationSessionActive ? 'STOP SIMULATION' : 'START SIMULATION'}
+            </span>
           </button>
           <span
             className="shrink-0 rounded-md border border-zinc-700/90 bg-zinc-900/90 px-2 py-2 text-[10px] font-semibold tabular-nums text-zinc-300"

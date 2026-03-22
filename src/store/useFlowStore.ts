@@ -18,6 +18,8 @@ export interface FlowStore {
   /** Single selected node id for properties panel; kept in sync with React Flow selection */
   selectedNodeId: string | null;
   setSelectedNodeId: (id: string | null) => void;
+  /** Selects one node on the canvas and syncs `selected` flags for React Flow. */
+  selectNodeOnCanvas: (id: string) => void;
   clearSelectedNode: () => void;
   onNodesChange: OnNodesChange<FlowNode>;
   onEdgesChange: OnEdgesChange;
@@ -33,6 +35,12 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   selectedNodeId: null,
   setSelectedNodeId: (id: string | null) => {
     set({ selectedNodeId: id });
+  },
+  selectNodeOnCanvas: (id: string) => {
+    set({
+      selectedNodeId: id,
+      nodes: get().nodes.map((n) => ({ ...n, selected: n.id === id })),
+    });
   },
   clearSelectedNode: () => {
     set({
