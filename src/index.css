@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Dark theme tokens (default) — aligned with constants/theme.ts */
+:root {
+  color-scheme: dark;
+  --color-surface: #09090b;
+  --color-surface-elevated: #18181b;
+  --color-surface-muted: #27272a;
+  --color-border: #3f3f46;
+  --color-accent: #22d3ee;
+}
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply min-h-screen bg-surface text-zinc-100;
+    margin: 0;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
