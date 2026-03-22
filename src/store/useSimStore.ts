@@ -46,6 +46,8 @@ export interface SimStore {
   nodeMetrics: Map<string, NodeMetrics>;
   activeRequests: SimulationRequest[];
   edgeTraffic: Map<string, EdgeTrafficVisual>;
+  /** Sum of in-transit counts across edges; used to apportion global traffic for edge labels */
+  totalInTransitOnEdges: number;
   engineState: SimulationEngineState;
   entryNodeIds: string[];
   simulatedStatusByNodeId: Map<string, NodeStatus>;
@@ -79,6 +81,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   nodeMetrics: new Map(),
   activeRequests: [],
   edgeTraffic: new Map(),
+  totalInTransitOnEdges: 0,
   engineState: createInitialEngineState(),
   entryNodeIds: [],
   simulatedStatusByNodeId: new Map(),
@@ -109,6 +112,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       nodeMetrics: new Map(),
       activeRequests: [],
       edgeTraffic: new Map(),
+      totalInTransitOnEdges: 0,
       globalMetrics: emptyGlobalMetrics(),
       globalMetricsPrev: emptyGlobalMetrics(),
       simulatedStatusByNodeId: new Map(),
@@ -127,6 +131,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       nodeMetrics: new Map(),
       activeRequests: [],
       edgeTraffic: new Map(),
+      totalInTransitOnEdges: 0,
       entryNodeIds: [],
       simulatedStatusByNodeId: new Map(),
       globalMetrics: emptyGlobalMetrics(),
@@ -158,6 +163,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       nodeMetrics: new Map(),
       activeRequests: [],
       edgeTraffic: new Map(),
+      totalInTransitOnEdges: 0,
       simulatedStatusByNodeId: new Map(),
       globalMetrics: emptyGlobalMetrics(),
       globalMetricsPrev: emptyGlobalMetrics(),
@@ -204,6 +210,11 @@ export const useSimStore = create<SimStore>((set, get) => ({
     });
 
     metricsTracker.replaceAll(result.nodeMetrics);
+
+    let totalInTransitOnEdges = 0;
+    for (const v of result.edgeTraffic.values()) {
+      totalInTransitOnEdges += v.activeCount;
+    }
 
     const { completed, completedLatencySum, dropped } = result.tickStats;
     const offeredThisTick =
@@ -252,6 +263,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       activeRequests: result.activeRequests,
       nodeMetrics: result.nodeMetrics,
       edgeTraffic: result.edgeTraffic,
+      totalInTransitOnEdges,
       tickCount: tickCount + 1,
       simulatedStatusByNodeId,
       globalMetricsPrev: { ...prevGlobal },

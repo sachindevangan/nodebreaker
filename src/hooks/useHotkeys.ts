@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import type { SimSpeed } from '@/simulation/models';
+import { contextMenuController } from '@/utils/contextMenuController';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useSimStore } from '@/store/useSimStore';
 
@@ -39,6 +40,10 @@ export function useHotkeys(shortcutsModalOpen: boolean, closeShortcutsModal: () 
 
       if (e.key === 'Escape') {
         e.preventDefault();
+        if (contextMenuController.dismiss) {
+          contextMenuController.dismiss();
+          return;
+        }
         flow.clearSelectedNode();
         return;
       }

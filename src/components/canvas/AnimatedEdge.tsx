@@ -1,6 +1,7 @@
-import { BaseEdge, getSmoothStepPath, type EdgeProps } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '@xyflow/react';
 import { memo, useMemo } from 'react';
 import { useSimStore } from '@/store/useSimStore';
+import { formatReqPerSecond } from '@/utils/formatThroughput';
 
 const MAX_DOTS = 14;
 const DEFAULT_STROKE_WIDTH = 2;
@@ -70,7 +71,7 @@ function AnimatedEdgeInner(props: EdgeProps) {
   void targetHandleId;
   void pathOptions;
 
-  const [edgePath] = getSmoothStepPath({
+  const [edgePath, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -80,10 +81,31 @@ function AnimatedEdgeInner(props: EdgeProps) {
   });
 
   const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
+  const trafficVolume = useSimStore((s) => s.trafficVolume);
+  const totalInTransitOnEdges = useSimStore((s) => s.totalInTransitOnEdges);
   const traffic = useSimStore((s) => s.edgeTraffic.get(id));
   const partitioned = simulationSessionActive && Boolean(traffic?.partitioned);
   const activeCount = simulationSessionActive ? (traffic?.activeCount ?? 0) : 0;
   const overload = simulationSessionActive && (traffic?.overload ?? false);
+
+  const edgeRateLabel = useMemo(() => {
+    if (
+      !simulationSessionActive ||
+      partitioned ||
+      activeCount <= 0 ||
+      totalInTransitOnEdges <= 0
+    ) {
+      return null;
+    }
+    const rate = (trafficVolume * activeCount) / totalInTransitOnEdges;
+    return formatReqPerSecond(rate);
+  }, [
+    activeCount,
+    partitioned,
+    simulationSessionActive,
+    totalInTransitOnEdges,
+    trafficVolume,
+  ]);
 
   const strokeWidth = useMemo(() => {
     if (!simulationSessionActive) {
@@ -146,6 +168,20 @@ function AnimatedEdgeInner(props: EdgeProps) {
       ) : null}
       {simulationSessionActive && activeCount > 0 && !partitioned ? (
         <TrafficDots edgePath={edgePath} count={activeCount} overload={overload} edgeDomId={edgeDomId} />
+      ) : null}
+      {edgeRateLabel ? (
+        <EdgeLabelRenderer>
+          <div
+            className="nodrag nopan pointer-events-none absolute"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)`,
+            }}
+          >
+            <span className="rounded-full border border-zinc-700/90 bg-zinc-950/95 px-2 py-0.5 font-mono text-[10px] font-medium text-zinc-300 shadow-md backdrop-blur-sm">
+              {edgeRateLabel}
+            </span>
+          </div>
+        </EdgeLabelRenderer>
       ) : null}
     </>
   );

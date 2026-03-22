@@ -1,4 +1,12 @@
-import { X } from 'lucide-react';
+import {
+  Download,
+  Github,
+  Keyboard,
+  LayoutTemplate,
+  Upload,
+  X,
+  Zap,
+} from 'lucide-react';
 
 const SHORTCUT_ROWS: { keys: string; description: string }[] = [
   { keys: 'Space', description: 'Play / pause simulation (while a session is active)' },
@@ -8,28 +16,94 @@ const SHORTCUT_ROWS: { keys: string; description: string }[] = [
   { keys: 'Delete / Backspace', description: 'Delete the selected node' },
 ];
 
+const ghostBtn =
+  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700/80 hover:bg-zinc-800/60 hover:text-zinc-100';
+
 export interface HeaderProps {
   shortcutsOpen: boolean;
   onShortcutsOpenChange: (open: boolean) => void;
+  onTemplates: () => void;
+  onExport: () => void;
+  onImportClick: () => void;
+  githubHref?: string;
 }
 
-export function Header({ shortcutsOpen, onShortcutsOpenChange }: HeaderProps) {
+export function Header({
+  shortcutsOpen,
+  onShortcutsOpenChange,
+  onTemplates,
+  onExport,
+  onImportClick,
+  githubHref = 'https://github.com/YOUR_USERNAME/nodebreaker',
+}: HeaderProps) {
   return (
-    <header className="flex h-12 shrink-0 items-center border-b border-border px-4 bg-surface-elevated">
-      <h1 className="text-sm font-semibold tracking-tight text-zinc-100">NodeBreaker</h1>
-      <span className="ml-3 hidden text-xs text-zinc-500 sm:inline">
-        Design canvas · drag from the palette to place nodes
-      </span>
-      <div className="ml-auto flex items-center gap-2">
+    <header className="flex h-12 shrink-0 items-center gap-4 border-b border-zinc-800 bg-zinc-950 px-3 sm:px-4">
+      <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+        <Zap className="h-5 w-5 shrink-0 text-cyan-400" strokeWidth={2} aria-hidden />
+        <div className="min-w-0">
+          <h1 className="truncate text-sm font-semibold tracking-tight text-zinc-100">NodeBreaker</h1>
+        </div>
+      </div>
+
+      <nav
+        className="hidden items-center justify-center gap-1 md:flex md:flex-1"
+        aria-label="Design actions"
+      >
+        <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
+          <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>Templates</span>
+        </button>
+        <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
+          <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>Import</span>
+        </button>
+        <button type="button" className={ghostBtn} onClick={onExport} title="Export design">
+          <Download className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>Export</span>
+        </button>
+        <div className="mx-1 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
         <button
           type="button"
+          className={ghostBtn}
           onClick={() => onShortcutsOpenChange(true)}
-          className="flex h-8 w-8 items-center justify-center rounded-md border border-zinc-700/80 bg-zinc-900/80 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-600 hover:text-zinc-100"
           title="Keyboard shortcuts"
-          aria-label="Keyboard shortcuts"
         >
-          ?
+          <Keyboard className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span>Shortcuts</span>
         </button>
+      </nav>
+
+      <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
+        <div className="flex items-center gap-0.5 md:hidden">
+          <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
+            <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
+          </button>
+          <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
+            <Upload className="h-4 w-4" strokeWidth={2} />
+          </button>
+          <button type="button" className={`${ghostBtn} px-2`} onClick={onExport} aria-label="Export">
+            <Download className="h-4 w-4" strokeWidth={2} />
+          </button>
+          <button
+            type="button"
+            className={`${ghostBtn} px-2`}
+            onClick={() => onShortcutsOpenChange(true)}
+            aria-label="Shortcuts"
+          >
+            <Keyboard className="h-4 w-4" strokeWidth={2} />
+          </button>
+        </div>
+        <a
+          href={githubHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${ghostBtn} border-zinc-800/80 px-2 sm:px-2.5`}
+          title="View on GitHub"
+          aria-label="GitHub repository"
+        >
+          <Github className="h-4 w-4 shrink-0" strokeWidth={2} />
+          <span className="hidden lg:inline">GitHub</span>
+        </a>
       </div>
 
       {shortcutsOpen ? (

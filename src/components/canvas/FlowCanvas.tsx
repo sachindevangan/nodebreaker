@@ -8,7 +8,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { OnSelectionChangeFunc } from '@xyflow/react';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
 import { useSimulation } from '@/hooks/useSimulation';
@@ -16,6 +16,11 @@ import { getComponentConfig } from '@/constants/components';
 import { flowNodeTypes } from '@/components/canvas/nodes';
 import type { FlowEdge, FlowNode } from '@/types';
 import { AnimatedEdge } from './AnimatedEdge';
+import {
+  CanvasContextMenu,
+  type CanvasContextMenuState,
+} from '@/components/canvas/CanvasContextMenu';
+import { EmptyState } from '@/components/canvas/EmptyState';
 
 const edgeTypes = {
   animated: AnimatedEdge,
@@ -40,9 +45,11 @@ function FlowCanvasInner() {
   const clearSelectedNode = useFlowStore((s) => s.clearSelectedNode);
   const setSelectedNodeId = useFlowStore((s) => s.setSelectedNodeId);
 
+  const [contextMenu, setContextMenu] = useState<CanvasContextMenuState>({ kind: 'closed' });
+
   useSimulation();
 
-  const { screenToFlowPosition } = useReactFlow();
+  const { screenToFlowPosition, fitView } = useReactFlow();
   const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
 
   const onSelectionChange = useCallback<OnSelectionChangeFunc<FlowNode, FlowEdge>>(
@@ -54,16 +61,49 @@ function FlowCanvasInner() {
 
   const onPaneClick = useCallback(() => {
     clearSelectedNode();
+    setContextMenu({ kind: 'closed' });
   }, [clearSelectedNode]);
 
+  const onNodeContextMenu = useCallback((e: { preventDefault: () => void; clientX: number; clientY: number }, node: FlowNode) => {
+    e.preventDefault();
+    setContextMenu({
+      kind: 'node',
+      clientX: e.clientX,
+      clientY: e.clientY,
+      nodeId: node.id,
+    });
+  }, []);
+
+  const onPaneContextMenu = useCallback(
+    (e: { preventDefault: () => void; clientX: number; clientY: number }) => {
+      e.preventDefault();
+      const p = screenToFlowPosition({ x: e.clientX, y: e.clientY });
+      setContextMenu({
+        kind: 'pane',
+        clientX: e.clientX,
+        clientY: e.clientY,
+        flowX: p.x,
+        flowY: p.y,
+      });
+    },
+    [screenToFlowPosition]
+  );
+
+  const onFitView = useCallback(() => {
+    fitView({ padding: 0.2, duration: 200 });
+  }, [fitView]);
+
   return (
-    <ReactFlow
+    <div className="relative h-full w-full min-h-0 min-w-0">
+      <ReactFlow
       nodes={nodes}
       edges={edges}
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       onSelectionChange={onSelectionChange}
+      onNodeContextMenu={onNodeContextMenu}
+      onPaneContextMenu={onPaneContextMenu}
       nodeTypes={flowNodeTypes}
       edgeTypes={edgeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
@@ -74,7 +114,7 @@ function FlowCanvasInner() {
       deleteKeyCode={null}
       multiSelectionKeyCode="Shift"
       proOptions={{ hideAttribution: true }}
-      className="bg-zinc-950"
+      className="h-full w-full bg-zinc-950"
     >
       <Background
         id="nodebreaker-dots"
@@ -104,7 +144,14 @@ function FlowCanvasInner() {
           node.selected ? 'rgb(228 228 231)' : 'rgb(39 39 42)'
         }
       />
-    </ReactFlow>
+      </ReactFlow>
+      <EmptyState />
+      <CanvasContextMenu
+        menu={contextMenu}
+        onClose={() => setContextMenu({ kind: 'closed' })}
+        onFitView={onFitView}
+      />
+    </div>
   );
 }
 

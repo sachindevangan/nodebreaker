@@ -11,6 +11,7 @@ import {
 } from '@xyflow/react';
 import { create } from 'zustand';
 import type { FlowEdge, FlowNode, NodeBreakerNodeData } from '@/types';
+import { getClipboardBlueprint, setClipboardFromNode } from '@/utils/nodeClipboard';
 import { useChaosStore } from './useChaosStore';
 
 export interface FlowStore {
@@ -26,6 +27,11 @@ export interface FlowStore {
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   addNode: (node: FlowNode) => void;
+  /** Replaces the entire graph (clears selection). Callers should stop simulation / clear chaos if needed. */
+  replaceGraph: (nodes: FlowNode[], edges: FlowEdge[]) => void;
+  duplicateNode: (id: string) => void;
+  /** Pastes clipboard blueprint at flow coordinates. Returns false if clipboard empty. */
+  pasteNodeAt: (x: number, y: number) => boolean;
   updateNodeData: (id: string, partial: Partial<NodeBreakerNodeData>) => void;
   deleteNode: (id: string) => void;
 }
@@ -60,6 +66,45 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
   },
   addNode: (node: FlowNode) => {
     set({ nodes: [...get().nodes, node] });
+  },
+  replaceGraph: (nodes, edges) => {
+    set({
+      nodes: nodes.map((n) => ({ ...n, selected: false })),
+      edges,
+      selectedNodeId: null,
+    });
+  },
+  duplicateNode: (id: string) => {
+    const src = get().nodes.find((n) => n.id === id);
+    if (!src) return;
+    const copy: FlowNode = {
+      ...src,
+      id: crypto.randomUUID(),
+      position: { x: src.position.x + 50, y: src.position.y + 50 },
+      selected: true,
+    };
+    set({
+      nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), { ...copy, selected: true }],
+      selectedNodeId: copy.id,
+    });
+    const created = get().nodes.find((n) => n.id === copy.id);
+    if (created) setClipboardFromNode(created);
+  },
+  pasteNodeAt: (x, y) => {
+    const bp = getClipboardBlueprint();
+    if (!bp) return false;
+    const newNode: FlowNode = {
+      id: crypto.randomUUID(),
+      type: bp.type,
+      position: { x, y },
+      selected: true,
+      data: { ...bp.data },
+    };
+    set({
+      nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }],
+      selectedNodeId: newNode.id,
+    });
+    return true;
   },
   updateNodeData: (id: string, partial: Partial<NodeBreakerNodeData>) => {
     set({
