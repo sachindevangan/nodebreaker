@@ -1,4 +1,3 @@
-import type { FinalConnectionState, OnConnectEnd, OnConnectStart } from '@xyflow/react';
 import {
   Background,
   BackgroundVariant,
@@ -33,57 +32,6 @@ function FlowCanvasInner() {
   const { screenToFlowPosition } = useReactFlow();
   const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
 
-  const onConnectStart: OnConnectStart = (_evt, params) => {
-    // #region agent log
-    fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '370d51',
-      },
-      body: JSON.stringify({
-        sessionId: '370d51',
-        runId: 'pre-fix',
-        hypothesisId: 'H3-H4',
-        location: 'FlowCanvas.tsx:onConnectStart',
-        message: 'connection drag started',
-        data: {
-          nodeId: params.nodeId,
-          handleId: params.handleId,
-          handleType: params.handleType,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  };
-
-  const onConnectEnd: OnConnectEnd = (_evt, state) => {
-    // #region agent log
-    const s = state as FinalConnectionState;
-    fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '370d51',
-      },
-      body: JSON.stringify({
-        sessionId: '370d51',
-        runId: 'pre-fix',
-        hypothesisId: 'H3-H4',
-        location: 'FlowCanvas.tsx:onConnectEnd',
-        message: 'connection gesture ended',
-        data: {
-          fromNode: s.fromHandle?.nodeId,
-          toHandleNode: s.toHandle?.nodeId,
-          isValid: s.isValid,
-        },
-        timestamp: Date.now(),
-      }),
-    }).catch(() => {});
-    // #endregion
-  };
-
   return (
     <ReactFlow
       nodes={nodes}
@@ -91,8 +39,6 @@ function FlowCanvasInner() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
-      onConnectStart={onConnectStart}
-      onConnectEnd={onConnectEnd}
       nodeTypes={flowNodeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
       onDragOver={onDragOver}
