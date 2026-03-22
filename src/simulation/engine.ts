@@ -40,6 +40,13 @@ function maxQueueForNode(data: NodeBreakerNodeData): number {
   return Math.max(0, Math.floor(data.capacity));
 }
 
+/** Max in-transit → queue admissions per tick (matches service capacity per tick, int). */
+function maxLandingsPerTick(data: NodeBreakerNodeData): number {
+  const t = nodeThroughputPerTick(data);
+  if (t <= 0) return 0;
+  return Math.max(1, Math.floor(t));
+}
+
 function pickOutgoingEdge(
   node: FlowNode,
   outgoing: FlowEdge[],
@@ -172,6 +179,16 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     return q;
   };
 
+  const incomingThisTick = new Map<string, number>();
+  for (const n of nodes) {
+    incomingThisTick.set(n.id, 0);
+  }
+
+  const bumpIncoming = (nodeId: string) => {
+    if (!incomingThisTick.has(nodeId)) return;
+    incomingThisTick.set(nodeId, (incomingThisTick.get(nodeId) ?? 0) + 1);
+  };
+
   // --- Phase 1: land in-transit ---
   const toLand: InternalRequest[] = [];
   for (const r of state.requests.values()) {
@@ -179,30 +196,50 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
       toLand.push(r);
     }
   }
-  for (const r of toLand) {
-    state.requests.delete(r.id);
+  const landSlotsUsed = new Map<string, number>();
+  for (const n of nodes) {
+    landSlotsUsed.set(n.id, 0);
+  }
+
+  const toLandSorted = [...toLand].sort((a, b) => a.id.localeCompare(b.id));
+  for (const r of toLandSorted) {
     const dest = r.currentNodeId;
     const node = nodeById.get(dest);
     if (!node) {
+      state.requests.delete(r.id);
       continue;
     }
+
+    const maxLands = maxLandingsPerTick(node.data);
+    const usedSlot = landSlotsUsed.get(dest) ?? 0;
+    if (usedSlot >= maxLands) {
+      continue;
+    }
+
     const cap = maxQueueForNode(node.data);
     const q = ensureQueue(dest);
     if (q.length >= cap) {
+      bumpIncoming(dest);
       addDrop(dest);
+      state.requests.delete(r.id);
       continue;
     }
+
+    state.requests.delete(r.id);
     r.status = 'pending';
     r.fromNodeId = undefined;
     r.edgeId = undefined;
     q.push(r.id);
     state.requests.set(r.id, r);
+    landSlotsUsed.set(dest, usedSlot + 1);
+    bumpIncoming(dest);
   }
 
   // --- Phase 2: spawn at entries ---
   if (entryNodeIds.length > 0 && trafficVolume > 0) {
     for (let s = 0; s < trafficVolume; s++) {
       const entryId = entryNodeIds[s % entryNodeIds.length]!;
+      bumpIncoming(entryId);
       const node = nodeById.get(entryId);
       if (!node) continue;
       const cap = maxQueueForNode(node.data);
@@ -285,10 +322,12 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     const q = state.queues.get(n.id) ?? [];
     const depth = q.length;
     const droppedHere = droppedByNode.get(n.id) ?? 0;
-    const throughput = Math.max(1, n.data.throughput);
+    const incoming = incomingThisTick.get(n.id) ?? 0;
     const served = servedThisTick.get(n.id) ?? 0;
+    const capPerTick = nodeThroughputPerTick(n.data);
+    const safeCap = Math.max(capPerTick, 1e-9);
+    const utilization = Math.min(1, incoming / safeCap);
     const currentLoad = served * SIM_TICKS_PER_SECOND;
-    const utilization = Math.min(1, currentLoad / throughput);
 
     nodeMetrics.set(n.id, {
       nodeId: n.id,

@@ -2,6 +2,7 @@ import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
 import { Plus } from 'lucide-react';
+import { useMemo } from 'react';
 import type { FlowNode, NodeStatus } from '@/types';
 import { useSimStore } from '@/store/useSimStore';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
@@ -24,14 +25,21 @@ const HANDLE_ANCHOR = {
     '!absolute !right-0 !top-1/2 !left-auto !bottom-auto translate-x-1/2 -translate-y-1/2',
 } as const;
 
-function statusDotClass(status: NodeStatus): string {
-  switch (status) {
+function getBorderColor(defaultColor: string, utilization: number, isRunning: boolean): string {
+  if (!isRunning) return defaultColor;
+  if (utilization > 0.8) return '#ef4444';
+  if (utilization > 0.5) return '#f59e0b';
+  return '#22c55e';
+}
+
+function simStatusDotStyle(simStatus: NodeStatus): { backgroundColor: string; boxShadow: string } {
+  switch (simStatus) {
     case 'healthy':
-      return 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]';
+      return { backgroundColor: '#22c55e', boxShadow: '0 0 8px rgba(34,197,94,0.75)' };
     case 'degraded':
-      return 'bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.6)]';
+      return { backgroundColor: '#f59e0b', boxShadow: '0 0 8px rgba(245,158,11,0.65)' };
     case 'down':
-      return 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.65)]';
+      return { backgroundColor: '#ef4444', boxShadow: '0 0 8px rgba(239,68,68,0.7)' };
   }
 }
 
@@ -61,23 +69,24 @@ function PlusHandle({
 export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNodeProps) {
   const isRunning = useSimStore((s) => s.isRunning);
   const entryNodeIds = useSimStore((s) => s.entryNodeIds);
-  const simMetrics = useSimStore((s) => s.nodeMetrics.get(id));
+  const nodeMetrics = useSimStore((s) => s.nodeMetrics);
+  const metrics = nodeMetrics.get(id);
+
+  const simStatus = useMemo((): NodeStatus => {
+    if (!isRunning || !metrics) return data.status ?? 'healthy';
+    if (metrics.utilization > 0.8) return 'down';
+    if (metrics.utilization > 0.5) return 'degraded';
+    return 'healthy';
+  }, [isRunning, metrics, data.status]);
+
+  const dotStyle = useMemo(() => simStatusDotStyle(simStatus), [simStatus]);
 
   const showEntryBadge = isRunning && entryNodeIds.includes(id);
-  const dropPulse = isRunning && (simMetrics?.droppedInLastTick ?? 0) > 0;
+  const dropPulse = isRunning && (metrics?.droppedInLastTick ?? 0) > 0;
 
-  let glowColor = accentColor;
-  if (isRunning && simMetrics) {
-    const u = simMetrics.utilization;
-    const stressed = simMetrics.droppedInLastTick > 0;
-    if (stressed || u >= 0.8) {
-      glowColor = '#ef4444';
-    } else if (u >= 0.5) {
-      glowColor = '#fbbf24';
-    } else {
-      glowColor = '#22c55e';
-    }
-  }
+  const utilization = metrics?.utilization ?? 0;
+  const glowColor =
+    isRunning && metrics ? getBorderColor(accentColor, utilization, true) : accentColor;
 
   const borderGlow = selected ? 0.55 : 0.32;
   const spread = selected ? 22 : 14;
@@ -105,8 +114,9 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
         <PlusHandle id="out-right" type="source" position={Position.Right} anchor="right" />
         <PlusHandle id="out-bottom" type="source" position={Position.Bottom} anchor="bottom" />
         <span
-          className={`absolute right-2 top-2 z-[55] h-2 w-2 rounded-full ${statusDotClass(data.status)}`}
-          title={data.status}
+          className={`absolute right-2 top-2 z-[55] h-2 w-2 rounded-full ${simStatus === 'down' ? 'animate-pulse' : ''}`}
+          style={dotStyle}
+          title={simStatus}
           aria-hidden
         />
         <div className="relative z-0 flex items-center justify-center">
@@ -119,10 +129,14 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
         </div>
         <div className="mt-1.5 flex flex-wrap justify-center gap-1">
           <span
-            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${isRunning && simMetrics ? 'text-cyan-300' : 'text-zinc-400'}`}
-            title={isRunning && simMetrics ? 'Live throughput (this tick)' : 'Configured throughput'}
+            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${isRunning && metrics ? 'text-cyan-300' : 'text-zinc-400'}`}
+            title={
+              isRunning && metrics
+                ? 'Processed throughput (this tick, req/s)'
+                : 'Configured throughput'
+            }
           >
-            {isRunning && simMetrics ? formatThroughput(simMetrics.currentLoad) : formatThroughput(data.throughput)}
+            {isRunning && metrics ? formatThroughput(metrics.currentLoad) : formatThroughput(data.throughput)}
           </span>
           <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
             {formatLatencyMs(data.latency)}

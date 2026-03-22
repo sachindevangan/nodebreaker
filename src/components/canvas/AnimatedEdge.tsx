@@ -3,6 +3,7 @@ import { memo, useMemo } from 'react';
 import { useSimStore } from '@/store/useSimStore';
 
 const MAX_DOTS = 14;
+const DEFAULT_STROKE_WIDTH = 2;
 
 function TrafficDots({
   edgePath,
@@ -51,12 +52,23 @@ function AnimatedEdgeInner(props: EdgeProps) {
     targetY,
     sourcePosition,
     targetPosition,
+    animated,
+    selectable,
+    deletable,
+    sourceHandleId,
+    targetHandleId,
+    pathOptions,
     style,
     markerStart,
     markerEnd,
     interactionWidth,
-    ...baseEdgeProps
   } = props;
+  void animated;
+  void selectable;
+  void deletable;
+  void sourceHandleId;
+  void targetHandleId;
+  void pathOptions;
 
   const [edgePath] = getSmoothStepPath({
     sourceX,
@@ -67,35 +79,49 @@ function AnimatedEdgeInner(props: EdgeProps) {
     targetPosition,
   });
 
+  const isRunning = useSimStore((s) => s.isRunning);
   const traffic = useSimStore((s) => s.edgeTraffic.get(id));
-  const activeCount = traffic?.activeCount ?? 0;
-  const overload = traffic?.overload ?? false;
+  const activeCount = isRunning ? (traffic?.activeCount ?? 0) : 0;
+  const overload = isRunning && (traffic?.overload ?? false);
 
   const strokeWidth = useMemo(() => {
-    const base = 1.2 + Math.min(3.8, activeCount * 0.35);
-    return base;
-  }, [activeCount]);
+    if (!isRunning) {
+      const fromStyle =
+        style && typeof style.strokeWidth === 'number' ? style.strokeWidth : undefined;
+      return fromStyle ?? DEFAULT_STROKE_WIDTH;
+    }
+    return 1.2 + Math.min(3.8, activeCount * 0.35);
+  }, [activeCount, isRunning, style]);
 
   const edgeDomId = `nb-edge-path-${id.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
+
+  const baseStroke =
+    !isRunning ? ((style?.stroke as string | undefined) ?? '#3b82f6') : overload ? '#f87171' : (style?.stroke as string | undefined) ?? '#3b82f6';
+
+  const baseFilter = !isRunning
+    ? (style?.filter as string | undefined) ?? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))'
+    : overload
+      ? 'drop-shadow(0 0 5px rgba(248,113,113,0.55))'
+      : 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))';
 
   return (
     <>
       <BaseEdge
-        {...baseEdgeProps}
+        id={id}
         path={edgePath}
         markerStart={markerStart}
         markerEnd={markerEnd}
         interactionWidth={interactionWidth}
         style={{
           ...style,
-          stroke: overload ? '#f87171' : (style?.stroke as string | undefined) ?? '#3b82f6',
+          stroke: baseStroke,
           strokeWidth,
-          filter: overload
-            ? 'drop-shadow(0 0 5px rgba(248,113,113,0.55))'
-            : 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))',
+          filter: baseFilter,
         }}
       />
-      <TrafficDots edgePath={edgePath} count={activeCount} overload={overload} edgeDomId={edgeDomId} />
+      {isRunning && activeCount > 0 ? (
+        <TrafficDots edgePath={edgePath} count={activeCount} overload={overload} edgeDomId={edgeDomId} />
+      ) : null}
     </>
   );
 }
