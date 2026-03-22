@@ -1,2 +1,2 @@
-/** Phase 0 — React Flow canvas, custom nodes and edges */
-export {};
+export { FlowCanvas } from './FlowCanvas';
+export * from './nodes';

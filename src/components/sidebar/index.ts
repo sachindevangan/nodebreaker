@@ -1,2 +1,1 @@
-/** Phase 0 — component palette (drag source) */
-export {};
+export { ComponentPalette } from './ComponentPalette';
