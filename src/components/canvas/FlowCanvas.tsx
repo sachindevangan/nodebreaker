@@ -7,6 +7,7 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
+import { useCallback } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
 import { getComponentConfig } from '@/constants/components';
@@ -28,9 +29,14 @@ function FlowCanvasInner() {
   const onNodesChange = useFlowStore((s) => s.onNodesChange);
   const onEdgesChange = useFlowStore((s) => s.onEdgesChange);
   const onConnect = useFlowStore((s) => s.onConnect);
+  const clearSelection = useFlowStore((s) => s.clearSelection);
 
   const { screenToFlowPosition } = useReactFlow();
   const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
+
+  const onPaneClick = useCallback(() => {
+    clearSelection();
+  }, [clearSelection]);
 
   return (
     <ReactFlow
@@ -43,6 +49,7 @@ function FlowCanvasInner() {
       defaultEdgeOptions={defaultEdgeOptions}
       onDragOver={onDragOver}
       onDrop={onDrop}
+      onPaneClick={onPaneClick}
       colorMode="dark"
       deleteKeyCode={['Backspace', 'Delete']}
       multiSelectionKeyCode="Shift"

@@ -1,5 +1,6 @@
-import { ComponentPalette } from '@/components/sidebar';
 import { FlowCanvas } from '@/components/canvas';
+import { PropertiesPanel } from '@/components/panels';
+import { ComponentPalette } from '@/components/sidebar';
 import { Header } from './Header';
 
 export function AppShell() {
@@ -11,6 +12,7 @@ export function AppShell() {
         <main className="relative min-h-0 min-w-0 flex-1" aria-label="Design canvas">
           <FlowCanvas />
         </main>
+        <PropertiesPanel />
       </div>
     </div>
   );

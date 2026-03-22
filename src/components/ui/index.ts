@@ -1,2 +1,8 @@
-/** Phase 0 — shared UI primitives (Button, Slider, Tooltip, Modal) */
-export {};
+export { SelectInput } from './SelectInput';
+export type { SelectInputProps, SelectOption } from './SelectInput';
+export { SliderInput } from './SliderInput';
+export type { SliderInputProps } from './SliderInput';
+export { TextInput } from './TextInput';
+export type { TextInputProps } from './TextInput';
+export { ToggleInput } from './ToggleInput';
+export type { ToggleInputProps } from './ToggleInput';

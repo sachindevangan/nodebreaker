@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { DragEvent } from 'react';
 import type { XYPosition } from '@xyflow/react';
-import { getComponentConfig } from '@/constants/components';
+import { createDefaultNodeData, getComponentConfig } from '@/constants/components';
 import { useFlowStore } from '@/store/useFlowStore';
 import type { FlowNode, NodeBreakerNodeType } from '@/types';
 
@@ -36,13 +36,7 @@ export function useDragToCanvas(
         id: crypto.randomUUID(),
         type: nodeType,
         position,
-        data: {
-          label: config.label,
-          throughput: config.defaultData.throughput,
-          latency: config.defaultData.latency,
-          capacity: config.defaultData.capacity,
-          status: config.defaultData.status,
-        },
+        data: createDefaultNodeData(nodeType, config.label, config.defaultData),
       };
 
       addNode(newNode);

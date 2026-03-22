@@ -71,3 +71,5 @@ export function getComponentConfig(type: string): ComponentTypeConfig | undefine
 }
 
 export const PALETTE_CATEGORY_ORDER = ['Traffic & Edge', 'Compute', 'Data'] as const;
+
+export { createDefaultNodeData } from './defaults';

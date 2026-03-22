@@ -1,6 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import type { FlowNode, NodeStatus } from '@/types';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
 
@@ -9,8 +10,8 @@ export type BaseNodeProps = NodeProps<FlowNode> & {
   accentColor: string;
 };
 
-const handleClassName =
-  '!pointer-events-auto !z-50 !h-3 !w-3 !min-h-[12px] !min-w-[12px] !shrink-0 !rounded-full !border-0 !bg-gray-500 !cursor-crosshair transition-colors duration-150';
+const plusHandleClass =
+  '!pointer-events-none !z-50 !flex !h-5 !w-5 !min-h-[20px] !min-w-[20px] !items-center !justify-center !rounded-full !border-2 !border-zinc-600 !bg-zinc-700 !cursor-crosshair !opacity-0 !shadow-sm !transition-all !duration-200 group-hover:!pointer-events-auto group-hover:!opacity-100 hover:!border-[var(--nb-accent)] hover:!bg-zinc-600';
 
 function statusDotClass(status: NodeStatus): string {
   switch (status) {
@@ -23,6 +24,27 @@ function statusDotClass(status: NodeStatus): string {
   }
 }
 
+function PlusHandle({
+  id,
+  type,
+  position,
+}: {
+  id: string;
+  type: 'source' | 'target';
+  position: Position;
+}) {
+  return (
+    <Handle
+      id={id}
+      type={type}
+      position={position}
+      className={`${plusHandleClass} hover:!text-[var(--nb-accent)]`}
+    >
+      <Plus className="pointer-events-none h-3 w-3 text-zinc-200" strokeWidth={2.5} />
+    </Handle>
+  );
+}
+
 export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodeProps) {
   const borderGlow = selected ? 0.55 : 0.32;
   const spread = selected ? 22 : 14;
@@ -33,14 +55,12 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
 
   return (
     <div
-      className="relative flex flex-col items-center gap-2 overflow-visible pb-1"
+      className="group relative flex flex-col items-center gap-2 overflow-visible pb-1"
       style={{ ['--nb-accent' as string]: accentColor }}
     >
-      <Handle
-        type="target"
-        position={Position.Top}
-        className={`${handleClassName} hover:!bg-[var(--nb-accent)]`}
-      />
+      <PlusHandle id="in-top" type="target" position={Position.Top} />
+      <PlusHandle id="in-left" type="target" position={Position.Left} />
+      <PlusHandle id="out-right" type="source" position={Position.Right} />
       <div
         className="relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner"
         style={{ boxShadow }}
@@ -67,11 +87,7 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
           </span>
         </div>
       </div>
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className={`${handleClassName} hover:!bg-[var(--nb-accent)]`}
-      />
+      <PlusHandle id="out-bottom" type="source" position={Position.Bottom} />
     </div>
   );
 }
