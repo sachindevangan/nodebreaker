@@ -1,9 +1,9 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { CloudLightning, X, Zap } from 'lucide-react';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getComponentConfig } from '@/constants/components';
 import { getNodeIcon } from '@/components/canvas/nodes';
-import { SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
+import { ConfirmDialog, SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
 import { useFlowStore } from '@/store/useFlowStore';
 import type { FlowNode, LoadBalancerAlgorithm, NodeBreakerNodeData, NodeStatus } from '@/types';
 
@@ -19,19 +19,23 @@ const ALGORITHM_OPTIONS: { value: string; label: string }[] = [
   { value: 'random', label: 'Random' },
 ];
 
-function useSingleSelectedNode(): FlowNode | null {
-  const nodes = useFlowStore((s) => s.nodes);
-  return useMemo(() => {
-    const sel = nodes.filter((n) => n.selected);
-    return sel.length === 1 ? sel[0]! : null;
-  }, [nodes]);
-}
-
 export function PropertiesPanel() {
-  const node = useSingleSelectedNode();
+  const selectedNodeId = useFlowStore((s) => s.selectedNodeId);
+  const nodes = useFlowStore((s) => s.nodes);
+  const node = useMemo((): FlowNode | null => {
+    if (!selectedNodeId) return null;
+    return nodes.find((n) => n.id === selectedNodeId) ?? null;
+  }, [nodes, selectedNodeId]);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (!node) setDeleteDialogOpen(false);
+  }, [node]);
+
   const updateNodeData = useFlowStore((s) => s.updateNodeData);
   const deleteNode = useFlowStore((s) => s.deleteNode);
-  const clearSelection = useFlowStore((s) => s.clearSelection);
+  const clearSelectedNode = useFlowStore((s) => s.clearSelectedNode);
 
   const patch = useCallback(
     (partial: Partial<NodeBreakerNodeData>) => {
@@ -42,33 +46,50 @@ export function PropertiesPanel() {
   );
 
   const handleClose = useCallback(() => {
-    clearSelection();
-  }, [clearSelection]);
+    clearSelectedNode();
+  }, [clearSelectedNode]);
 
-  const handleDelete = useCallback(() => {
+  const confirmDelete = useCallback(() => {
     if (!node) return;
-    const ok = window.confirm(`Delete "${node.data.label}"? This cannot be undone.`);
-    if (!ok) return;
     deleteNode(node.id);
+    setDeleteDialogOpen(false);
   }, [node, deleteNode]);
 
   const cfg = node?.type ? getComponentConfig(node.type) : undefined;
   const Icon = cfg ? getNodeIcon(cfg.icon) : null;
   const accent = cfg?.color ?? '#71717a';
 
+  const panelOpen = Boolean(node && cfg && Icon);
+
   return (
-    <AnimatePresence mode="wait">
-      {node && cfg && Icon ? (
-        <motion.aside
-          key={node.id}
-          initial={{ x: 16, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          exit={{ x: 16, opacity: 0 }}
-          transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-          className="flex h-full w-80 shrink-0 flex-col border-l border-zinc-800 bg-gray-900"
-          style={{ borderLeftColor: accent }}
-          aria-label="Node properties"
-        >
+    <div
+      className={`flex h-full min-h-0 shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-out ${
+        panelOpen ? 'w-[320px]' : 'w-0'
+      }`}
+    >
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        title="Delete node?"
+        message={
+          node
+            ? `Remove “${node.data.label}” from the canvas. Connected edges will be removed.`
+            : ''
+        }
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
+      <AnimatePresence mode="wait">
+        {panelOpen && node && cfg && Icon ? (
+          <motion.aside
+            key={node.id}
+            initial={{ x: 16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 16, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            className="flex h-full w-[320px] flex-col border-l border-zinc-800 bg-gray-900"
+            style={{ borderLeftColor: accent }}
+            aria-label="Node properties"
+          >
           <header className="flex shrink-0 items-start gap-3 border-b border-zinc-800 p-4">
             <div
               className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950/80"
@@ -283,14 +304,15 @@ export function PropertiesPanel() {
           <footer className="shrink-0 border-t border-zinc-800 p-4">
             <button
               type="button"
-              onClick={handleDelete}
+              onClick={() => setDeleteDialogOpen(true)}
               className="w-full rounded-lg border border-red-900/60 bg-red-950/40 py-2.5 text-sm font-medium text-red-200 transition-colors hover:bg-red-950/70"
             >
               Delete node
             </button>
           </footer>
         </motion.aside>
-      ) : null}
-    </AnimatePresence>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
 }

@@ -7,9 +7,14 @@ export function AppShell() {
   return (
     <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
       <Header />
-      <div className="flex min-h-0 flex-1">
-        <ComponentPalette />
-        <main className="relative min-h-0 min-w-0 flex-1" aria-label="Design canvas">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex h-full min-h-0 w-[260px] shrink-0 flex-col">
+          <ComponentPalette />
+        </div>
+        <main
+          className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+          aria-label="Design canvas"
+        >
           <FlowCanvas />
         </main>
         <PropertiesPanel />

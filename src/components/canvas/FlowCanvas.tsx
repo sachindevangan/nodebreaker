@@ -7,11 +7,13 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
+import type { OnSelectionChangeFunc } from '@xyflow/react';
 import { useCallback } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
 import { getComponentConfig } from '@/constants/components';
 import { flowNodeTypes } from '@/components/canvas/nodes';
+import type { FlowEdge, FlowNode } from '@/types';
 
 const defaultEdgeOptions = {
   type: 'smoothstep' as const,
@@ -29,14 +31,22 @@ function FlowCanvasInner() {
   const onNodesChange = useFlowStore((s) => s.onNodesChange);
   const onEdgesChange = useFlowStore((s) => s.onEdgesChange);
   const onConnect = useFlowStore((s) => s.onConnect);
-  const clearSelection = useFlowStore((s) => s.clearSelection);
+  const clearSelectedNode = useFlowStore((s) => s.clearSelectedNode);
+  const setSelectedNodeId = useFlowStore((s) => s.setSelectedNodeId);
 
   const { screenToFlowPosition } = useReactFlow();
   const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
 
+  const onSelectionChange = useCallback<OnSelectionChangeFunc<FlowNode, FlowEdge>>(
+    ({ nodes: selectedNodes }) => {
+      setSelectedNodeId(selectedNodes.length === 1 ? selectedNodes[0]!.id : null);
+    },
+    [setSelectedNodeId]
+  );
+
   const onPaneClick = useCallback(() => {
-    clearSelection();
-  }, [clearSelection]);
+    clearSelectedNode();
+  }, [clearSelectedNode]);
 
   return (
     <ReactFlow
@@ -45,6 +55,7 @@ function FlowCanvasInner() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onSelectionChange={onSelectionChange}
       nodeTypes={flowNodeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
       onDragOver={onDragOver}
@@ -90,7 +101,7 @@ function FlowCanvasInner() {
 
 export function FlowCanvas() {
   return (
-    <div className="h-full min-h-0 w-full flex-1">
+    <div className="h-full min-h-0 w-full min-w-0 flex-1">
       <ReactFlowProvider>
         <FlowCanvasInner />
       </ReactFlowProvider>

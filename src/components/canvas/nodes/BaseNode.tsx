@@ -11,7 +11,17 @@ export type BaseNodeProps = NodeProps<FlowNode> & {
 };
 
 const plusHandleClass =
-  '!pointer-events-none !z-50 !flex !h-5 !w-5 !min-h-[20px] !min-w-[20px] !items-center !justify-center !rounded-full !border-2 !border-zinc-600 !bg-zinc-700 !cursor-crosshair !opacity-0 !shadow-sm !transition-all !duration-200 group-hover:!pointer-events-auto group-hover:!opacity-100 hover:!border-[var(--nb-accent)] hover:!bg-zinc-600';
+  '!pointer-events-none !z-[60] !flex !h-5 !w-5 !min-h-[20px] !min-w-[20px] !items-center !justify-center !rounded-full !border-2 !border-zinc-600 !bg-zinc-700 !cursor-crosshair !opacity-0 !shadow-sm !transition-all !duration-200 group-hover:!pointer-events-auto group-hover:!opacity-100 hover:!border-[var(--nb-accent)] hover:!bg-zinc-600';
+
+/** Anchor handles to the card box (half in / half out on the border). */
+const HANDLE_ANCHOR = {
+  top: '!absolute !left-1/2 !top-0 !right-auto !bottom-auto -translate-x-1/2 -translate-y-1/2',
+  bottom:
+    '!absolute !left-1/2 !bottom-0 !top-auto !right-auto -translate-x-1/2 translate-y-1/2',
+  left: '!absolute !left-0 !top-1/2 !right-auto !bottom-auto -translate-x-1/2 -translate-y-1/2',
+  right:
+    '!absolute !right-0 !top-1/2 !left-auto !bottom-auto translate-x-1/2 -translate-y-1/2',
+} as const;
 
 function statusDotClass(status: NodeStatus): string {
   switch (status) {
@@ -28,17 +38,19 @@ function PlusHandle({
   id,
   type,
   position,
+  anchor,
 }: {
   id: string;
   type: 'source' | 'target';
   position: Position;
+  anchor: keyof typeof HANDLE_ANCHOR;
 }) {
   return (
     <Handle
       id={id}
       type={type}
       position={position}
-      className={`${plusHandleClass} hover:!text-[var(--nb-accent)]`}
+      className={`${plusHandleClass} ${HANDLE_ANCHOR[anchor]} hover:!text-[var(--nb-accent)]`}
     >
       <Plus className="pointer-events-none h-3 w-3 text-zinc-200" strokeWidth={2.5} />
     </Handle>
@@ -58,19 +70,20 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
       className="group relative flex flex-col items-center gap-2 overflow-visible pb-1"
       style={{ ['--nb-accent' as string]: accentColor }}
     >
-      <PlusHandle id="in-top" type="target" position={Position.Top} />
-      <PlusHandle id="in-left" type="target" position={Position.Left} />
-      <PlusHandle id="out-right" type="source" position={Position.Right} />
       <div
         className="relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner"
         style={{ boxShadow }}
       >
+        <PlusHandle id="in-top" type="target" position={Position.Top} anchor="top" />
+        <PlusHandle id="in-left" type="target" position={Position.Left} anchor="left" />
+        <PlusHandle id="out-right" type="source" position={Position.Right} anchor="right" />
+        <PlusHandle id="out-bottom" type="source" position={Position.Bottom} anchor="bottom" />
         <span
-          className={`absolute right-2 top-2 z-10 h-2 w-2 rounded-full ${statusDotClass(data.status)}`}
+          className={`absolute right-2 top-2 z-[55] h-2 w-2 rounded-full ${statusDotClass(data.status)}`}
           title={data.status}
           aria-hidden
         />
-        <div className="flex items-center justify-center">
+        <div className="relative z-0 flex items-center justify-center">
           <Icon className="h-9 w-9" style={{ color: accentColor }} strokeWidth={1.75} />
         </div>
       </div>
@@ -87,7 +100,6 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
           </span>
         </div>
       </div>
-      <PlusHandle id="out-bottom" type="source" position={Position.Bottom} />
     </div>
   );
 }

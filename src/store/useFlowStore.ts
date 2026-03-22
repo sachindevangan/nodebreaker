@@ -15,18 +15,31 @@ import type { FlowEdge, FlowNode, NodeBreakerNodeData } from '@/types';
 export interface FlowStore {
   nodes: FlowNode[];
   edges: FlowEdge[];
+  /** Single selected node id for properties panel; kept in sync with React Flow selection */
+  selectedNodeId: string | null;
+  setSelectedNodeId: (id: string | null) => void;
+  clearSelectedNode: () => void;
   onNodesChange: OnNodesChange<FlowNode>;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
   addNode: (node: FlowNode) => void;
   updateNodeData: (id: string, partial: Partial<NodeBreakerNodeData>) => void;
   deleteNode: (id: string) => void;
-  clearSelection: () => void;
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
   nodes: [],
   edges: [],
+  selectedNodeId: null,
+  setSelectedNodeId: (id: string | null) => {
+    set({ selectedNodeId: id });
+  },
+  clearSelectedNode: () => {
+    set({
+      selectedNodeId: null,
+      nodes: get().nodes.map((n) => ({ ...n, selected: false })),
+    });
+  },
   onNodesChange: (changes: NodeChange<FlowNode>[]) => {
     set({ nodes: applyNodeChanges(changes, get().nodes) });
   },
@@ -47,15 +60,11 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     });
   },
   deleteNode: (id: string) => {
-    const { nodes, edges } = get();
+    const { nodes, edges, selectedNodeId } = get();
     set({
       nodes: nodes.filter((n) => n.id !== id),
       edges: edges.filter((e) => e.source !== id && e.target !== id),
-    });
-  },
-  clearSelection: () => {
-    set({
-      nodes: get().nodes.map((n) => ({ ...n, selected: false })),
+      selectedNodeId: selectedNodeId === id ? null : selectedNodeId,
     });
   },
 }));
