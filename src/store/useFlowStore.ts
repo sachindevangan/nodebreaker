@@ -11,6 +11,7 @@ import {
 } from '@xyflow/react';
 import { create } from 'zustand';
 import type { FlowEdge, FlowNode, NodeBreakerNodeData } from '@/types';
+import { useChaosStore } from './useChaosStore';
 
 export interface FlowStore {
   nodes: FlowNode[];
@@ -68,6 +69,7 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     });
   },
   deleteNode: (id: string) => {
+    useChaosStore.getState().removeEventsForNode(id);
     const { nodes, edges, selectedNodeId } = get();
     set({
       nodes: nodes.filter((n) => n.id !== id),

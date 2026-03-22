@@ -1,9 +1,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
-import { CloudLightning, X, Zap } from 'lucide-react';
+import { Clock, Skull, TrendingDown, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getComponentConfig } from '@/constants/components';
 import { getNodeIcon } from '@/components/canvas/nodes';
 import { ConfirmDialog, SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
+import type { ChaosEventType } from '@/simulation/chaos';
+import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useSimStore } from '@/store/useSimStore';
 import type { FlowNode, LoadBalancerAlgorithm, NodeBreakerNodeData, NodeStatus } from '@/types';
@@ -70,6 +72,15 @@ export function PropertiesPanel() {
     deleteNode(node.id);
     setDeleteDialogOpen(false);
   }, [node, deleteNode]);
+
+  const injectChaosQuick = useCallback(
+    (type: ChaosEventType) => {
+      if (!node || !simulationSessionActive) return;
+      const startTick = useSimStore.getState().tickCount;
+      useChaosStore.getState().injectChaos(type, node.id, { startTick });
+    },
+    [node, simulationSessionActive]
+  );
 
   const cfg = node?.type ? getComponentConfig(node.type) : undefined;
   const Icon = cfg ? getNodeIcon(cfg.icon) : null;
@@ -314,23 +325,36 @@ export function PropertiesPanel() {
               <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
                 Chaos
               </h3>
-              <p className="mt-1 text-[11px] text-zinc-600">Quick actions — Phase 5</p>
-              <div className="mt-3 flex gap-2">
+              <p className="mt-1 text-[11px] text-zinc-600">
+                Quick inject on this node (simulation must be running)
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <button
                   type="button"
-                  disabled
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-amber-400 opacity-50"
-                  title="Coming in Phase 5"
+                  disabled={!simulationSessionActive}
+                  onClick={() => injectChaosQuick('node_crash')}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-red-900/50 bg-red-950/50 text-red-300 transition-colors hover:bg-red-950/80 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Node crash"
                 >
-                  <Zap className="h-5 w-5" strokeWidth={1.75} />
+                  <Skull className="h-5 w-5" strokeWidth={1.75} />
                 </button>
                 <button
                   type="button"
-                  disabled
-                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 opacity-50"
-                  title="Coming in Phase 5"
+                  disabled={!simulationSessionActive}
+                  onClick={() => injectChaosQuick('latency_spike')}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-amber-900/50 bg-amber-950/40 text-amber-300 transition-colors hover:bg-amber-950/70 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Latency spike"
                 >
-                  <CloudLightning className="h-5 w-5" strokeWidth={1.75} />
+                  <Clock className="h-5 w-5" strokeWidth={1.75} />
+                </button>
+                <button
+                  type="button"
+                  disabled={!simulationSessionActive}
+                  onClick={() => injectChaosQuick('capacity_drop')}
+                  className="flex h-10 w-10 items-center justify-center rounded-lg border border-orange-900/50 bg-orange-950/40 text-orange-300 transition-colors hover:bg-orange-950/70 disabled:cursor-not-allowed disabled:opacity-40"
+                  title="Capacity drop"
+                >
+                  <TrendingDown className="h-5 w-5" strokeWidth={1.75} />
                 </button>
               </div>
             </section>

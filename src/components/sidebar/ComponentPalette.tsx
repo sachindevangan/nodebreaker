@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Cpu, HardDrive, LayoutGrid, Radio, Search, Sparkles } from 'lucide-react';
+import { Cpu, HardDrive, LayoutGrid, Radio, Search } from 'lucide-react';
 import {
   COMPONENT_TYPE_CONFIGS,
   PALETTE_CATEGORY_ORDER,
@@ -11,6 +11,7 @@ import { NODEBREAKER_DRAG_MIME } from '@/hooks/useDragToCanvas';
 import { getNodeIcon } from '@/components/canvas/nodes/nodeIcons';
 import { useSimStore } from '@/store/useSimStore';
 import { hexToRgba } from '@/utils/math';
+import { ChaosPalette } from './ChaosPalette';
 
 type PaletteTab = 'components' | 'chaos';
 
@@ -132,11 +133,7 @@ export function ComponentPalette() {
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
         {tab === 'chaos' ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-2 py-12 text-center">
-            <Sparkles className="h-8 w-8 text-zinc-600" strokeWidth={1.5} />
-            <p className="text-sm font-medium text-zinc-400">Coming in Phase 5</p>
-            <p className="text-xs text-zinc-600">Chaos events will appear here.</p>
-          </div>
+          <ChaosPalette />
         ) : filteredByCategory.length === 0 ? (
           <p className="px-1 py-8 text-center text-xs text-zinc-500">No components match your search.</p>
         ) : (

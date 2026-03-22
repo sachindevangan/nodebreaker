@@ -81,6 +81,7 @@ function AnimatedEdgeInner(props: EdgeProps) {
 
   const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
   const traffic = useSimStore((s) => s.edgeTraffic.get(id));
+  const partitioned = simulationSessionActive && Boolean(traffic?.partitioned);
   const activeCount = simulationSessionActive ? (traffic?.activeCount ?? 0) : 0;
   const overload = simulationSessionActive && (traffic?.overload ?? false);
 
@@ -96,17 +97,21 @@ function AnimatedEdgeInner(props: EdgeProps) {
   const edgeDomId = `nb-edge-path-${id.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
   const baseStroke =
-    !simulationSessionActive
-      ? ((style?.stroke as string | undefined) ?? '#3b82f6')
-      : overload
-        ? '#f87171'
-        : (style?.stroke as string | undefined) ?? '#3b82f6';
+    partitioned
+      ? '#f87171'
+      : !simulationSessionActive
+        ? ((style?.stroke as string | undefined) ?? '#3b82f6')
+        : overload
+          ? '#f87171'
+          : (style?.stroke as string | undefined) ?? '#3b82f6';
 
   const baseFilter = !simulationSessionActive
     ? (style?.filter as string | undefined) ?? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))'
-    : overload
-      ? 'drop-shadow(0 0 5px rgba(248,113,113,0.55))'
-      : 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))';
+    : partitioned
+      ? 'drop-shadow(0 0 6px rgba(248,113,113,0.65))'
+      : overload
+        ? 'drop-shadow(0 0 5px rgba(248,113,113,0.55))'
+        : 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))';
 
   return (
     <>
@@ -121,9 +126,25 @@ function AnimatedEdgeInner(props: EdgeProps) {
           stroke: baseStroke,
           strokeWidth,
           filter: baseFilter,
+          strokeDasharray: partitioned ? '7 5' : undefined,
         }}
       />
-      {simulationSessionActive && activeCount > 0 ? (
+      {partitioned ? (
+        <text
+          x={(sourceX + targetX) / 2}
+          y={(sourceY + targetY) / 2}
+          fill="#fca5a5"
+          fontSize={14}
+          fontWeight={700}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          className="pointer-events-none select-none"
+          style={{ filter: 'drop-shadow(0 0 4px rgba(0,0,0,0.9))' }}
+        >
+          ×
+        </text>
+      ) : null}
+      {simulationSessionActive && activeCount > 0 && !partitioned ? (
         <TrafficDots edgePath={edgePath} count={activeCount} overload={overload} edgeDomId={edgeDomId} />
       ) : null}
     </>

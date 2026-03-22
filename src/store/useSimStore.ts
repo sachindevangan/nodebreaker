@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { buildChaosEngineContext } from '@/simulation/chaos';
 import {
   createInitialEngineState,
   runSimulationTick,
@@ -14,6 +15,7 @@ import type {
 import { SIM_SPEEDS } from '@/simulation/models';
 import type { NodeStatus } from '@/types';
 import { getEntryNodeIds } from '@/utils/graph';
+import { useChaosStore } from './useChaosStore';
 import { useToastStore } from './useToastStore';
 import { useFlowStore } from './useFlowStore';
 
@@ -97,6 +99,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
     }
 
     metricsTracker.reset();
+    useChaosStore.getState().clearAllChaos();
     set({
       simulationSessionActive: true,
       isPlaying: true,
@@ -147,6 +150,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
     if (!simulationSessionActive) return;
 
     metricsTracker.reset();
+    useChaosStore.getState().clearAllChaos();
     set({
       isPlaying: false,
       tickCount: 0,
@@ -183,6 +187,11 @@ export const useSimStore = create<SimStore>((set, get) => ({
       bottleneckNotifiedNodeIds,
     } = get();
 
+    const validIds = new Set(nodes.map((n) => n.id));
+    useChaosStore.getState().tick(tickCount, validIds);
+    const chaosEvents = useChaosStore.getState().activeEvents;
+    const chaosContext = buildChaosEngineContext(chaosEvents, nodes, edges, prevMetrics);
+
     const result = runSimulationTick({
       nodes,
       edges,
@@ -191,6 +200,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       tickCount,
       entryNodeIds,
       prevMetrics,
+      chaosContext,
     });
 
     metricsTracker.replaceAll(result.nodeMetrics);

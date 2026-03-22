@@ -1,10 +1,14 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
-import { Plus } from 'lucide-react';
+import { Plus, Skull } from 'lucide-react';
 import { useMemo } from 'react';
+import { getChaosEventDefinition } from '@/constants/chaosEvents';
+import type { ChaosEvent } from '@/simulation/chaos';
 import type { FlowNode, NodeStatus } from '@/types';
+import { useChaosStore } from '@/store/useChaosStore';
 import { useSimStore } from '@/store/useSimStore';
+import { getChaosPaletteIcon } from '@/utils/chaosIcons';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
 
 export type BaseNodeProps = NodeProps<FlowNode> & {
@@ -71,6 +75,14 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
   const entryNodeIds = useSimStore((s) => s.entryNodeIds);
   const nodeMetrics = useSimStore((s) => s.nodeMetrics);
   const metrics = nodeMetrics.get(id);
+  const chaosEvents = useChaosStore((s) => s.activeEvents);
+
+  const myChaos = useMemo(
+    () => chaosEvents.filter((e) => e.isActive && e.targetNodeId === id),
+    [chaosEvents, id]
+  );
+  const crashed = myChaos.some((e) => e.type === 'node_crash');
+  const underChaos = myChaos.length > 0;
 
   const simStatus = useMemo((): NodeStatus => {
     if (!simulationSessionActive || !metrics) return data.status ?? 'healthy';
@@ -90,10 +102,14 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
 
   const borderGlow = selected ? 0.55 : 0.32;
   const spread = selected ? 22 : 14;
+  const chaosPulse =
+    simulationSessionActive && underChaos
+      ? `, 0 0 0 1px rgba(239,68,68,0.55), 0 0 ${selected ? 20 : 12}px 2px rgba(239,68,68,0.25)`
+      : '';
   const boxShadow = [
     `0 0 0 1px ${glowColor}`,
     `0 0 ${spread}px 3px ${hexToRgba(glowColor, borderGlow)}`,
-  ].join(', ');
+  ].join(', ') + chaosPulse;
 
   return (
     <div
@@ -106,7 +122,11 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
         </span>
       ) : null}
       <div
-        className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner ${dropPulse ? 'animate-pulse' : ''}`}
+        className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner ${
+          crashed ? 'opacity-50' : ''
+        } ${dropPulse ? 'animate-pulse' : ''} ${
+          simulationSessionActive && underChaos ? 'animate-[pulse_2.5s_ease-in-out_infinite] ring-1 ring-red-500/40' : ''
+        }`}
         style={{ boxShadow }}
       >
         <PlusHandle id="in-top" type="target" position={Position.Top} anchor="top" />
@@ -119,9 +139,39 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
           title={simStatus}
           aria-hidden
         />
+        {simulationSessionActive && myChaos.length > 0 ? (
+          <div
+            className="absolute left-2 top-8 z-[56] flex max-w-[calc(100%-1rem)] flex-wrap gap-1"
+            aria-label="Active chaos on this node"
+          >
+            {myChaos.map((ev: ChaosEvent) => {
+              const def = getChaosEventDefinition(ev.type);
+              if (!def) return null;
+              const CIcon = getChaosPaletteIcon(def.icon);
+              const pulse = ev.type === 'latency_spike';
+              return (
+                <span
+                  key={ev.id}
+                  title={def.label}
+                  className={pulse ? 'inline-flex animate-pulse' : 'inline-flex'}
+                >
+                  <CIcon className="h-3.5 w-3.5" style={{ color: def.color }} strokeWidth={2} />
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
         <div className="relative z-0 flex items-center justify-center">
           <Icon className="h-9 w-9" style={{ color: accentColor }} strokeWidth={1.75} />
         </div>
+        {crashed && simulationSessionActive ? (
+          <div className="pointer-events-none absolute inset-0 z-[58] flex flex-col items-center justify-center rounded-xl bg-black/50 backdrop-blur-[0.5px]">
+            <Skull className="h-9 w-9 text-red-500 drop-shadow-[0_0_12px_rgba(239,68,68,0.85)]" strokeWidth={1.5} />
+            <span className="mt-1 text-[8px] font-bold uppercase tracking-widest text-red-200/90">
+              Crashed
+            </span>
+          </div>
+        ) : null}
       </div>
       <div className="relative z-0 max-w-[160px] text-center">
         <div className="inline-block rounded-full bg-zinc-900/90 px-3 py-1">

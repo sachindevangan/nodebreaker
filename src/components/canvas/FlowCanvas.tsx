@@ -42,8 +42,8 @@ function FlowCanvasInner() {
 
   useSimulation();
 
-  const { screenToFlowPosition } = useReactFlow();
-  const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
+  const { screenToFlowPosition, getNodes } = useReactFlow();
+  const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition, getNodes);
 
   const onSelectionChange = useCallback<OnSelectionChangeFunc<FlowNode, FlowEdge>>(
     ({ nodes: selectedNodes }) => {

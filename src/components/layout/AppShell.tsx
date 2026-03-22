@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { FlowCanvas } from '@/components/canvas';
-import { MetricsDashboard, PropertiesPanel, SimulationControls } from '@/components/panels';
+import { ChaosOverlay, MetricsDashboard, PropertiesPanel, SimulationControls } from '@/components/panels';
 import { ComponentPalette } from '@/components/sidebar';
 import { ToastViewport } from '@/components/ui/Toast';
 import { useHotkeys } from '@/hooks/useHotkeys';
@@ -23,6 +23,7 @@ export function AppShell() {
           aria-label="Design canvas"
         >
           <SimulationControls />
+          <ChaosOverlay />
           <FlowCanvas />
           <MetricsDashboard />
         </main>

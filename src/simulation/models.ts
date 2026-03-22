@@ -37,4 +37,6 @@ export interface EdgeTrafficVisual {
   activeCount: number;
   /** True when destination node is overloaded (high util or dropping) */
   overload: boolean;
+  /** Network partition — edge is severed */
+  partitioned?: boolean;
 }

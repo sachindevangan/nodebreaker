@@ -1,5 +1,11 @@
 import type { FlowEdge, FlowNode, NodeBreakerNodeData } from '@/types';
 import { buildOutgoingEdges } from '@/utils/graph';
+import {
+  chaosPacketLossRoll,
+  type ChaosEngineContext,
+  defaultNodeChaosModifier,
+  resolveEffectiveNodeTiming,
+} from './chaos';
 import type { EdgeTrafficVisual, NodeMetrics, SimulationRequest } from './models';
 
 const SIM_TICKS_PER_SECOND = 10;
@@ -32,8 +38,8 @@ export function createInitialEngineState(): SimulationEngineState {
   };
 }
 
-function nodeThroughputPerTick(data: NodeBreakerNodeData): number {
-  return data.throughput / SIM_TICKS_PER_SECOND;
+function throughputPerTick(throughputPerSecond: number): number {
+  return throughputPerSecond / SIM_TICKS_PER_SECOND;
 }
 
 function maxQueueForNode(data: NodeBreakerNodeData): number {
@@ -41,8 +47,8 @@ function maxQueueForNode(data: NodeBreakerNodeData): number {
 }
 
 /** Max in-transit → queue admissions per tick (matches service capacity per tick, int). */
-function maxLandingsPerTick(data: NodeBreakerNodeData): number {
-  const t = nodeThroughputPerTick(data);
+function maxLandingsPerTickFromThroughput(throughputPerSecond: number): number {
+  const t = throughputPerTick(throughputPerSecond);
   if (t <= 0) return 0;
   return Math.max(1, Math.floor(t));
 }
@@ -126,6 +132,7 @@ export interface RunTickInput {
   tickCount: number;
   entryNodeIds: string[];
   prevMetrics: Map<string, NodeMetrics>;
+  chaosContext: ChaosEngineContext;
 }
 
 /** Cumulative counters for a single tick (feeds global dashboard metrics). */
@@ -155,11 +162,15 @@ function toPublicRequest(r: InternalRequest): SimulationRequest {
   };
 }
 
+function getModifier(ctx: ChaosEngineContext, nodeId: string) {
+  return ctx.modifiers.get(nodeId) ?? defaultNodeChaosModifier();
+}
+
 /**
  * One simulation step: land in-flight requests, spawn entry traffic, drain queues with capacity limits.
  */
 export function runSimulationTick(input: RunTickInput): RunTickOutput {
-  const { nodes, edges, trafficVolume, tickCount, entryNodeIds } = input;
+  const { nodes, edges, trafficVolume, tickCount, entryNodeIds, chaosContext } = input;
   const state = cloneState(input.state);
 
   const nodeById = new Map(nodes.map((n) => [n.id, n] as const));
@@ -220,8 +231,16 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
       continue;
     }
 
-    const maxLands = maxLandingsPerTick(node.data);
+    const destMod = getModifier(chaosContext, dest);
+    const destEff = resolveEffectiveNodeTiming(node.data, destMod);
+    const maxLands = maxLandingsPerTickFromThroughput(destEff.throughput);
     const usedSlot = landSlotsUsed.get(dest) ?? 0;
+    if (maxLands <= 0) {
+      bumpIncoming(dest);
+      addDrop(dest);
+      state.requests.delete(r.id);
+      continue;
+    }
     if (usedSlot >= maxLands) {
       continue;
     }
@@ -288,13 +307,16 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     const q = state.queues.get(nodeId);
     if (!q || q.length === 0) continue;
 
-    const perTick = nodeThroughputPerTick(node.data);
+    const procMod = getModifier(chaosContext, nodeId);
+    const procEff = resolveEffectiveNodeTiming(node.data, procMod);
+    const perTick = throughputPerTick(procEff.throughput);
     const carry = state.processCarry.get(nodeId) ?? 0;
     const budget = perTick + carry;
     const nServe = Math.min(q.length, Math.floor(budget));
     state.processCarry.set(nodeId, Math.max(0, budget - nServe));
 
-    const outgoing = outgoingBySource.get(nodeId) ?? [];
+    const rawOutgoing = outgoingBySource.get(nodeId) ?? [];
+    const outgoing = rawOutgoing.filter((e) => !chaosContext.partitionedEdgeIds.has(e.id));
     const m = accMetrics.get(nodeId)!;
 
     for (let i = 0; i < nServe; i++) {
@@ -303,9 +325,18 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
       const req = state.requests.get(rid);
       if (!req || req.status !== 'pending') continue;
 
+      if (
+        procEff.packetLossPercent > 0 &&
+        chaosPacketLossRoll(tickCount, nodeId, rid) < procEff.packetLossPercent
+      ) {
+        addDrop(nodeId);
+        state.requests.delete(rid);
+        continue;
+      }
+
       servedThisTick.set(nodeId, (servedThisTick.get(nodeId) ?? 0) + 1);
 
-      req.totalLatency += node.data.latency;
+      req.totalLatency += procEff.latency;
       req.hops = [...req.hops, nodeId];
 
       const edge = pickOutgoingEdge(node, outgoing, tickCount, state.rrIndex, state.queues);
@@ -339,9 +370,10 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     const droppedHere = droppedByNode.get(n.id) ?? 0;
     const incoming = incomingThisTick.get(n.id) ?? 0;
     const served = servedThisTick.get(n.id) ?? 0;
-    const capPerTick = nodeThroughputPerTick(n.data);
-    const safeCap = Math.max(capPerTick, 1e-9);
-    const utilization = Math.min(1, incoming / safeCap);
+    const metMod = getModifier(chaosContext, n.id);
+    const metEff = resolveEffectiveNodeTiming(n.data, metMod);
+    const capPerTick = Math.max(throughputPerTick(metEff.throughput), 1e-9);
+    const utilization = Math.min(1, incoming / capPerTick);
     const currentLoad = served * SIM_TICKS_PER_SECOND;
 
     nodeMetrics.set(n.id, {
@@ -368,6 +400,7 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
     const activeCount = transitByEdge.get(e.id) ?? 0;
     const destMetrics = nodeMetrics.get(e.target);
     const destNode = nodeById.get(e.target);
+    const partitioned = chaosContext.partitionedEdgeIds.has(e.id);
     const overload = Boolean(
       (destMetrics?.utilization ?? 0) >= 0.8 ||
         (destMetrics?.droppedInLastTick ?? 0) > 0 ||
@@ -376,7 +409,7 @@ export function runSimulationTick(input: RunTickInput): RunTickOutput {
           destMetrics.queueDepth >= Math.max(1, Math.floor(destNode.data.capacity)) * 0.95)
     );
 
-    edgeTraffic.set(e.id, { activeCount, overload });
+    edgeTraffic.set(e.id, { activeCount, overload, partitioned });
   }
 
   const activeRequests: SimulationRequest[] = [];
