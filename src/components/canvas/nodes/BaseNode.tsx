@@ -3,6 +3,7 @@ import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
 import { Plus } from 'lucide-react';
 import type { FlowNode, NodeStatus } from '@/types';
+import { useSimStore } from '@/store/useSimStore';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
 
 export type BaseNodeProps = NodeProps<FlowNode> & {
@@ -57,12 +58,32 @@ function PlusHandle({
   );
 }
 
-export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodeProps) {
+export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNodeProps) {
+  const isRunning = useSimStore((s) => s.isRunning);
+  const entryNodeIds = useSimStore((s) => s.entryNodeIds);
+  const simMetrics = useSimStore((s) => s.nodeMetrics.get(id));
+
+  const showEntryBadge = isRunning && entryNodeIds.includes(id);
+  const dropPulse = isRunning && (simMetrics?.droppedInLastTick ?? 0) > 0;
+
+  let glowColor = accentColor;
+  if (isRunning && simMetrics) {
+    const u = simMetrics.utilization;
+    const stressed = simMetrics.droppedInLastTick > 0;
+    if (stressed || u >= 0.8) {
+      glowColor = '#ef4444';
+    } else if (u >= 0.5) {
+      glowColor = '#fbbf24';
+    } else {
+      glowColor = '#22c55e';
+    }
+  }
+
   const borderGlow = selected ? 0.55 : 0.32;
   const spread = selected ? 22 : 14;
   const boxShadow = [
-    `0 0 0 1px ${accentColor}`,
-    `0 0 ${spread}px 3px ${hexToRgba(accentColor, borderGlow)}`,
+    `0 0 0 1px ${glowColor}`,
+    `0 0 ${spread}px 3px ${hexToRgba(glowColor, borderGlow)}`,
   ].join(', ');
 
   return (
@@ -70,8 +91,13 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
       className="group relative flex flex-col items-center gap-2 overflow-visible pb-1"
       style={{ ['--nb-accent' as string]: accentColor }}
     >
+      {showEntryBadge ? (
+        <span className="absolute -top-1 left-1/2 z-[70] -translate-x-1/2 rounded-full border border-emerald-500/50 bg-emerald-950/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.35)]">
+          ENTRY
+        </span>
+      ) : null}
       <div
-        className="relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner"
+        className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner ${dropPulse ? 'animate-pulse' : ''}`}
         style={{ boxShadow }}
       >
         <PlusHandle id="in-top" type="target" position={Position.Top} anchor="top" />
@@ -92,8 +118,11 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
           <span className="text-xs font-medium tracking-tight text-zinc-100">{data.label}</span>
         </div>
         <div className="mt-1.5 flex flex-wrap justify-center gap-1">
-          <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
-            {formatThroughput(data.throughput)}
+          <span
+            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${isRunning && simMetrics ? 'text-cyan-300' : 'text-zinc-400'}`}
+            title={isRunning && simMetrics ? 'Live throughput (this tick)' : 'Configured throughput'}
+          >
+            {isRunning && simMetrics ? formatThroughput(simMetrics.currentLoad) : formatThroughput(data.throughput)}
           </span>
           <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
             {formatLatencyMs(data.latency)}

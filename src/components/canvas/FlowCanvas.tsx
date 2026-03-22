@@ -11,13 +11,19 @@ import type { OnSelectionChangeFunc } from '@xyflow/react';
 import { useCallback } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
+import { useSimulation } from '@/hooks/useSimulation';
 import { getComponentConfig } from '@/constants/components';
 import { flowNodeTypes } from '@/components/canvas/nodes';
 import type { FlowEdge, FlowNode } from '@/types';
+import { AnimatedEdge } from './AnimatedEdge';
+
+const edgeTypes = {
+  animated: AnimatedEdge,
+};
 
 const defaultEdgeOptions = {
-  type: 'smoothstep' as const,
-  animated: true,
+  type: 'animated' as const,
+  animated: false,
   style: {
     stroke: '#3b82f6',
     strokeWidth: 2,
@@ -33,6 +39,8 @@ function FlowCanvasInner() {
   const onConnect = useFlowStore((s) => s.onConnect);
   const clearSelectedNode = useFlowStore((s) => s.clearSelectedNode);
   const setSelectedNodeId = useFlowStore((s) => s.setSelectedNodeId);
+
+  useSimulation();
 
   const { screenToFlowPosition } = useReactFlow();
   const { onDragOver, onDrop } = useDragToCanvas(screenToFlowPosition);
@@ -57,6 +65,7 @@ function FlowCanvasInner() {
       onConnect={onConnect}
       onSelectionChange={onSelectionChange}
       nodeTypes={flowNodeTypes}
+      edgeTypes={edgeTypes}
       defaultEdgeOptions={defaultEdgeOptions}
       onDragOver={onDragOver}
       onDrop={onDrop}

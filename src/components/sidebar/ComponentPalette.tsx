@@ -9,6 +9,7 @@ import {
 } from '@/constants/components';
 import { NODEBREAKER_DRAG_MIME } from '@/hooks/useDragToCanvas';
 import { getNodeIcon } from '@/components/canvas/nodes/nodeIcons';
+import { useSimStore } from '@/store/useSimStore';
 import { hexToRgba } from '@/utils/math';
 
 type PaletteTab = 'components' | 'chaos';
@@ -53,6 +54,10 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
 export function ComponentPalette() {
   const [tab, setTab] = useState<PaletteTab>('components');
   const [query, setQuery] = useState('');
+  const isRunning = useSimStore((s) => s.isRunning);
+  const speed = useSimStore((s) => s.speed);
+  const start = useSimStore((s) => s.start);
+  const pause = useSimStore((s) => s.pause);
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -158,13 +163,25 @@ export function ComponentPalette() {
       </div>
 
       <div className="shrink-0 border-t border-zinc-800/90 p-3">
-        <button
-          type="button"
-          disabled
-          className="w-full rounded-full bg-blue-600 py-3 text-xs font-bold uppercase tracking-wide text-white opacity-50 shadow-lg shadow-blue-900/20 cursor-not-allowed"
-        >
-          Start simulation
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => (isRunning ? pause() : start())}
+            className={`min-w-0 flex-1 rounded-full py-3 text-xs font-bold uppercase tracking-wide text-white shadow-lg transition-colors ${
+              isRunning
+                ? 'bg-red-600 shadow-red-950/30 hover:bg-red-500'
+                : 'bg-blue-600 shadow-blue-900/20 hover:bg-blue-500'
+            }`}
+          >
+            {isRunning ? 'STOP SIMULATION' : 'START SIMULATION'}
+          </button>
+          <span
+            className="shrink-0 rounded-md border border-zinc-700/90 bg-zinc-900/90 px-2 py-2 text-[10px] font-semibold tabular-nums text-zinc-300"
+            title="Simulation speed"
+          >
+            {speed}x
+          </span>
+        </div>
       </div>
     </div>
   );
