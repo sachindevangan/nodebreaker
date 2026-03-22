@@ -5,9 +5,11 @@ import { getComponentConfig } from '@/constants/components';
 import { getNodeIcon } from '@/components/canvas/nodes';
 import { ConfirmDialog, SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
 import type { ChaosEventType } from '@/simulation/chaos';
+import { getChaosEventDefinition } from '@/constants/chaosEvents';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useSimStore } from '@/store/useSimStore';
+import { useToastStore } from '@/store/useToastStore';
 import type { FlowNode, LoadBalancerAlgorithm, NodeBreakerNodeData, NodeStatus } from '@/types';
 
 const STATUS_OPTIONS: { value: string; label: string }[] = [
@@ -78,6 +80,11 @@ export function PropertiesPanel() {
       if (!node || !simulationSessionActive) return;
       const startTick = useSimStore.getState().tickCount;
       useChaosStore.getState().injectChaos(type, node.id, { startTick });
+      const def = getChaosEventDefinition(type);
+      useToastStore.getState().push({
+        kind: 'success',
+        message: `${def?.label ?? type} injected on ${node.data.label}`,
+      });
     },
     [node, simulationSessionActive]
   );
