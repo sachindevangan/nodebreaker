@@ -1,4 +1,5 @@
-import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { Handle, Position } from '@xyflow/react';
+import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
 import type { FlowNode, NodeStatus } from '@/types';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
@@ -7,6 +8,9 @@ export type BaseNodeProps = NodeProps<FlowNode> & {
   icon: LucideIcon;
   accentColor: string;
 };
+
+const handleClassName =
+  '!pointer-events-auto !z-50 !h-3 !w-3 !min-h-[12px] !min-w-[12px] !shrink-0 !rounded-full !border-0 !bg-gray-500 !cursor-crosshair transition-colors duration-150';
 
 function statusDotClass(status: NodeStatus): string {
   switch (status) {
@@ -28,18 +32,21 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
   ].join(', ');
 
   return (
-    <div className="flex flex-col items-center gap-2 pb-1">
+    <div
+      className="relative flex flex-col items-center gap-2 overflow-visible pb-1"
+      style={{ ['--nb-accent' as string]: accentColor }}
+    >
       <Handle
         type="target"
         position={Position.Top}
-        className="!h-2 !w-2 !border-0 !bg-zinc-500"
+        className={`${handleClassName} hover:!bg-[var(--nb-accent)]`}
       />
       <div
-        className="relative w-[132px] rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner"
+        className="relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner"
         style={{ boxShadow }}
       >
         <span
-          className={`absolute right-2 top-2 h-2 w-2 rounded-full ${statusDotClass(data.status)}`}
+          className={`absolute right-2 top-2 z-10 h-2 w-2 rounded-full ${statusDotClass(data.status)}`}
           title={data.status}
           aria-hidden
         />
@@ -47,7 +54,7 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
           <Icon className="h-9 w-9" style={{ color: accentColor }} strokeWidth={1.75} />
         </div>
       </div>
-      <div className="max-w-[160px] text-center">
+      <div className="relative z-0 max-w-[160px] text-center">
         <div className="inline-block rounded-full bg-zinc-900/90 px-3 py-1">
           <span className="text-xs font-medium tracking-tight text-zinc-100">{data.label}</span>
         </div>
@@ -63,7 +70,7 @@ export function BaseNode({ data, selected, icon: Icon, accentColor }: BaseNodePr
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!h-2 !w-2 !border-0 !bg-zinc-500"
+        className={`${handleClassName} hover:!bg-[var(--nb-accent)]`}
       />
     </div>
   );

@@ -31,21 +31,34 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     set({ edges: applyEdgeChanges(changes, get().edges) });
   },
   onConnect: (connection: Connection) => {
-    set({
-      edges: addEdge<FlowEdge>(
-        {
-          ...connection,
-          type: 'smoothstep',
-          animated: true,
-          style: {
-            stroke: '#3b82f6',
-            strokeWidth: 2,
-            filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.55))',
-          },
+    // #region agent log
+    const prevLen = get().edges.length;
+    // #endregion
+    const nextEdges = addEdge<FlowEdge>(connection, get().edges);
+    // #region agent log
+    fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Debug-Session-Id': '370d51',
+      },
+      body: JSON.stringify({
+        sessionId: '370d51',
+        runId: 'pre-fix',
+        hypothesisId: 'H1-H2',
+        location: 'useFlowStore.ts:onConnect',
+        message: 'onConnect invoked',
+        data: {
+          connection,
+          prevEdgeCount: prevLen,
+          nextEdgeCount: nextEdges.length,
+          edgeAdded: nextEdges.length > prevLen,
         },
-        get().edges
-      ),
-    });
+        timestamp: Date.now(),
+      }),
+    }).catch(() => {});
+    // #endregion
+    set({ edges: nextEdges });
   },
   addNode: (node: FlowNode) => {
     set({ nodes: [...get().nodes, node] });
