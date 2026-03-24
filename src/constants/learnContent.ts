@@ -22,7 +22,7 @@ This is the **client-server model**, and it's the foundation of every single web
       },
       {
         type: 'diagram',
-        content: 'Client -> Server -> Response flow',
+        content: 'CLIENT_SERVER_FLOW',
         diagramTemplate: 'client-server-flow',
       },
       {
@@ -42,6 +42,28 @@ Most servers don't work alone. They connect to databases to read/write data, to 
 
 **4. Send the response**
 The server sends back data - usually as JSON for APIs or HTML for web pages. Your browser or app then renders this into what you see on screen.`,
+      },
+      {
+        type: 'text',
+        content: `# The Three Numbers That Define a Server
+
+Every server in system design is described by three key metrics:
+
+**Throughput** - How many requests per second it can handle. 
+A simple Node.js server might handle 1,000-5,000 req/s. 
+A highly optimized Go server might handle 50,000+ req/s. 
+This is like how many customers a restaurant can serve per hour.
+
+**Latency** - How long it takes to process ONE request, 
+measured in milliseconds (ms). Reading from memory: ~0.1ms. 
+Reading from an SSD: ~0.1ms. A database query: 1-50ms. 
+An API call to another service: 10-200ms. Users notice 
+anything above 200ms.
+
+**Capacity** - The maximum number of concurrent connections 
+or requests the server can hold before it starts dropping 
+them. When capacity is exceeded, new requests get queued 
+or rejected. This is like how many tables a restaurant has.`,
       },
       {
         type: 'comparison',
@@ -68,13 +90,35 @@ The server sends back data - usually as JSON for APIs or HTML for web pages. You
         },
       },
       {
+        type: 'text',
+        content: `# What Happens When a Server Gets Overloaded?
+
+Imagine your restaurant only has 10 tables but 100 customers walk in. What happens?
+
+- First, customers wait in line (**queueing**)
+- The wait gets longer and longer (**increased latency**)
+- Eventually, people give up and leave (**dropped requests**)
+- If the kitchen gets too many orders, food quality drops (**degraded performance**)
+- In the worst case, the kitchen catches fire and shuts down entirely (**server crash**)
+
+This is exactly what happens to a real server under too much load. In the NodeBreaker simulator, you can SEE this happening:
+- Green node = healthy, handling traffic fine
+- Yellow node = under pressure, latency increasing
+- Red node = overloaded, dropping requests
+
+This is why we need more than just one server - which is what the rest of this journey will teach you.`,
+      },
+      {
         type: 'interactive',
         content: 'See it yourself',
         interactivePrompt: `Drop a Service node onto the canvas.
 Set its throughput to 500 req/s. Start the simulation.
-Then lower throughput to 50 req/s and watch the status shift from green to yellow/red.
+The node should be green - it can handle the load.
 
-This is a bottleneck in action.`,
+Now click the node and lower throughput to 50 req/s.
+Watch it turn yellow, then red as it gets overwhelmed.
+
+This is a bottleneck - and learning to identify and fix bottlenecks is the core skill of system design.`,
       },
       {
         type: 'quiz',
@@ -89,7 +133,7 @@ This is a bottleneck in action.`,
           ],
           correctIndex: 1,
           explanation:
-            'The server can only handle 1000 req/s. The extra 500 either queue up (higher latency) or get dropped.',
+            'The server can only handle 1000 req/s. The extra 500 requests either queue up (adding latency) or get dropped. Servers do not automatically scale - that requires additional infrastructure like load balancers and auto-scaling groups.',
         },
       },
       {
@@ -100,7 +144,24 @@ This is a bottleneck in action.`,
 - **Throughput** = requests per second (how much)
 - **Latency** = time per request (how fast)
 - **Capacity** = max concurrent load (how many at once)
-- Single servers have limits; distributed systems solve this`,
+- When load exceeds capacity -> queueing -> dropping -> crash
+- Single servers have limits - that's why distributed systems exist`,
+      },
+      {
+        type: 'quiz',
+        content: 'Final Check',
+        quiz: {
+          question: 'In a system design interview, what should you think about FIRST?',
+          options: [
+            'Which database to use',
+            'How traffic enters the system and flows through it',
+            'What programming language to use',
+            'How to make the UI look good',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Always start with the traffic flow: How do requests enter? Where do they go? What processes them? This is the client-server model and it shapes every design decision that follows.',
+        },
       },
     ],
   },
@@ -130,9 +191,16 @@ Throughput is the number of requests your system processes per second (req/s).
 - 8-lane expressway: ~8,000 cars/hour
 
 In systems, "more lanes" means:
-- horizontal scaling (more instances),
-- vertical scaling (faster instances),
-- and load balancing.`,
+- More server instances (horizontal scaling)
+- Faster processing per server (vertical scaling)
+- Smarter routing to avoid congestion (load balancing)
+
+**Real-world throughput numbers you should memorize:**
+- A single web server (Node.js/Express): 1,000 - 10,000 req/s
+- Redis cache: 100,000+ req/s
+- PostgreSQL database: 5,000 - 20,000 queries/s
+- Kafka message broker: 1,000,000+ messages/s
+- Nginx load balancer: 50,000+ req/s`,
       },
       {
         type: 'analogy',
@@ -143,12 +211,78 @@ In systems, "more lanes" means:
         type: 'text',
         content: `# Latency: Where Time Goes
 
-Latency includes:
-- **Network latency** (distance)
-- **Processing latency** (CPU, storage, DB)
-- **Queue wait time** (utilization pressure)
+Latency is the total time from "request sent" to "response received." But where does that time actually go?
 
-As utilization approaches 100%, queueing delay rises sharply. Keep critical components below 70-80% utilization when possible.`,
+**Network latency** - Time for data to travel over the wire.
+- Same data center: 0.5ms
+- Same continent: 30-50ms  
+- Cross-continent: 100-200ms
+- With satellite: 500ms+
+
+**Processing latency** - Time for the server to do its work.
+- Read from memory (RAM): 0.0001ms
+- Read from SSD: 0.1ms
+- Read from database: 1-50ms
+- Complex computation: 10-500ms
+
+**Queue wait time** - Time spent waiting in line.
+- When a server is at 50% utilization: ~1ms extra
+- At 80% utilization: ~5ms extra
+- At 95% utilization: ~20ms extra
+- At 99% utilization: requests wait FOREVER
+
+This is why keeping utilization below 70-80% is critical.
+Latency doesn't increase linearly - it increases EXPONENTIALLY as you approach capacity.`,
+      },
+      {
+        type: 'text',
+        content: `# The Latency Numbers Every Engineer Should Know
+
+Memorize these - they come up in interviews:
+
+| Operation | Time |
+|---|---|
+| L1 cache reference | 0.5 ns |
+| Read from RAM | 100 ns |
+| Read from SSD | 100,000 ns (0.1 ms) |
+| Read from HDD | 10,000,000 ns (10 ms) |
+| Send packet within data center | 500,000 ns (0.5 ms) |
+| Send packet coast to coast | 30,000,000 ns (30 ms) |
+
+The key insight: **memory is 100,000x faster than disk**. This is why caching is so powerful.`,
+      },
+      {
+        type: 'text',
+        content: `# Capacity & Utilization
+
+Capacity is the maximum load a component can handle. But you should NEVER run at 100% capacity.
+
+The rule of thumb:
+- **Under 50%** - Healthy
+- **50-70%** - Normal
+- **70-85%** - Warning
+- **85%+** - Danger
+
+In NodeBreaker, you can see this as colors:
+- Green = under 50%
+- Yellow = 50-80%
+- Red = 80%+`,
+      },
+      {
+        type: 'text',
+        content: `# Bottlenecks: Finding the Weakest Link
+
+A system is only as fast as its slowest component.
+If your chain is:
+
+Load Balancer (50k req/s) -> Service (10k req/s) -> Database (500 req/s)
+
+Your ENTIRE system can only handle 500 req/s - because the database is the bottleneck.
+
+**How to find bottlenecks:**
+1. Look for highest utilization
+2. That's your bottleneck
+3. Fix by scaling, caching, or redesigning flow`,
       },
       {
         type: 'interactive',
@@ -156,8 +290,11 @@ As utilization approaches 100%, queueing delay rises sharply. Keep critical comp
         interactivePrompt: `Build this chain:
 Load Balancer (10k req/s) -> Service (2k req/s) -> Database (100 req/s)
 
-Run simulation and identify what turns red first.
-Then increase the DB throughput and observe recovery.`,
+Start the simulation. Which component turns red first?
+That is your bottleneck.
+
+Now try fixing it: click the Database and increase its throughput to 5000.
+Watch the system recover.`,
       },
       {
         type: 'quiz',
@@ -176,8 +313,20 @@ Then increase the DB throughput and observe recovery.`,
           question: 'At 99% utilization, what typically happens to latency?',
           options: ['Small increase', 'No change', 'Dramatic increase', 'Latency decreases'],
           correctIndex: 2,
-          explanation: 'Queueing explodes near capacity, so latency rises dramatically.',
+          explanation:
+            'Latency increases exponentially near capacity. At 99% utilization, queue wait times skyrocket because there is almost no spare capacity.',
         },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- **Throughput** = how many (req/s). Highway width.
+- **Latency** = how fast (ms). Highway length.
+- **Capacity** = max concurrent load.
+- Latency increases **exponentially** near capacity
+- Keep utilization under **70-80%**
+- **Bottleneck** = slowest component`,
       },
     ],
   },
@@ -189,8 +338,13 @@ Then increase the DB throughput and observe recovery.`,
         type: 'text',
         content: `# Why Databases Become Bottlenecks
 
-Compute and cache layers run in memory; databases often touch disk and complex query planning.
-That makes DB latency higher and throughput lower than stateless services in many systems.`,
+In almost every system you design, the database will be the slowest component.
+
+Servers and caches use memory (RAM), which is extremely fast.
+Databases read/write persistent storage and execute query planning/joins/sorts, which is slower.
+
+Most databases max out at lower throughput than stateless services.
+This is why caching, replication, sharding, and queues are so important.`,
       },
       {
         type: 'diagram',
@@ -221,21 +375,45 @@ That makes DB latency higher and throughput lower than stateless services in man
       },
       {
         type: 'text',
-        content: `# Connection Pooling, Replication, Indexes
+        content: `# Connection Pooling: Don't Open a New Door Every Time
 
-**Connection pooling** avoids expensive new DB handshakes for every request.
+Creating a new DB connection can take 20-50ms.
+Connection pooling creates reusable connections upfront so each request borrows one.
 
-**Replication** splits reads away from the write primary and improves availability.
+Typical pool sizes are 20-100 per service instance.
+Too small: requests wait.
+Too large: DB is overwhelmed managing connections.`,
+      },
+      {
+        type: 'text',
+        content: `# Replication: Copies of Your Data
 
-**Indexes** can turn table scans into fast lookups, but add write overhead and storage cost.`,
+**Primary-replica replication**:
+- Primary handles writes
+- Replicas handle reads
+- Replicas are asynchronously updated
+
+This scales read traffic and improves availability.
+Tradeoff: replication lag and eventual consistency.`,
+      },
+      {
+        type: 'text',
+        content: `# Indexing: The Difference Between 1ms and 1 second
+
+Without indexes, large tables require scans.
+With indexes, the engine can jump directly to matching rows.
+
+Rule of thumb: index frequently filtered/sorted columns, but avoid over-indexing because each index slows writes.`,
       },
       {
         type: 'interactive',
         content: 'See the DB bottleneck',
-        interactivePrompt: `Build: LB (10k) -> Service (5k) -> Database (500).
-Run simulation and observe DB pressure.
+        interactivePrompt: `Build: LB (10k) -> Service (5k) -> Database (500 req/s)
 
-Then add another DB node and split traffic to model read replicas.`,
+Start simulation. The database turns red immediately - it is the bottleneck.
+
+Now add a second Database node (read replica). Connect Service to BOTH databases.
+Watch the load split across them.`,
       },
       {
         type: 'quiz',
@@ -246,6 +424,17 @@ Then add another DB node and split traffic to model read replicas.`,
           correctIndex: 1,
           explanation: 'Read replicas are a standard first move for read-heavy bottlenecks.',
         },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Databases are often bottlenecks
+- **SQL** for strong integrity + structured queries
+- **NoSQL** for flexibility + horizontal scale
+- Connection pooling reduces connection overhead
+- Replication scales reads and adds redundancy
+- Indexes speed reads but can slow writes`,
       },
     ],
   },
@@ -261,7 +450,8 @@ Caching stores hot data in RAM.
 Typical cache lookup: **0.1-1ms**.
 Typical DB query: **5-50ms**.
 
-A high hit ratio dramatically cuts DB load and improves user experience.`,
+If 90% of requests are cache hits, DB load drops by ~90%.
+This is why Redis is one of the highest ROI infrastructure components.`,
       },
       {
         type: 'diagram',
@@ -289,6 +479,16 @@ Common pitfalls:
 - Stale data from long TTL`,
       },
       {
+        type: 'text',
+        content: `# TTL: When Cache Data Expires
+
+TTL controls freshness vs load:
+- Short TTL = fresher data, more misses
+- Long TTL = fewer misses, staler data
+
+Choose TTL based on how quickly the underlying data changes.`,
+      },
+      {
         type: 'comparison',
         content: 'Redis vs Memcached',
         comparison: {
@@ -307,11 +507,13 @@ Common pitfalls:
       {
         type: 'interactive',
         content: 'Add a cache layer',
-        interactivePrompt: `Build: LB -> Service -> Database (500 req/s).
-Observe DB saturation.
+        interactivePrompt: `Build: LB -> Service -> Database (500 req/s)
 
-Add a Cache node and route reads through it.
-Observe DB pressure decrease.`,
+Start simulation - DB turns red.
+Stop simulation.
+
+Now add a Cache node and route read traffic through it.
+Start again and watch DB pressure drop.`,
       },
       {
         type: 'quiz',
@@ -325,8 +527,19 @@ Observe DB pressure decrease.`,
             'Cache automatically clears all keys',
           ],
           correctIndex: 1,
-          explanation: 'TTL alone can keep stale values alive until expiration.',
+          explanation:
+            'With TTL-based caching, users can see stale data until expiry unless you explicitly invalidate on write.',
         },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Caches are memory-speed reads
+- High hit ratio removes huge DB load
+- Cache-aside is the default pattern
+- TTL is freshness/performance tradeoff
+- Know stampede, hot keys, invalidation`,
       },
     ],
   },
@@ -348,12 +561,22 @@ That component is the **load balancer**.`,
       },
       {
         type: 'text',
+        content: `# What a Load Balancer Actually Does
+
+Key responsibilities:
+1. **Distribute traffic** across servers
+2. **Health checks** to avoid failed servers
+3. **SSL termination** for HTTPS
+4. **Session persistence** when needed`,
+      },
+      {
+        type: 'text',
         content: `# L4 vs L7
 
-**L4** routes by network attributes (IP/port), very fast.
-**L7** routes by HTTP content (path/headers/cookies), more flexible.
+**Layer 4 (Transport)**: routes by IP/port, very fast, no HTTP awareness.
+**Layer 7 (Application)**: inspects URL/headers/cookies, supports advanced HTTP routing.
 
-For web apps, L7 is often the default; for raw TCP or extreme performance cases, consider L4.`,
+Interview default: L7 for web apps, L4 for raw TCP or extreme packet-forwarding performance.`,
       },
       {
         type: 'comparison',
@@ -388,10 +611,11 @@ This is core to high availability.`,
       {
         type: 'interactive',
         content: 'Load balancing in action',
-        interactivePrompt: `Build: Load Balancer -> 3 Service nodes.
-Run simulation and watch traffic split.
+        interactivePrompt: `Build: Load Balancer -> 3 Service nodes (each 1000 req/s)
+Run simulation and watch traffic split evenly.
 
-Then simulate one service failure and observe remaining services absorb traffic.`,
+Now inject a crash on one service.
+Watch the LB reroute traffic to remaining healthy services.`,
       },
       {
         type: 'quiz',
@@ -410,7 +634,8 @@ Then simulate one service failure and observe remaining services absorb traffic.
 - Load balancers distribute traffic and detect failure
 - L4 favors raw speed, L7 favors routing intelligence
 - Pick algorithm based on workload shape
-- Health checks + redundancy keep systems online`,
+- Health checks + redundancy keep systems online
+- In interviews: mention LB type, algorithm, and health check policy`,
       },
     ],
   },
