@@ -1,6 +1,9 @@
 import { CHAPTER_1_TOPICS } from '@/constants/content/chapter1';
 import { CHAPTER_2_TOPICS } from '@/constants/content/chapter2';
 import { CHAPTER_3_TOPICS } from '@/constants/content/chapter3';
+import { CHAPTER_4_TOPICS } from '@/constants/content/chapter4';
+import { CHAPTER_5_TOPICS } from '@/constants/content/chapter5';
+import { CHAPTER_6_TOPICS } from '@/constants/content/chapter6';
 import type { Chapter, QuizQuestion, Topic } from '@/constants/curriculumTypes';
 
 export type {
@@ -49,37 +52,25 @@ export const CURRICULUM: Chapter[] = [
     CHAPTER_2_TOPICS
   ),
   ch(3, 'chapter-3', 'The Three Numbers', 'Throughput, latency, and capacity intuition.', 'Gauge', '#f59e0b', CHAPTER_3_TOPICS),
-  ch(4, 'chapter-4', 'Databases Deep Dive', 'Storage engines, consistency, and query paths.', 'Database', '#a855f7', [
-    topic({ id: 'what-is-a-database', title: 'What Is a Database?' }),
-    topic({ id: 'sql-databases', title: 'SQL Databases' }),
-    topic({ id: 'acid-transactions', title: 'ACID Transactions' }),
-    topic({ id: 'nosql-databases', title: 'NoSQL Databases' }),
-    topic({ id: 'sql-vs-nosql-decision-framework', title: 'SQL vs NoSQL Decision Framework' }),
-    topic({ id: 'indexes', title: 'Indexes' }),
-    topic({ id: 'connection-pooling', title: 'Connection Pooling' }),
-    topic({ id: 'transactions-and-isolation-levels', title: 'Transactions & Isolation Levels' }),
-    topic({ id: 'normalization-vs-denormalization', title: 'Normalization vs Denormalization' }),
-    topic({ id: 'cap-theorem', title: 'CAP Theorem' }),
-  ]),
-  ch(5, 'chapter-5', 'Caching', 'Speed layers, eviction, and cache pitfalls.', 'Zap', '#eab308', [
-    topic({ id: 'why-caching-matters', title: 'Why Caching Matters' }),
-    topic({ id: 'cache-aside-pattern', title: 'Cache-Aside Pattern' }),
-    topic({ id: 'write-through-write-behind', title: 'Write-Through & Write-Behind' }),
-    topic({ id: 'ttl-and-eviction-policies', title: 'TTL & Eviction Policies' }),
-    topic({ id: 'cache-stampede', title: 'Cache Stampede' }),
-    topic({ id: 'cache-invalidation', title: 'Cache Invalidation' }),
-    topic({ id: 'hot-key-problem', title: 'Hot Key Problem' }),
-    topic({ id: 'redis-vs-memcached', title: 'Redis vs Memcached' }),
-  ]),
-  ch(6, 'chapter-6', 'Load Balancing & Traffic', 'Spreading work and staying healthy under load.', 'GitBranch', '#06b6d4', [
-    topic({ id: 'why-one-server-is-never-enough', title: 'Why One Server Is Never Enough' }),
-    topic({ id: 'l4-vs-l7-load-balancing', title: 'L4 vs L7 Load Balancing' }),
-    topic({ id: 'algorithms-round-robin-least-connections', title: 'Algorithms: Round Robin & Least Connections' }),
-    topic({ id: 'health-checks', title: 'Health Checks' }),
-    topic({ id: 'sticky-sessions', title: 'Sticky Sessions' }),
-    topic({ id: 'ssl-tls-termination', title: 'SSL/TLS Termination' }),
-    topic({ id: 'global-load-balancing-geodns', title: 'Global Load Balancing & GeoDNS' }),
-  ]),
+  ch(
+    4,
+    'chapter-4',
+    'Databases Deep Dive',
+    'Storage engines, consistency, and query paths.',
+    'Database',
+    '#a855f7',
+    CHAPTER_4_TOPICS
+  ),
+  ch(5, 'chapter-5', 'Caching', 'Speed layers, eviction, and cache pitfalls.', 'Zap', '#eab308', CHAPTER_5_TOPICS),
+  ch(
+    6,
+    'chapter-6',
+    'Load Balancing & Traffic',
+    'Spreading work and staying healthy under load.',
+    'GitBranch',
+    '#06b6d4',
+    CHAPTER_6_TOPICS
+  ),
   ch(7, 'chapter-7', 'Scaling Strategies', 'Growing systems without losing control.', 'TrendingUp', '#22c55e', [
     topic({ id: 'vertical-vs-horizontal-scaling', title: 'Vertical vs Horizontal Scaling' }),
     topic({ id: 'why-horizontal-requires-statelessness', title: 'Why Horizontal Scaling Requires Statelessness' }),
