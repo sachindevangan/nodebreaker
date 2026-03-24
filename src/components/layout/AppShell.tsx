@@ -2,6 +2,8 @@ import { useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { FlowCanvas } from '@/components/canvas';
 import {
   ChaosOverlay,
+  GlossaryModal,
+  KnowledgePanel,
   MetricsDashboard,
   PropertiesPanel,
   SimulationControls,
@@ -16,6 +18,7 @@ import { useFlowStore } from '@/store/useFlowStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 import { useToastStore } from '@/store/useToastStore';
+import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import {
   designToFlowGraph,
   downloadDesignJson,
@@ -25,6 +28,7 @@ import {
 import { Header } from './Header';
 
 export function AppShell() {
+  const openGlossary = useKnowledgeStore((s) => s.openGlossary);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +121,7 @@ export function AppShell() {
           onExport={handleExport}
           onImportClick={() => importInputRef.current?.click()}
           onResetCanvas={handleResetCanvas}
+          onOpenGlossary={openGlossary}
         />
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 w-[260px] shrink-0 flex-col">
@@ -130,9 +135,11 @@ export function AppShell() {
             <ChaosOverlay />
             <FlowCanvas />
             <MetricsDashboard />
+            <KnowledgePanel />
           </main>
           <PropertiesPanel />
         </div>
+        <GlossaryModal />
         <ToastViewport />
       </div>
     </AppChromeContext.Provider>

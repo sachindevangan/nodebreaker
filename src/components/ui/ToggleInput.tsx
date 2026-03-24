@@ -1,16 +1,24 @@
+import type { KnowledgeTarget } from '@/store/useKnowledgeStore';
+import { InfoTooltip } from './InfoTooltip';
+
 export type ToggleInputProps = {
   label: string;
   id: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
+  infoText?: string;
+  infoTarget?: KnowledgeTarget;
 };
 
-export function ToggleInput({ label, id, checked, onChange }: ToggleInputProps) {
+export function ToggleInput({ label, id, checked, onChange, infoText, infoTarget }: ToggleInputProps) {
   return (
     <div className="flex items-center justify-between gap-3 py-0.5">
-      <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-        {label}
-      </label>
+      <span className="inline-flex items-center gap-1">
+        <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+          {label}
+        </label>
+        {infoText ? <InfoTooltip text={infoText} target={infoTarget} /> : null}
+      </span>
       <button
         type="button"
         id={id}

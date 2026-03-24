@@ -1,3 +1,6 @@
+import type { KnowledgeTarget } from '@/store/useKnowledgeStore';
+import { InfoTooltip } from './InfoTooltip';
+
 export type SelectOption = { value: string; label: string };
 
 export type SelectInputProps = {
@@ -6,14 +9,19 @@ export type SelectInputProps = {
   value: string;
   options: readonly SelectOption[];
   onChange: (value: string) => void;
+  infoText?: string;
+  infoTarget?: KnowledgeTarget;
 };
 
-export function SelectInput({ label, id, value, options, onChange }: SelectInputProps) {
+export function SelectInput({ label, id, value, options, onChange, infoText, infoTarget }: SelectInputProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-        {label}
-      </label>
+      <span className="inline-flex items-center gap-1">
+        <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+          {label}
+        </label>
+        {infoText ? <InfoTooltip text={infoText} target={infoTarget} /> : null}
+      </span>
       <select
         id={id}
         value={value}

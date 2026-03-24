@@ -19,6 +19,8 @@ import {
 import { NODEBREAKER_DRAG_MIME } from '@/hooks/useDragToCanvas';
 import { getNodeIcon } from '@/components/canvas/nodes/nodeIcons';
 import { useSimStore } from '@/store/useSimStore';
+import { useKnowledgeStore } from '@/store/useKnowledgeStore';
+import { getComponentKnowledge } from '@/constants/knowledge';
 import { hexToRgba } from '@/utils/math';
 import { ChaosPalette } from './ChaosPalette';
 
@@ -35,7 +37,10 @@ const CATEGORY_ICONS: Record<(typeof PALETTE_CATEGORY_ORDER)[number], LucideIcon
 };
 
 function PaletteCard({ config }: { config: ComponentTypeConfig }) {
+  const [showTip, setShowTip] = useState(false);
+  const openKnowledge = useKnowledgeStore((s) => s.openKnowledge);
   const Icon = getNodeIcon(config.icon);
+  const knowledge = getComponentKnowledge(config.type);
 
   return (
     <div
@@ -44,16 +49,18 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
         e.dataTransfer.setData(NODEBREAKER_DRAG_MIME, config.type);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className="group cursor-grab select-none rounded-lg border border-zinc-700/70 bg-zinc-900/85 p-3 text-center transition-[border-color,box-shadow] duration-200 hover:border-zinc-500 active:cursor-grabbing"
+      className="group relative cursor-grab select-none rounded-lg border border-zinc-700/70 bg-zinc-900/85 p-3 text-center transition-[border-color,box-shadow] duration-200 hover:border-zinc-500 active:cursor-grabbing"
       style={
         {
           ['--nb-palette-glow' as string]: hexToRgba(config.color, 0.42),
         } as CSSProperties
       }
       onMouseEnter={(e) => {
+        setShowTip(true);
         e.currentTarget.style.boxShadow = '0 0 18px var(--nb-palette-glow)';
       }}
       onMouseLeave={(e) => {
+        setShowTip(false);
         e.currentTarget.style.boxShadow = '';
       }}
     >
@@ -61,6 +68,22 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
         <Icon className="h-7 w-7" style={{ color: config.color }} strokeWidth={1.75} />
       </div>
       <p className="mt-2 text-[11px] font-medium leading-tight text-zinc-200">{config.label}</p>
+      {showTip ? (
+        <div className="pointer-events-none absolute left-1/2 top-full z-[90] mt-1 w-56 -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-left shadow-lg">
+          <p className="text-[11px] leading-snug text-zinc-100">{knowledge.summary}</p>
+          <button
+            type="button"
+            className="pointer-events-auto mt-1 text-[10px] font-medium text-cyan-300 hover:text-cyan-200"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openKnowledge({ kind: 'component', componentType: config.type });
+            }}
+          >
+            Click to learn more
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

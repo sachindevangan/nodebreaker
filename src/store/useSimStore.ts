@@ -5,6 +5,7 @@ import {
   runSimulationTick,
   type SimulationEngineState,
 } from '@/simulation/engine';
+import { createInitialInsightState, detectInsights, type InsightState } from '@/simulation/insights';
 import { MetricsTracker } from '@/simulation/metrics';
 import type {
   EdgeTrafficVisual,
@@ -52,6 +53,7 @@ export interface SimStore {
   entryNodeIds: string[];
   simulatedStatusByNodeId: Map<string, NodeStatus>;
   bottleneckNotifiedNodeIds: Set<string>;
+  insightState: InsightState;
 
   startSession: () => void;
   stopSession: () => void;
@@ -86,6 +88,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
   entryNodeIds: [],
   simulatedStatusByNodeId: new Map(),
   bottleneckNotifiedNodeIds: new Set(),
+  insightState: createInitialInsightState(),
 
   startSession: () => {
     const { simulationSessionActive } = get();
@@ -117,6 +120,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       globalMetricsPrev: emptyGlobalMetrics(),
       simulatedStatusByNodeId: new Map(),
       bottleneckNotifiedNodeIds: new Set(),
+      insightState: createInitialInsightState(),
     });
     useToastStore.getState().push({ kind: 'success', message: 'Simulation started' });
   },
@@ -137,6 +141,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       globalMetrics: emptyGlobalMetrics(),
       globalMetricsPrev: emptyGlobalMetrics(),
       bottleneckNotifiedNodeIds: new Set(),
+      insightState: createInitialInsightState(),
     });
   },
 
@@ -168,6 +173,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       globalMetrics: emptyGlobalMetrics(),
       globalMetricsPrev: emptyGlobalMetrics(),
       bottleneckNotifiedNodeIds: new Set(),
+      insightState: createInitialInsightState(),
     });
     useToastStore.getState().push({ kind: 'info', message: 'Simulation reset' });
   },
@@ -191,6 +197,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       nodeMetrics: prevMetrics,
       globalMetrics: prevGlobal,
       bottleneckNotifiedNodeIds,
+      insightState,
     } = get();
 
     const validIds = new Set(nodes.map((n) => n.id));
@@ -257,6 +264,15 @@ export const useSimStore = create<SimStore>((set, get) => ({
         }
       }
     }
+    const insightResult = detectInsights(nodes, edges, result.nodeMetrics, insightState);
+    if (insightResult.insight) {
+      useToastStore.getState().push({
+        kind: 'info',
+        message: insightResult.insight.message,
+        durationMs: 8000,
+        learnMore: insightResult.insight.learnMore,
+      });
+    }
 
     set({
       engineState: result.state,
@@ -269,6 +285,7 @@ export const useSimStore = create<SimStore>((set, get) => ({
       globalMetricsPrev: { ...prevGlobal },
       globalMetrics: nextGlobal,
       bottleneckNotifiedNodeIds: nextBottleneckIds,
+      insightState: insightResult.nextState,
     });
   },
 }));

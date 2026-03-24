@@ -1,5 +1,6 @@
 import {
   Download,
+  BookOpen,
   Github,
   Keyboard,
   LayoutTemplate,
@@ -40,6 +41,7 @@ export interface HeaderProps {
   onExport: () => void;
   onImportClick: () => void;
   onResetCanvas: () => void;
+  onOpenGlossary: () => void;
   githubHref?: string;
 }
 
@@ -50,6 +52,7 @@ export function Header({
   onExport,
   onImportClick,
   onResetCanvas,
+  onOpenGlossary,
   githubHref = 'https://github.com/sachindevangan/nodebreaker',
 }: HeaderProps) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -137,6 +140,15 @@ export function Header({
             <Keyboard className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Shortcuts</span>
           </button>
+          <button
+            type="button"
+            className={`${ghostBtn} px-2`}
+            onClick={onOpenGlossary}
+            title="Learn glossary"
+            aria-label="Learn glossary"
+          >
+            <BookOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
+          </button>
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
@@ -183,6 +195,9 @@ export function Header({
               aria-label="Shortcuts"
             >
               <Keyboard className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenGlossary} aria-label="Learn">
+              <BookOpen className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
           <a

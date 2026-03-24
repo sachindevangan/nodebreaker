@@ -1,18 +1,34 @@
 import type { InputHTMLAttributes } from 'react';
+import type { KnowledgeTarget } from '@/store/useKnowledgeStore';
+import { InfoTooltip } from './InfoTooltip';
 
 export type TextInputProps = {
   label: string;
   id: string;
   value: string;
   onChange: (value: string) => void;
+  infoText?: string;
+  infoTarget?: KnowledgeTarget;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'value' | 'onChange'>;
 
-export function TextInput({ label, id, value, onChange, className = '', ...rest }: TextInputProps) {
+export function TextInput({
+  label,
+  id,
+  value,
+  onChange,
+  infoText,
+  infoTarget,
+  className = '',
+  ...rest
+}: TextInputProps) {
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-        {label}
-      </label>
+      <span className="inline-flex items-center gap-1">
+        <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+          {label}
+        </label>
+        {infoText ? <InfoTooltip text={infoText} target={infoTarget} /> : null}
+      </span>
       <input
         id={id}
         value={value}

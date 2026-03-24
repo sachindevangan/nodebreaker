@@ -2,8 +2,9 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { Clock, Skull, TrendingDown, X } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getComponentConfig } from '@/constants/components';
+import { GLOSSARY_BY_TERM } from '@/constants/glossary';
 import { getNodeIcon } from '@/components/canvas/nodes';
-import { ConfirmDialog, SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
+import { ConfirmDialog, InfoTooltip, SelectInput, SliderInput, TextInput, ToggleInput } from '@/components/ui';
 import type { ChaosEventType } from '@/simulation/chaos';
 import { getChaosEventDefinition } from '@/constants/chaosEvents';
 import { useChaosStore } from '@/store/useChaosStore';
@@ -24,6 +25,8 @@ const ALGORITHM_OPTIONS: { value: string; label: string }[] = [
   { value: 'least_connections', label: 'Least connections' },
   { value: 'random', label: 'Random' },
 ];
+
+const glossaryText = (term: string, fallback: string): string => GLOSSARY_BY_TERM.get(term)?.definition ?? fallback;
 
 export function PropertiesPanel() {
   const selectedNodeId = useFlowStore((s) => s.selectedNodeId);
@@ -170,6 +173,7 @@ export function PropertiesPanel() {
                 label="Label"
                 value={node.data.label}
                 onChange={(v) => patch({ label: v })}
+                infoText="Human-readable component name used in architecture diagrams."
               />
 
               <SliderInput
@@ -181,6 +185,8 @@ export function PropertiesPanel() {
                 step={100}
                 onChange={(v) => patch({ throughput: v })}
                 suffix="req/s"
+                infoText={`${glossaryText('Throughput', 'Requests per second this component can process.')} Typical PostgreSQL is ~5-20k req/s, Redis can exceed 100k req/s.`}
+                infoTarget={{ kind: 'term', term: 'Throughput' }}
               />
 
               <SliderInput
@@ -192,6 +198,8 @@ export function PropertiesPanel() {
                 step={1}
                 onChange={(v) => patch({ latency: v })}
                 suffix="ms"
+                infoText={glossaryText('Latency', 'Time to process one request in milliseconds.')}
+                infoTarget={{ kind: 'term', term: 'Latency' }}
               />
 
               <SliderInput
@@ -202,15 +210,20 @@ export function PropertiesPanel() {
                 max={5_000_000}
                 step={1000}
                 onChange={(v) => patch({ capacity: v })}
+                infoText={glossaryText('Capacity', 'Maximum load before performance degrades or requests drop.')}
+                infoTarget={{ kind: 'term', term: 'Capacity' }}
               />
 
               <div className="flex flex-col gap-1">
-                <label
-                  htmlFor={`${node.id}-status`}
-                  className="text-[11px] font-medium uppercase tracking-wide text-zinc-500"
-                >
-                  Status
-                </label>
+                <span className="inline-flex items-center gap-1">
+                  <label
+                    htmlFor={`${node.id}-status`}
+                    className="text-[11px] font-medium uppercase tracking-wide text-zinc-500"
+                  >
+                    Status
+                  </label>
+                  <InfoTooltip text="Service health indicator. In simulation this is auto-derived from utilization." />
+                </span>
                 <select
                   id={`${node.id}-status`}
                   value={statusDropdownValue}
@@ -239,12 +252,16 @@ export function PropertiesPanel() {
                     value={node.data.algorithm ?? 'round_robin'}
                     options={ALGORITHM_OPTIONS}
                     onChange={(v) => patch({ algorithm: v as LoadBalancerAlgorithm })}
+                    infoText="Routing strategy for distributing requests across downstream targets."
+                    infoTarget={{ kind: 'term', term: 'Load Balancing' }}
                   />
                   <ToggleInput
                     id={`${node.id}-rate-limit`}
                     label="Rate limiting"
                     checked={Boolean(node.data.rateLimiting)}
                     onChange={(c) => patch({ rateLimiting: c, rateLimitRps: c ? node.data.rateLimitRps ?? 1000 : null })}
+                    infoText={glossaryText('Rate Limiting', 'Controls request frequency over a window to prevent overload.')}
+                    infoTarget={{ kind: 'term', term: 'Rate Limiting' }}
                   />
                   {node.data.rateLimiting ? (
                     <SliderInput

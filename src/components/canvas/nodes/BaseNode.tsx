@@ -2,11 +2,13 @@ import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import type { LucideIcon } from 'lucide-react';
 import { Plus, Skull } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { getChaosEventDefinition } from '@/constants/chaosEvents';
+import { getComponentKnowledge } from '@/constants/knowledge';
 import type { ChaosEvent } from '@/simulation/chaos';
 import type { FlowNode, NodeStatus } from '@/types';
 import { useChaosStore } from '@/store/useChaosStore';
+import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import { useSimStore } from '@/store/useSimStore';
 import { getChaosPaletteIcon } from '@/utils/chaosIcons';
 import { formatLatencyMs, formatThroughput, hexToRgba } from '@/utils/math';
@@ -70,12 +72,15 @@ function PlusHandle({
   );
 }
 
-export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNodeProps) {
+export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: BaseNodeProps) {
   const simulationSessionActive = useSimStore((s) => s.simulationSessionActive);
   const entryNodeIds = useSimStore((s) => s.entryNodeIds);
   const nodeMetrics = useSimStore((s) => s.nodeMetrics);
   const metrics = nodeMetrics.get(id);
   const chaosEvents = useChaosStore((s) => s.activeEvents);
+  const openKnowledge = useKnowledgeStore((s) => s.openKnowledge);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const hoverTimerRef = useRef<number | null>(null);
 
   const myChaos = useMemo(
     () => chaosEvents.filter((e) => e.isActive && e.targetNodeId === id),
@@ -110,12 +115,37 @@ export function BaseNode({ id, data, selected, icon: Icon, accentColor }: BaseNo
     `0 0 0 1px ${glowColor}`,
     `0 0 ${spread}px 3px ${hexToRgba(glowColor, borderGlow)}`,
   ].join(', ') + chaosPulse;
+  const knowledgeSummary = type ? getComponentKnowledge(type).summary : null;
 
   return (
     <div
       className="group relative flex flex-col items-center gap-2 overflow-visible pb-1"
       style={{ ['--nb-accent' as string]: accentColor }}
+      onMouseEnter={() => {
+        if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+        hoverTimerRef.current = window.setTimeout(() => setShowTooltip(true), 1500);
+      }}
+      onMouseLeave={() => {
+        if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+        setShowTooltip(false);
+      }}
     >
+      {showTooltip && type ? (
+        <div className="pointer-events-auto absolute -top-12 left-1/2 z-[90] w-64 -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-[11px] text-zinc-100 shadow-lg">
+          {data.label}: {knowledgeSummary} Click for details.
+          <button
+            type="button"
+            className="mt-1 block text-[10px] font-medium text-cyan-300 hover:text-cyan-200"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              openKnowledge({ kind: 'component', componentType: type });
+            }}
+          >
+            Learn more
+          </button>
+        </div>
+      ) : null}
       {showEntryBadge ? (
         <span className="absolute -top-1 left-1/2 z-[70] -translate-x-1/2 rounded-full border border-emerald-500/50 bg-emerald-950/95 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-300 shadow-[0_0_12px_rgba(52,211,153,0.35)]">
           ENTRY

@@ -1,4 +1,5 @@
-import { X } from 'lucide-react';
+import { Lightbulb, X } from 'lucide-react';
+import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import { useToastStore, type ToastItem as ToastItemType } from '@/store/useToastStore';
 
 const KIND_STYLES: Record<
@@ -34,14 +35,34 @@ const KIND_STYLES: Record<
 
 function ToastItemView({ item }: { item: ToastItemType }) {
   const dismiss = useToastStore((s) => s.dismiss);
+  const openKnowledge = useKnowledgeStore((s) => s.openKnowledge);
   const styles = KIND_STYLES[item.kind];
+  const isInsight = item.learnMore !== undefined;
 
   return (
     <div
       role="status"
-      className={`pointer-events-auto flex max-w-sm items-start gap-2 rounded-lg border px-3 py-2.5 shadow-lg backdrop-blur-sm ${styles.border} ${styles.bg}`}
+      className={`pointer-events-auto flex max-w-sm items-start gap-2 rounded-lg border px-3 py-2.5 shadow-lg backdrop-blur-sm ${
+        isInsight
+          ? 'border-violet-500/60 bg-gradient-to-r from-indigo-950/95 to-violet-950/95'
+          : `${styles.border} ${styles.bg}`
+      }`}
     >
-      <p className={`min-w-0 flex-1 text-xs leading-snug ${styles.text}`}>{item.message}</p>
+      {isInsight ? <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-violet-200" /> : null}
+      <div className="min-w-0 flex-1">
+        <p className={`text-xs leading-snug ${isInsight ? 'text-violet-100' : styles.text}`}>{item.message}</p>
+        {item.learnMore ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (item.learnMore) openKnowledge(item.learnMore);
+            }}
+            className="mt-1 text-[11px] font-medium text-cyan-300 hover:text-cyan-200"
+          >
+            Learn More
+          </button>
+        ) : null}
+      </div>
       <button
         type="button"
         onClick={() => dismiss(item.id)}

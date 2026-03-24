@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { NodeBreakerNodeType } from '@/types';
 
 export type ToastKind = 'success' | 'warning' | 'info' | 'error' | 'orange';
 
@@ -6,11 +7,18 @@ export interface ToastItem {
   id: string;
   kind: ToastKind;
   message: string;
+  durationMs: number;
+  learnMore?: { kind: 'component'; componentType: NodeBreakerNodeType } | { kind: 'term'; term: string };
 }
 
 interface ToastStore {
   toasts: ToastItem[];
-  push: (item: { kind: ToastKind; message: string }) => void;
+  push: (item: {
+    kind: ToastKind;
+    message: string;
+    durationMs?: number;
+    learnMore?: { kind: 'component'; componentType: NodeBreakerNodeType } | { kind: 'term'; term: string };
+  }) => void;
   dismiss: (id: string) => void;
 }
 
@@ -21,11 +29,17 @@ export const useToastStore = create<ToastStore>((set, get) => ({
 
   push: (item) => {
     const id = `toast-${++toastSeq}`;
-    const next: ToastItem = { id, kind: item.kind, message: item.message };
+    const next: ToastItem = {
+      id,
+      kind: item.kind,
+      message: item.message,
+      durationMs: item.durationMs ?? 3000,
+      learnMore: item.learnMore,
+    };
     set({ toasts: [...get().toasts, next] });
     window.setTimeout(() => {
       get().dismiss(id);
-    }, 3000);
+    }, next.durationMs);
   },
 
   dismiss: (id) => {

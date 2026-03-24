@@ -1,3 +1,6 @@
+import type { KnowledgeTarget } from '@/store/useKnowledgeStore';
+import { InfoTooltip } from './InfoTooltip';
+
 export type SliderInputProps = {
   label: string;
   id: string;
@@ -7,6 +10,8 @@ export type SliderInputProps = {
   step?: number;
   onChange: (value: number) => void;
   suffix?: string;
+  infoText?: string;
+  infoTarget?: KnowledgeTarget;
 };
 
 export function SliderInput({
@@ -18,13 +23,18 @@ export function SliderInput({
   step = 1,
   onChange,
   suffix,
+  infoText,
+  infoTarget,
 }: SliderInputProps) {
   return (
     <div className="flex flex-col gap-1.5">
       <div className="flex items-baseline justify-between gap-2">
-        <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
-          {label}
-        </label>
+        <span className="inline-flex items-center gap-1">
+          <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+            {label}
+          </label>
+          {infoText ? <InfoTooltip text={infoText} target={infoTarget} /> : null}
+        </span>
         <div className="flex items-center gap-1">
           <input
             id={id}
