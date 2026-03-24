@@ -250,12 +250,20 @@ export const useSimStore = create<SimStore>((set, get) => ({
         if (!nextBottleneckIds.has(m.nodeId)) {
           nextBottleneckIds.add(m.nodeId);
           const label = nodes.find((n) => n.id === m.nodeId)?.data.label ?? m.nodeId;
+          // #region agent log
+          fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H1',location:'useSimStore.ts:253',message:'direct bottleneck toast emitted',data:{nodeId:m.nodeId,label,utilization:u,nextBottleneckSize:nextBottleneckIds.size},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
           useToastStore.getState().push({
             kind: 'orange',
             message: `Bottleneck detected at ${label}`,
           });
         }
       } else {
+        if (nextBottleneckIds.has(m.nodeId)) {
+          // #region agent log
+          fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H1',location:'useSimStore.ts:262',message:'bottleneck node removed from dedupe set',data:{nodeId:m.nodeId,utilization:u},timestamp:Date.now()})}).catch(()=>{});
+          // #endregion
+        }
         nextBottleneckIds.delete(m.nodeId);
         if (u >= 0.5) {
           simulatedStatusByNodeId.set(m.nodeId, 'degraded');
@@ -266,6 +274,9 @@ export const useSimStore = create<SimStore>((set, get) => ({
     }
     const insightResult = detectInsights(nodes, edges, result.nodeMetrics, insightState);
     if (insightResult.insight) {
+      // #region agent log
+      fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H3',location:'useSimStore.ts:272',message:'insight toast emitted',data:{insightId:insightResult.insight.id,message:insightResult.insight.message,tickCount},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       useToastStore.getState().push({
         kind: 'info',
         message: insightResult.insight.message,

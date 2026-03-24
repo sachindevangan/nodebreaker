@@ -23,6 +23,9 @@ export function detectInsights(
   prev: InsightState
 ): { insight: SimulationInsight | null; nextState: InsightState } {
   const now = Date.now();
+  // #region agent log
+  fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H2',location:'insights.ts:25',message:'detectInsights invoked',data:{nodeCount:nodes.length,edgeCount:edges.length,lastShownAt:prev.lastShownAt},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
   const nextState: InsightState = {
     lastShownAt: prev.lastShownAt,
     queueDepthHistory: new Map(prev.queueDepthHistory),
@@ -35,6 +38,9 @@ export function detectInsights(
   }
 
   if (now - prev.lastShownAt < 5000) {
+    // #region agent log
+    fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H2',location:'insights.ts:38',message:'insight throttled by lastShownAt gate',data:{deltaMs:now-prev.lastShownAt},timestamp:Date.now()})}).catch(()=>{});
+    // #endregion
     return { insight: null, nextState };
   }
 
@@ -50,6 +56,9 @@ export function detectInsights(
     const m = nodeMetrics.get(node.id);
     if (!m) continue;
     if (m.utilization > 0.8) {
+      // #region agent log
+      fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H2',location:'insights.ts:54',message:'bottleneck insight emitted',data:{insightId:`bottleneck-${node.id}`,nodeId:node.id,label:node.data.label,utilization:m.utilization,currentLoad:m.currentLoad},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return {
         insight: {
           id: `bottleneck-${node.id}`,
@@ -65,6 +74,9 @@ export function detectInsights(
     const inCount = incoming.get(node.id)?.length ?? 0;
     const outCount = outgoing.get(node.id)?.length ?? 0;
     if (inCount === 1 && outCount === 1) {
+      // #region agent log
+      fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'429a29'},body:JSON.stringify({sessionId:'429a29',runId:'pre-fix',hypothesisId:'H4',location:'insights.ts:69',message:'spof insight emitted',data:{insightId:`spof-${node.id}`,nodeId:node.id,label:node.data.label,inCount,outCount},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
       return {
         insight: {
           id: `spof-${node.id}`,
