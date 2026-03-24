@@ -1,5 +1,6 @@
 export { useChaosStore } from './useChaosStore';
 export { useChallengeStore } from './useChallengeStore';
+export { useConfirmStore } from './useConfirmStore';
 export { useFlowStore } from './useFlowStore';
 export { useKnowledgeStore } from './useKnowledgeStore';
 export { useSimStore } from './useSimStore';

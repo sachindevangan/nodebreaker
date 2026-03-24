@@ -18,6 +18,7 @@ interface JourneyStore {
   lastActiveDate: string;
   collectedInterviewCards: string[];
   lastXPGain: number;
+  quizResults: Map<string, Record<string, boolean>>;
 
   completeLearn: (stageId: string) => void;
   completeBuild: (stageId: string) => void;
@@ -32,6 +33,8 @@ interface JourneyStore {
   getOverallProgress: () => number;
   getComputedTotalXP: () => number;
   clearXPGain: () => void;
+  setQuizResult: (stageId: string, quizId: string, isCorrect: boolean) => void;
+  getQuizSummary: (stageId: string) => { correct: number; total: number };
 }
 
 const STORAGE_KEY = 'nb-journey-store-v1';
@@ -44,6 +47,7 @@ interface PersistedJourney {
   streak: number;
   lastActiveDate: string;
   collectedInterviewCards: string[];
+  quizResults: Record<string, Record<string, boolean>>;
 }
 
 const defaultProgress: StagePartProgress = {
@@ -70,6 +74,7 @@ function readPersisted(): PersistedJourney {
         streak: 0,
         lastActiveDate: '',
         collectedInterviewCards: [],
+        quizResults: {},
       };
     }
     const parsed = JSON.parse(raw) as Partial<PersistedJourney>;
@@ -84,6 +89,10 @@ function readPersisted(): PersistedJourney {
       streak: typeof parsed.streak === 'number' ? parsed.streak : 0,
       lastActiveDate: typeof parsed.lastActiveDate === 'string' ? parsed.lastActiveDate : '',
       collectedInterviewCards: Array.isArray(parsed.collectedInterviewCards) ? parsed.collectedInterviewCards : [],
+      quizResults:
+        parsed.quizResults && typeof parsed.quizResults === 'object'
+          ? (parsed.quizResults as Record<string, Record<string, boolean>>)
+          : {},
     };
   } catch {
     return {
@@ -94,6 +103,7 @@ function readPersisted(): PersistedJourney {
       streak: 0,
       lastActiveDate: '',
       collectedInterviewCards: [],
+      quizResults: {},
     };
   }
 }
@@ -107,6 +117,7 @@ function persist(state: JourneyStore): void {
     streak: state.streak,
     lastActiveDate: state.lastActiveDate,
     collectedInterviewCards: state.collectedInterviewCards,
+    quizResults: Object.fromEntries(state.quizResults.entries()),
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
 }
@@ -140,6 +151,7 @@ export const useJourneyStore = create<JourneyStore>((set, get) => ({
   streak: initial.streak,
   lastActiveDate: initial.lastActiveDate,
   collectedInterviewCards: initial.collectedInterviewCards,
+  quizResults: new Map(Object.entries(initial.quizResults ?? {})),
   lastXPGain: 0,
 
   completeLearn: (stageId) => {
@@ -330,4 +342,23 @@ export const useJourneyStore = create<JourneyStore>((set, get) => ({
   },
 
   clearXPGain: () => set({ lastXPGain: 0 }),
+
+  setQuizResult: (stageId, quizId, isCorrect) => {
+    const current = get().quizResults;
+    const next = new Map(current);
+    const stageResults = { ...(next.get(stageId) ?? {}) };
+    stageResults[quizId] = isCorrect;
+    next.set(stageId, stageResults);
+    set({ quizResults: next });
+    persist(get());
+  },
+
+  getQuizSummary: (stageId) => {
+    const stage = getJourneyStageById(stageId);
+    if (!stage) return { correct: 0, total: 0 };
+    const total = stage.parts.learn.content.filter((b) => b.type === 'quiz').length;
+    const results = get().quizResults.get(stageId) ?? {};
+    const correct = Object.values(results).filter(Boolean).length;
+    return { correct, total };
+  },
 }));

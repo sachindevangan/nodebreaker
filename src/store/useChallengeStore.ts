@@ -7,6 +7,7 @@ import { useChaosStore } from './useChaosStore';
 import { useFlowStore } from './useFlowStore';
 import { useHistoryStore } from './useHistoryStore';
 import { useSimStore } from './useSimStore';
+import { useConfirmStore } from './useConfirmStore';
 
 interface CompletedChallenge {
   stars: number;
@@ -71,24 +72,34 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
   startChallenge: (challengeId) => {
     const challenge = getChallengeById(challengeId);
     if (!challenge) return;
+
+    const startFlow = () => {
+      useChaosStore.getState().clearAllChaos();
+      useSimStore.getState().stopSession();
+      useHistoryStore.getState().clear();
+      useFlowStore.getState().replaceGraph([], []);
+      set({
+        activeChallenge: challenge,
+        currentScore: 0,
+        requirementStatuses: new Map(),
+        hintsRevealed: 0,
+        startTime: Date.now(),
+        lastResult: null,
+        isHudMinimized: false,
+      });
+    };
+
     const { nodes } = useFlowStore.getState();
     if (nodes.length > 0) {
-      const confirmed = window.confirm('Starting this challenge clears your current canvas. Continue?');
-      if (!confirmed) return;
+      useConfirmStore.getState().open({
+        title: 'Start challenge?',
+        message: 'Starting this challenge clears your current canvas. Continue?',
+        confirmLabel: 'Start',
+        onConfirm: startFlow,
+      });
+      return;
     }
-    useChaosStore.getState().clearAllChaos();
-    useSimStore.getState().stopSession();
-    useHistoryStore.getState().clear();
-    useFlowStore.getState().replaceGraph([], []);
-    set({
-      activeChallenge: challenge,
-      currentScore: 0,
-      requirementStatuses: new Map(),
-      hintsRevealed: 0,
-      startTime: Date.now(),
-      lastResult: null,
-      isHudMinimized: false,
-    });
+    startFlow();
   },
 
   submitDesign: async () => {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AppShell } from '@/components/layout';
 import { BuildView, InterviewCardModal, InterviewCards, JourneyMap, LearnView } from '@/components/journey';
+import { GlobalConfirmDialog } from '@/components/ui';
 import type { JourneyStage } from '@/constants/journey';
 import { JOURNEY_STAGES } from '@/constants/journey';
 import { useChallengeStore } from '@/store/useChallengeStore';
@@ -14,6 +15,7 @@ export default function App() {
   const [cardsOpen, setCardsOpen] = useState(false);
   const [collectedCardStage, setCollectedCardStage] = useState<JourneyStage | null>(null);
   const [cardModalOpen, setCardModalOpen] = useState(false);
+  const [learnSandboxState, setLearnSandboxState] = useState<{ stage: JourneyStage; prompt: string } | null>(null);
 
   const completeTutorialPart = useJourneyStore((s) => s.completeTutorial);
   const completeChallengePart = useJourneyStore((s) => s.completeChallenge);
@@ -63,7 +65,20 @@ export default function App() {
   }, [lastXPGain, clearXPGain]);
 
   if (activeLearnStage) {
-    return <LearnView stage={activeLearnStage} onBack={() => setActiveLearnStage(null)} />;
+    return (
+      <>
+        <LearnView
+          stage={activeLearnStage}
+          onBack={() => setActiveLearnStage(null)}
+          onTryInSandbox={(prompt) => {
+            setLearnSandboxState({ stage: activeLearnStage, prompt });
+            setActiveLearnStage(null);
+            setCurrentView('sandbox');
+          }}
+        />
+        <GlobalConfirmDialog />
+      </>
+    );
   }
 
   return (
@@ -105,6 +120,24 @@ export default function App() {
                   setCurrentView('journey');
                 }}
               />
+            ) : learnSandboxState ? (
+              <div className="pointer-events-none fixed inset-0 z-[160]">
+                <div className="pointer-events-auto absolute left-4 top-4 max-w-sm rounded-xl border border-cyan-700/50 bg-zinc-900/95 p-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveLearnStage(learnSandboxState.stage);
+                      setCurrentView('journey');
+                      setLearnSandboxState(null);
+                    }}
+                    className="mb-3 rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
+                  >
+                    Back to Learn
+                  </button>
+                  <h3 className="text-sm font-semibold text-cyan-200">Try this in the Sandbox</h3>
+                  <p className="mt-2 whitespace-pre-line text-sm text-zinc-200">{learnSandboxState.prompt}</p>
+                </div>
+              </div>
             ) : null
           }
         />
@@ -123,6 +156,7 @@ export default function App() {
           +{lastXPGain} XP!
         </div>
       ) : null}
+      <GlobalConfirmDialog />
     </>
   );
 }

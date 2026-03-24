@@ -1,5 +1,6 @@
 export { ConfirmDialog } from './ConfirmDialog';
 export type { ConfirmDialogProps } from './ConfirmDialog';
+export { GlobalConfirmDialog } from './GlobalConfirmDialog';
 export { SelectInput } from './SelectInput';
 export type { SelectInputProps, SelectOption } from './SelectInput';
 export { SliderInput } from './SliderInput';

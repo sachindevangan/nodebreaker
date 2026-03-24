@@ -5,6 +5,7 @@ import { useFlowStore } from './useFlowStore';
 import { useHistoryStore } from './useHistoryStore';
 import { useSimStore } from './useSimStore';
 import { useToastStore } from './useToastStore';
+import { useConfirmStore } from './useConfirmStore';
 
 const COMPLETED_STORAGE_KEY = 'nb-completed-tutorials';
 
@@ -53,27 +54,33 @@ export const useTutorialStore = create<TutorialStore>((set, get) => ({
     const tutorial = getTutorialById(tutorialId);
     if (!tutorial) return;
 
+    const startFlow = () => {
+      useChaosStore.getState().clearAllChaos();
+      useSimStore.getState().stopSession();
+      useHistoryStore.getState().clear();
+      useFlowStore.getState().replaceGraph([], []);
+
+      set({
+        activeTutorial: tutorial,
+        currentStepIndex: 0,
+        isMinimized: false,
+        showCompletionModal: false,
+        lastCompletedTutorialId: null,
+      });
+      useToastStore.getState().push({ kind: 'info', message: `Started tutorial: ${tutorial.title}` });
+    };
+
     const { nodes } = useFlowStore.getState();
     if (nodes.length > 0) {
-      const confirmed = window.confirm(
-        'Starting this tutorial will clear your current canvas. Continue?'
-      );
-      if (!confirmed) return;
+      useConfirmStore.getState().open({
+        title: 'Start tutorial?',
+        message: 'Starting this tutorial will clear your current canvas. Continue?',
+        confirmLabel: 'Start',
+        onConfirm: startFlow,
+      });
+      return;
     }
-
-    useChaosStore.getState().clearAllChaos();
-    useSimStore.getState().stopSession();
-    useHistoryStore.getState().clear();
-    useFlowStore.getState().replaceGraph([], []);
-
-    set({
-      activeTutorial: tutorial,
-      currentStepIndex: 0,
-      isMinimized: false,
-      showCompletionModal: false,
-      lastCompletedTutorialId: null,
-    });
-    useToastStore.getState().push({ kind: 'info', message: `Started tutorial: ${tutorial.title}` });
+    startFlow();
   },
 
   nextStep: () => {

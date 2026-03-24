@@ -48,6 +48,8 @@ export interface InterviewCard {
   followUps: string[];
 }
 
+import { LEARN_CONTENT_BY_STAGE } from './learnContent';
+
 const placeholderLearn = (topic: string): LearnSection => ({
   title: topic,
   estimatedMinutes: 8,
@@ -80,7 +82,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     description:
       'A server is the system that receives requests and returns responses. This stage builds a mental model for client-server communication and request flow. You will connect these basics to how modern web apps actually run.',
     parts: {
-      learn: placeholderLearn('What Is a Server?'),
+      learn: LEARN_CONTENT_BY_STAGE['stage-1'] ?? placeholderLearn('What Is a Server?'),
       build: {
         title: 'Hello Server',
         description: 'Create your first working server-style flow in the simulator.',
@@ -113,7 +115,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     description:
       'Performance is not one metric. You need to balance throughput, latency, and capacity while watching utilization. This stage helps you reason about bottlenecks and tradeoffs.',
     parts: {
-      learn: placeholderLearn('Throughput, Latency & Capacity'),
+      learn: LEARN_CONTENT_BY_STAGE['stage-2'] ?? placeholderLearn('Throughput, Latency & Capacity'),
       build: {
         title: 'Find the Bottleneck',
         description: 'Create a constrained system and identify the pressure point.',
@@ -144,7 +146,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     description:
       'Storage layers are powerful but often slower than compute. You will learn when to use SQL vs NoSQL, why indexes matter, and how replication and pooling keep systems stable.',
     parts: {
-      learn: placeholderLearn('The Database Problem'),
+      learn: LEARN_CONTENT_BY_STAGE['stage-3'] ?? placeholderLearn('The Database Problem'),
       build: {
         title: 'DB Stress Test',
         description: 'Experiment with indexing and throughput constraints.',
@@ -174,7 +176,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     description:
       'Caching moves hot reads to memory and dramatically improves response time. This stage covers cache-aside, TTL, invalidation, and how to avoid stampedes.',
     parts: {
-      learn: placeholderLearn('Caching'),
+      learn: LEARN_CONTENT_BY_STAGE['stage-4'] ?? placeholderLearn('Caching'),
       build: {
         title: 'Cache Boost',
         description: 'Add a cache layer and compare before/after metrics.',
@@ -206,7 +208,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
     description:
       'Load balancers spread traffic and improve reliability. You will compare L4 and L7 approaches, balancing strategies, and sticky session behavior.',
     parts: {
-      learn: placeholderLearn('Load Balancing'),
+      learn: LEARN_CONTENT_BY_STAGE['stage-5'] ?? placeholderLearn('Load Balancing'),
       build: {
         title: 'Distribute the Load',
         description: 'Route traffic across multiple services.',
