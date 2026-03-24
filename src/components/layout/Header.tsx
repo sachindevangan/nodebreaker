@@ -1,5 +1,4 @@
 import {
-  Download,
   BookOpen,
   GraduationCap,
   Github,
@@ -16,8 +15,9 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { ExportMenu } from '@/components/ui';
 import { useHistory } from '@/hooks/useHistory';
 
 const SHORTCUT_ROWS: { keys: string; description: string }[] = [
@@ -48,10 +48,14 @@ export interface HeaderProps {
   onTemplates: () => void;
   onTutorials: () => void;
   onChallenges: () => void;
-  onExport: () => void;
+  onExportJson: () => void;
+  onExportPng: () => void;
+  onExportSvg: () => void;
   onImportClick: () => void;
   onResetCanvas: () => void;
   onOpenGlossary: () => void;
+  extraActions?: ReactNode;
+  interviewModeActive?: boolean;
   githubHref?: string;
 }
 
@@ -64,10 +68,14 @@ export function Header({
   onTemplates,
   onTutorials,
   onChallenges,
-  onExport,
+  onExportJson,
+  onExportPng,
+  onExportSvg,
   onImportClick,
   onResetCanvas,
   onOpenGlossary,
+  extraActions,
+  interviewModeActive = false,
   githubHref = 'https://github.com/sachindevangan/nodebreaker',
 }: HeaderProps) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
@@ -156,10 +164,7 @@ export function Header({
             <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Import</span>
           </button>
-          <button type="button" className={ghostBtn} onClick={onExport} title="Export design">
-            <Download className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Export</span>
-          </button>
+          <ExportMenu onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
           <button
             type="button"
             className={ghostBtnRed}
@@ -189,11 +194,11 @@ export function Header({
           >
             <BookOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
           </button>
-          <button type="button" className={ghostBtn} onClick={onTutorials} title="Tutorials">
+          <button type="button" className={ghostBtn} onClick={onTutorials} title="Tutorials" disabled={interviewModeActive}>
             <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Tutorials</span>
           </button>
-          <button type="button" className={ghostBtn} onClick={onChallenges} title="Challenges">
+          <button type="button" className={ghostBtn} onClick={onChallenges} title="Challenges" disabled={interviewModeActive}>
             <Trophy className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Challenges</span>
           </button>
@@ -201,6 +206,7 @@ export function Header({
             <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Templates</span>
           </button>
+          {extraActions}
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
@@ -226,9 +232,7 @@ export function Header({
             <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
               <Upload className="h-4 w-4" strokeWidth={2} />
             </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onExport} aria-label="Export">
-              <Download className="h-4 w-4" strokeWidth={2} />
-            </button>
+            <ExportMenu compact onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
             <button
               type="button"
               className={`${ghostBtnRed} px-2`}
@@ -248,10 +252,10 @@ export function Header({
             <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenGlossary} aria-label="Learn">
               <BookOpen className="h-4 w-4" strokeWidth={2} />
             </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials">
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials" disabled={interviewModeActive}>
               <GraduationCap className="h-4 w-4" strokeWidth={2} />
             </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges">
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges" disabled={interviewModeActive}>
               <Trophy className="h-4 w-4" strokeWidth={2} />
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
@@ -282,6 +286,7 @@ export function Header({
               ) : null}
             </>
           ) : null}
+          {extraActions}
           </div>
           <a
             href={githubHref}

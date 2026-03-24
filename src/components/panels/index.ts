@@ -11,3 +11,6 @@ export { ChallengeLauncher } from './ChallengeLauncher';
 export { ChallengeBriefing } from './ChallengeBriefing';
 export { ChallengeHUD } from './ChallengeHUD';
 export { ChallengeResults } from './ChallengeResults';
+export { CostEstimation } from './CostEstimation';
+export { ScorePanel } from './ScorePanel';
+export { InterviewTimer } from './InterviewTimer';

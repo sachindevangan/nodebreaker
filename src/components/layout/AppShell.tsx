@@ -2,14 +2,17 @@ import { useCallback, useMemo, useRef, useState, type ChangeEvent, type ReactNod
 import { FlowCanvas } from '@/components/canvas';
 import {
   ChaosOverlay,
+  CostEstimation,
   ChallengeBriefing,
   ChallengeHUD,
   ChallengeLauncher,
   ChallengeResults,
   GlossaryModal,
+  InterviewTimer,
   KnowledgePanel,
   MetricsDashboard,
   PropertiesPanel,
+  ScorePanel,
   SimulationControls,
   TemplateSelector,
   TutorialLauncher,
@@ -33,6 +36,7 @@ import {
   serializeDesign,
   validateDesignFile,
 } from '@/utils/serialization';
+import { exportCanvasAsPng, exportCanvasAsSvg } from '@/utils/export';
 import { Header } from './Header';
 
 interface AppShellProps {
@@ -52,6 +56,7 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
   const [challengesOpen, setChallengesOpen] = useState(false);
   const [briefingChallengeId, setBriefingChallengeId] = useState<string | null>(null);
+  const [interviewModeActive, setInterviewModeActive] = useState(false);
   const [leftWidth, setLeftWidth] = useState(() => {
     return parseInt(localStorage.getItem('nb-left-w') || '260');
   });
@@ -79,10 +84,20 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
     useToastStore.getState().push({ kind: 'success', message: 'Canvas cleared' });
   }, []);
 
-  const handleExport = useCallback(() => {
+  const handleExportJson = useCallback(() => {
     const { nodes, edges } = useFlowStore.getState();
     const name = nodes[0]?.data.label?.trim() || 'My Architecture';
     downloadDesignJson(serializeDesign(name, nodes, edges));
+  }, []);
+
+  const handleExportPng = useCallback(async () => {
+    const ok = await exportCanvasAsPng();
+    if (!ok) useToastStore.getState().push({ kind: 'error', message: 'Unable to export PNG' });
+  }, []);
+
+  const handleExportSvg = useCallback(async () => {
+    const ok = await exportCanvasAsSvg();
+    if (!ok) useToastStore.getState().push({ kind: 'error', message: 'Unable to export SVG' });
   }, []);
 
   const handleImportChange = useCallback(async (e: ChangeEvent<HTMLInputElement>) => {
@@ -162,12 +177,34 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
           shortcutsOpen={shortcutsOpen}
           onShortcutsOpenChange={setShortcutsOpen}
           onTemplates={() => setTemplatesOpen(true)}
-          onTutorials={() => setTutorialsOpen(true)}
-          onChallenges={() => setChallengesOpen(true)}
-          onExport={handleExport}
+          onTutorials={() => {
+            if (interviewModeActive) {
+              useToastStore.getState().push({ kind: 'warning', message: 'Tutorials disabled during Interview Mode' });
+              return;
+            }
+            setTutorialsOpen(true);
+          }}
+          onChallenges={() => {
+            if (interviewModeActive) {
+              useToastStore.getState().push({ kind: 'warning', message: 'Challenges disabled during Interview Mode' });
+              return;
+            }
+            setChallengesOpen(true);
+          }}
+          onExportJson={handleExportJson}
+          onExportPng={handleExportPng}
+          onExportSvg={handleExportSvg}
           onImportClick={() => importInputRef.current?.click()}
           onResetCanvas={handleResetCanvas}
           onOpenGlossary={openGlossary}
+          interviewModeActive={interviewModeActive}
+          extraActions={
+            <>
+              <CostEstimation />
+              <ScorePanel />
+              <InterviewTimer active={interviewModeActive} onActiveChange={setInterviewModeActive} />
+            </>
+          }
         />
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 flex-shrink-0 flex-col" style={{ width: leftWidth }}>

@@ -8,7 +8,7 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Connection, OnSelectionChangeFunc } from '@xyflow/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
@@ -22,6 +22,12 @@ import {
   type CanvasContextMenuState,
 } from '@/components/canvas/CanvasContextMenu';
 import { EmptyState } from '@/components/canvas/EmptyState';
+
+declare global {
+  interface Window {
+    __nbFitViewForExport?: () => void;
+  }
+}
 
 const edgeTypes = {
   animated: AnimatedEdge,
@@ -133,6 +139,15 @@ function FlowCanvasInner() {
 
   const onFitView = useCallback(() => {
     fitView({ padding: 0.2, duration: 200 });
+  }, [fitView]);
+
+  useEffect(() => {
+    window.__nbFitViewForExport = () => {
+      fitView({ padding: 0.2, duration: 250 });
+    };
+    return () => {
+      window.__nbFitViewForExport = undefined;
+    };
   }, [fitView]);
 
   return (
