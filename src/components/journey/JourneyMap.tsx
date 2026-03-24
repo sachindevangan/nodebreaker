@@ -1,23 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import {
+  ArrowRight,
   Check,
   Flame,
-  Gauge,
-  GitBranch,
-  Layout,
-  Layers,
-  ListOrdered,
-  Server,
-  ShieldAlert,
-  TrendingUp,
   Trophy,
-  Wrench,
-  Zap,
-  Database,
-  ArrowRight,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import { JOURNEY_STAGES, type JourneyStage } from '@/constants/journey';
 import { useJourneyStore } from '@/store/useJourneyStore';
 
@@ -31,17 +18,17 @@ interface JourneyMapProps {
   onCollectCard: (stage: JourneyStage) => void;
 }
 
-const ICONS: Record<string, LucideIcon> = {
-  Server,
-  Gauge,
-  Database,
-  Zap,
-  GitBranch,
-  ShieldAlert,
-  ListOrdered,
-  TrendingUp,
-  Layout,
-  Flame,
+const STAGE_ACCENTS: Record<number, string> = {
+  1: '#3b82f6',
+  2: '#f59e0b',
+  3: '#a855f7',
+  4: '#eab308',
+  5: '#06b6d4',
+  6: '#ef4444',
+  7: '#f97316',
+  8: '#22c55e',
+  9: '#8b5cf6',
+  10: '#ef4444',
 };
 
 export function JourneyMap({
@@ -62,211 +49,235 @@ export function JourneyMap({
   const streak = useJourneyStore((s) => s.streak);
   const stageProgress = useJourneyStore((s) => s.stageProgress);
   const [selectedStage, setSelectedStage] = useState<JourneyStage | null>(null);
-  const currentStageId = getCurrentStage();
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const currentStageId = getCurrentStage() ?? 'stage-1';
 
-  useEffect(() => {
-    if (!currentStageId || !scrollerRef.current) return;
-    const target = scrollerRef.current.querySelector(`[data-stage-id="${currentStageId}"]`);
-    if (target instanceof HTMLElement) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-  }, [currentStageId]);
+  const firstStage = JOURNEY_STAGES[0];
+  if (!firstStage) return null;
 
   const completedCount = completedStages.size;
   const overallProgress = getOverallProgress();
   const currentNumber =
     JOURNEY_STAGES.find((stage) => stage.id === currentStageId)?.number ?? Math.min(completedCount + 1, 10);
 
-  const stageNodes = useMemo(
+  const stageCards = useMemo(
     () =>
       JOURNEY_STAGES.map((stage) => {
         const completed = completedStages.has(stage.id);
         const current = currentStageId === stage.id;
         const unlocked = isStageUnlocked(stage.id);
-        return { stage, completed, current, unlocked };
+        const progress = getStageProgress(stage.id);
+        const details = stageProgress.get(stage.id);
+        const challengeCompleted = Boolean(details?.challengeCompleted);
+        return { stage, completed, current, unlocked, progress, challengeCompleted };
       }),
-    [completedStages, currentStageId, isStageUnlocked]
+    [completedStages, currentStageId, getStageProgress, isStageUnlocked, stageProgress]
   );
 
+  const hasStarted =
+    completedCount > 0 ||
+    Array.from(stageProgress.values()).some(
+      (p) => p.learnCompleted || p.buildCompleted || p.tutorialCompleted || p.challengeCompleted || p.interviewCardCollected
+    );
+
+  const challengeCompletedCount = Array.from(stageProgress.values()).filter((p) => p.challengeCompleted).length;
+  const currentStage = JOURNEY_STAGES.find((stage) => stage.id === currentStageId) ?? firstStage;
+  const quickChallengeStage =
+    (currentStage.parts.challenge ? currentStage : undefined) ??
+    JOURNEY_STAGES.find((stage) => stage.parts.challenge && isStageUnlocked(stage.id));
+
   return (
-    <div className="relative h-screen overflow-hidden bg-zinc-950 text-zinc-100">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.16),transparent_35%),radial-gradient(circle_at_bottom,rgba(34,197,94,0.08),transparent_35%)]" />
-      <div className="relative flex h-full flex-col">
-        <header className="border-b border-zinc-800 bg-zinc-950/90 px-4 py-3 backdrop-blur">
-          <div className="flex items-center justify-between gap-3">
+    <div className="min-h-screen bg-[var(--bg)] text-[var(--text)]">
+      <div className="mx-auto w-full max-w-5xl px-4 py-8 md:px-6 xl:px-0">
+        <header className="mb-6 space-y-3">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-lg font-semibold">System Design Journey</h1>
-              <p className="text-xs text-zinc-400">
-                Stage {currentNumber} of 10 - {overallProgress}%
+              <p className="text-sm text-[var(--text-secondary)]">
+                Stage {currentNumber} of 10 • {overallProgress}% complete
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onOpenCards}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-700 px-2 py-1.5 text-xs hover:bg-zinc-800"
-              >
-                <Layers className="h-3.5 w-3.5" />
-                Cards
-              </button>
-              <button
-                type="button"
-                onClick={onOpenSandbox}
-                className="inline-flex items-center gap-1 rounded-md border border-zinc-700 px-2 py-1.5 text-xs hover:bg-zinc-800"
-              >
-                Skip to Sandbox <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+            <div className="flex items-center gap-4 text-sm text-[var(--text-secondary)]">
+              <span>{totalXP} XP</span>
+              <span className="inline-flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-orange-400" />
+                {streak > 0 ? `${streak} day streak` : 'No streak yet'}
+              </span>
             </div>
           </div>
-          <div className="mt-3 flex items-center gap-4">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-zinc-800">
-              <div className="h-full rounded-full bg-blue-500" style={{ width: `${overallProgress}%` }} />
-            </div>
-            <p className="text-xs text-amber-300">⚡ {totalXP} XP</p>
-            <p className="text-xs text-orange-300">{streak > 0 ? `🔥 ${streak} day streak` : 'Start your streak!'}</p>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--surface)]">
+            <div className="h-full rounded-full bg-blue-500" style={{ width: `${overallProgress}%` }} />
           </div>
         </header>
 
-        <div ref={scrollerRef} className="min-h-0 flex-1 overflow-auto px-4 py-8">
-          <div className="mx-auto max-w-5xl">
-            {stageNodes.map(({ stage, completed, current }, idx) => {
-              const Icon = ICONS[stage.icon] ?? Server;
-              const isOdd = stage.number % 2 === 1;
-              const progress = getStageProgress(stage.id);
-              return (
-                <motion.div
-                  key={stage.id}
-                  data-stage-id={stage.id}
-                  className={`relative mb-10 flex items-center ${isOdd ? 'justify-start' : 'justify-end'}`}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1, duration: 0.2, ease: 'easeOut' }}
-                >
-                  <motion.div
-                    className="absolute left-1/2 top-0 -ml-px h-[140%] w-0.5 bg-zinc-700/70"
-                    initial={{ scaleY: 0, transformOrigin: 'top' }}
-                    animate={{ scaleY: 1 }}
-                    transition={{ delay: idx * 0.08, duration: 0.25, ease: 'easeOut' }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setSelectedStage(stage)}
-                    className={`group relative z-10 flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-left transition hover:border-zinc-500 ${
-                      current ? 'ring-2 ring-blue-500/60' : ''
-                    }`}
-                    style={{ width: 'min(92%, 460px)' }}
-                  >
-                    <motion.span
-                      className={`relative inline-flex items-center justify-center rounded-full border ${
-                        current ? 'h-20 w-20' : 'h-16 w-16'
-                      } ${completed ? 'border-emerald-400 bg-emerald-600/20' : 'border-zinc-600 bg-zinc-900'} `}
-                      animate={
-                        current
-                          ? { boxShadow: ['0 0 0 0 rgba(59,130,246,0.35)', '0 0 0 8px rgba(59,130,246,0)', '0 0 0 0 rgba(59,130,246,0)'] }
-                          : completed
-                            ? { boxShadow: ['0 0 0 0 rgba(34,197,94,0.25)', '0 0 0 6px rgba(34,197,94,0)', '0 0 0 0 rgba(34,197,94,0)'] }
-                            : undefined
-                      }
-                      transition={{ duration: current ? 2 : 3, repeat: Infinity, ease: 'easeOut' }}
-                    >
-                      <Icon className="h-6 w-6" style={{ color: stage.color }} />
-                      {completed ? (
-                        <span className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
-                          <Check className="h-3 w-3 text-white" />
-                        </span>
-                      ) : null}
-                    </motion.span>
-                    <span className="min-w-0 flex-1">
-                      <p className="text-xs text-zinc-500">Stage {stage.number}</p>
-                      <p className="truncate text-sm font-semibold text-zinc-100">{stage.title}</p>
-                      <p className="truncate text-xs text-zinc-400">{stage.subtitle}</p>
-                      <p className="mt-1 text-[11px] text-zinc-500">{progress}% complete</p>
-                    </span>
-                    {current ? <span className="animate-pulse text-xs font-semibold text-blue-300">Continue →</span> : null}
-                  </button>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
+        <section className="mb-7 flex gap-3 overflow-x-auto pb-1">
+          <button
+            type="button"
+            onClick={() => onOpenLearn(currentStage)}
+            className="min-w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-left hover:bg-[var(--surface-hover)]"
+          >
+            <p className="text-sm font-medium">Continue Learning</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Stage {currentStage.number}: {currentStage.title}</p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (quickChallengeStage?.parts.challenge) {
+                onStartChallenge(quickChallengeStage.parts.challenge, quickChallengeStage.id);
+              }
+            }}
+            className="min-w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-left hover:bg-[var(--surface-hover)] disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={!quickChallengeStage?.parts.challenge}
+          >
+            <p className="text-sm font-medium">Challenges</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{challengeCompletedCount} completed</p>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenCards}
+            className="min-w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-left hover:bg-[var(--surface-hover)]"
+          >
+            <p className="text-sm font-medium">Interview Mode</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Quick launch interview cards</p>
+          </button>
+
+          <button
+            type="button"
+            onClick={onOpenSandbox}
+            className="min-w-[220px] rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-left hover:bg-[var(--surface-hover)]"
+          >
+            <p className="text-sm font-medium">Sandbox</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">Open free canvas</p>
+          </button>
+        </section>
+
+        {!hasStarted ? (
+          <section className="mb-6 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5">
+            <h2 className="text-lg font-semibold">Welcome to NodeBreaker&apos;s System Design Journey.</h2>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+              10 stages from basics to interview-ready. Each stage: read -&gt; build -&gt; practice -&gt; prove.
+            </p>
+            <button
+              type="button"
+              onClick={() => onOpenLearn(firstStage)}
+              className="mt-4 inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-500"
+            >
+              Start Stage 1
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </section>
+        ) : null}
+
+        <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          {stageCards.map(({ stage, completed, current, unlocked, progress, challengeCompleted }) => (
+            <button
+              key={stage.id}
+              type="button"
+              onClick={() => setSelectedStage(stage)}
+              className={`w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4 text-left hover:bg-[var(--surface-hover)] ${
+                current ? 'ring-1 ring-blue-500/60' : ''
+              }`}
+              style={{ borderLeft: `4px solid ${STAGE_ACCENTS[stage.number] ?? stage.color}` }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm text-[var(--text-muted)]">Stage {stage.number}</p>
+                  <h3 className="truncate text-lg font-semibold">{stage.title}</h3>
+                  <p className="truncate text-sm text-[var(--text-secondary)]">{stage.subtitle}</p>
+                </div>
+                {completed ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-xs text-emerald-300">
+                    <Check className="h-3 w-3" />
+                    Complete
+                  </span>
+                ) : null}
+              </div>
+
+              <div className="mt-3 flex items-center justify-between text-sm text-[var(--text-secondary)]">
+                <span>{progress}% complete</span>
+                <span>{unlocked ? 'Unlocked' : 'Locked'}</span>
+              </div>
+              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[var(--border)]">
+                <div className="h-full rounded-full bg-blue-500" style={{ width: `${progress}%` }} />
+              </div>
+              {challengeCompleted ? (
+                <p className="mt-2 inline-flex items-center gap-1 text-sm text-amber-300">
+                  <Trophy className="h-3.5 w-3.5" />
+                  Challenge completed
+                </p>
+              ) : null}
+            </button>
+          ))}
+        </section>
       </div>
 
-      <AnimatePresence>
       {selectedStage ? (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[150] bg-black/70 p-4 backdrop-blur-sm" onClick={() => setSelectedStage(null)}>
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mx-auto max-w-2xl rounded-xl border border-zinc-700 bg-zinc-900 p-5"
+        <div
+          className="fixed inset-0 z-[150] bg-black/55 p-4 backdrop-blur-sm"
+          onClick={() => setSelectedStage(null)}
+          role="presentation"
+        >
+          <div
+            className="mx-auto mt-8 max-w-2xl rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5"
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Stage ${selectedStage.number} details`}
           >
-            <p className="text-xs text-zinc-500">Stage {selectedStage.number}</p>
-            <h3 className="mt-1 text-xl font-semibold text-zinc-100">{selectedStage.title}</h3>
-            <p className="mt-2 text-sm text-zinc-300">{selectedStage.description}</p>
+            <p className="text-sm text-[var(--text-muted)]">Stage {selectedStage.number}</p>
+            <h3 className="mt-1 text-lg font-semibold">{selectedStage.title}</h3>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">{selectedStage.description}</p>
+
             <div className="mt-4 space-y-2 text-sm">
-              <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-950 p-2">
-                <span>📖 Learn ({selectedStage.parts.learn.estimatedMinutes} min read)</span>
-                <button className="text-blue-300" onClick={() => onOpenLearn(selectedStage)}>Start</button>
+              <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg)] p-2.5">
+                <span>Learn ({selectedStage.parts.learn.estimatedMinutes} min read)</span>
+                <button className="text-blue-400" onClick={() => onOpenLearn(selectedStage)}>
+                  Start
+                </button>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-950 p-2">
-                <span>🔧 Build</span>
-                <button className="text-blue-300" onClick={() => onOpenBuild(selectedStage)}>Try it</button>
+              <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg)] p-2.5">
+                <span>Build</span>
+                <button className="text-blue-400" onClick={() => onOpenBuild(selectedStage)}>
+                  Try it
+                </button>
               </div>
-              <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-950 p-2">
-                <span>🎓 Tutorial</span>
+              <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg)] p-2.5">
+                <span>Tutorial</span>
                 {selectedStage.parts.tutorial ? (
-                  <button className="text-blue-300" onClick={() => onStartTutorial(selectedStage.parts.tutorial!, selectedStage.id)}>
-                    Start Tutorial
+                  <button
+                    className="text-blue-400"
+                    onClick={() => onStartTutorial(selectedStage.parts.tutorial!, selectedStage.id)}
+                  >
+                    Start tutorial
                   </button>
                 ) : (
-                  <span className="text-zinc-500">Not available</span>
+                  <span className="text-[var(--text-muted)]">Not available</span>
                 )}
               </div>
-              <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-950 p-2">
-                <span>🏆 Challenge</span>
+              <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg)] p-2.5">
+                <span>Challenge</span>
                 {selectedStage.parts.challenge ? (
-                  <button className="text-blue-300" onClick={() => onStartChallenge(selectedStage.parts.challenge!, selectedStage.id)}>
-                    Start Challenge
+                  <button
+                    className="text-blue-400"
+                    onClick={() => onStartChallenge(selectedStage.parts.challenge!, selectedStage.id)}
+                  >
+                    Start challenge
                   </button>
                 ) : (
-                  <span className="text-zinc-500">Not available</span>
+                  <span className="text-[var(--text-muted)]">Not available</span>
                 )}
               </div>
-              <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-950 p-2">
-                <span>💡 Interview Card</span>
-                <button className="text-blue-300" onClick={() => onCollectCard(selectedStage)}>
+              <div className="flex items-center justify-between rounded-md border border-[var(--border)] bg-[var(--bg)] p-2.5">
+                <span>Interview Card</span>
+                <button className="text-blue-400" onClick={() => onCollectCard(selectedStage)}>
                   Collect
                 </button>
               </div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-1.5">
-              {selectedStage.concepts.map((concept) => (
-                <span key={concept} className="rounded-full border border-zinc-700 px-2 py-0.5 text-xs text-zinc-300">
-                  {concept}
-                </span>
-              ))}
-            </div>
-            <p className="mt-3 text-xs text-amber-300">⚡ XP Reward: {selectedStage.xpReward}</p>
-            <button
-              type="button"
-              onClick={() => onOpenLearn(selectedStage)}
-              className="mt-4 inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white"
-            >
-              <Wrench className="h-4 w-4" />
-              Start Learning
-            </button>
-            {stageProgress.get(selectedStage.id)?.challengeCompleted ? (
-              <p className="mt-2 inline-flex items-center gap-1 text-xs text-amber-300">
-                <Trophy className="h-3.5 w-3.5" /> Challenge completed
-              </p>
-            ) : null}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       ) : null}
-      </AnimatePresence>
     </div>
   );
 }
