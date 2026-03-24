@@ -20,6 +20,7 @@ import { NODEBREAKER_DRAG_MIME } from '@/hooks/useDragToCanvas';
 import { getNodeIcon } from '@/components/canvas/nodes/nodeIcons';
 import { InfoTooltip } from '@/components/ui';
 import { useSimStore } from '@/store/useSimStore';
+import { useTutorialStore } from '@/store/useTutorialStore';
 import { getComponentKnowledge } from '@/constants/knowledge';
 import { hexToRgba } from '@/utils/math';
 import { ChaosPalette } from './ChaosPalette';
@@ -36,7 +37,15 @@ const CATEGORY_ICONS: Record<(typeof PALETTE_CATEGORY_ORDER)[number], LucideIcon
   Monitoring: BarChart3,
 };
 
-function PaletteCard({ config }: { config: ComponentTypeConfig }) {
+function PaletteCard({
+  config,
+  highlighted,
+  dimmed,
+}: {
+  config: ComponentTypeConfig;
+  highlighted: boolean;
+  dimmed: boolean;
+}) {
   const Icon = getNodeIcon(config.icon);
   const knowledge = getComponentKnowledge(config.type);
 
@@ -54,6 +63,7 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
       style={
         {
           ['--nb-palette-glow' as string]: hexToRgba(config.color, 0.42),
+          opacity: dimmed ? 0.6 : 1,
         } as CSSProperties
       }
       onMouseEnter={(e) => {
@@ -63,6 +73,14 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
         e.currentTarget.style.boxShadow = '';
       }}
     >
+      {highlighted ? (
+        <>
+          <span className="pointer-events-none absolute inset-0 animate-pulse rounded-lg border-2 border-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.45)]" />
+          <span className="pointer-events-none absolute -left-1 top-1 rounded bg-cyan-500/90 px-1.5 py-0.5 text-[9px] font-semibold text-cyan-950">
+            ← Drag this
+          </span>
+        </>
+      ) : null}
       <div className="flex justify-center">
         <Icon className="h-7 w-7" style={{ color: config.color }} strokeWidth={1.75} />
       </div>
@@ -82,6 +100,9 @@ export function ComponentPalette() {
   const speed = useSimStore((s) => s.speed);
   const startSession = useSimStore((s) => s.startSession);
   const stopSession = useSimStore((s) => s.stopSession);
+  const activeTutorial = useTutorialStore((s) => s.activeTutorial);
+  const currentStepIndex = useTutorialStore((s) => s.currentStepIndex);
+  const highlightedComponent = activeTutorial?.steps[currentStepIndex]?.highlightComponent;
 
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -180,7 +201,12 @@ export function ComponentPalette() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {section.items.map((config) => (
-                      <PaletteCard key={config.type} config={config} />
+                      <PaletteCard
+                        key={config.type}
+                        config={config}
+                        highlighted={highlightedComponent === config.type}
+                        dimmed={Boolean(highlightedComponent && highlightedComponent !== config.type)}
+                      />
                     ))}
                   </div>
                 </section>

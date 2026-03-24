@@ -8,6 +8,8 @@ import {
   PropertiesPanel,
   SimulationControls,
   TemplateSelector,
+  TutorialLauncher,
+  TutorialOverlay,
 } from '@/components/panels';
 import { ComponentPalette } from '@/components/sidebar';
 import { ToastViewport } from '@/components/ui/Toast';
@@ -31,6 +33,7 @@ export function AppShell() {
   const openGlossary = useKnowledgeStore((s) => s.openGlossary);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [tutorialsOpen, setTutorialsOpen] = useState(false);
   const [leftWidth, setLeftWidth] = useState(() => {
     return parseInt(localStorage.getItem('nb-left-w') || '260');
   });
@@ -119,11 +122,13 @@ export function AppShell() {
         onClose={() => setTemplatesOpen(false)}
         onReopen={() => setTemplatesOpen(true)}
       />
+      <TutorialLauncher isOpen={tutorialsOpen} onClose={() => setTutorialsOpen(false)} />
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
         <Header
           shortcutsOpen={shortcutsOpen}
           onShortcutsOpenChange={setShortcutsOpen}
           onTemplates={() => setTemplatesOpen(true)}
+          onTutorials={() => setTutorialsOpen(true)}
           onExport={handleExport}
           onImportClick={() => importInputRef.current?.click()}
           onResetCanvas={handleResetCanvas}
@@ -166,6 +171,7 @@ export function AppShell() {
             <FlowCanvas />
             <MetricsDashboard />
             <KnowledgePanel />
+            <TutorialOverlay />
           </main>
           <PropertiesPanel
             panelWidth={rightWidth}

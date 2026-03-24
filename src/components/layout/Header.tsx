@@ -1,6 +1,7 @@
 import {
   Download,
   BookOpen,
+  GraduationCap,
   Github,
   Keyboard,
   LayoutTemplate,
@@ -38,6 +39,7 @@ export interface HeaderProps {
   shortcutsOpen: boolean;
   onShortcutsOpenChange: (open: boolean) => void;
   onTemplates: () => void;
+  onTutorials: () => void;
   onExport: () => void;
   onImportClick: () => void;
   onResetCanvas: () => void;
@@ -49,6 +51,7 @@ export function Header({
   shortcutsOpen,
   onShortcutsOpenChange,
   onTemplates,
+  onTutorials,
   onExport,
   onImportClick,
   onResetCanvas,
@@ -108,10 +111,6 @@ export function Header({
             <span className="hidden lg:inline">Redo</span>
           </button>
           <div className="mx-0.5 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
-          <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
-            <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Templates</span>
-          </button>
           <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
             <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Import</span>
@@ -149,6 +148,14 @@ export function Header({
           >
             <BookOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
           </button>
+          <button type="button" className={ghostBtn} onClick={onTutorials} title="Tutorials">
+            <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <span>Tutorials</span>
+          </button>
+          <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
+            <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <span>Templates</span>
+          </button>
         </nav>
 
         <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
@@ -170,9 +177,6 @@ export function Header({
               aria-label="Redo"
             >
               <Redo2 className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
-              <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
               <Upload className="h-4 w-4" strokeWidth={2} />
@@ -198,6 +202,12 @@ export function Header({
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenGlossary} aria-label="Learn">
               <BookOpen className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials">
+              <GraduationCap className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
+              <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
           <a

@@ -5,3 +5,5 @@ export { SimulationControls } from './SimulationControls';
 export { TemplateSelector } from './TemplateSelector';
 export { KnowledgePanel } from './KnowledgePanel';
 export { GlossaryModal } from './GlossaryModal';
+export { TutorialLauncher } from './TutorialLauncher';
+export { TutorialOverlay } from './TutorialOverlay';
