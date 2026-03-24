@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useCallback, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
 import { FlowCanvas } from '@/components/canvas';
 import {
   ChaosOverlay,
@@ -35,7 +35,14 @@ import {
 } from '@/utils/serialization';
 import { Header } from './Header';
 
-export function AppShell() {
+interface AppShellProps {
+  currentView?: 'journey' | 'sandbox';
+  onSwitchView?: (view: 'journey' | 'sandbox') => void;
+  onOpenCards?: () => void;
+  overlay?: ReactNode;
+}
+
+export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, overlay }: AppShellProps) {
   const openGlossary = useKnowledgeStore((s) => s.openGlossary);
   const startChallenge = useChallengeStore((s) => s.startChallenge);
   const lastResult = useChallengeStore((s) => s.lastResult);
@@ -149,6 +156,9 @@ export function AppShell() {
       />
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
         <Header
+          currentView={currentView}
+          onSwitchView={onSwitchView}
+          onOpenCards={onOpenCards}
           shortcutsOpen={shortcutsOpen}
           onShortcutsOpenChange={setShortcutsOpen}
           onTemplates={() => setTemplatesOpen(true)}
@@ -198,6 +208,7 @@ export function AppShell() {
             <KnowledgePanel />
             <TutorialOverlay />
             <ChallengeHUD />
+            {overlay}
           </main>
           <PropertiesPanel
             panelWidth={rightWidth}

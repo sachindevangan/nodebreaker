@@ -4,7 +4,10 @@ import {
   GraduationCap,
   Github,
   Keyboard,
+  Layers,
   LayoutTemplate,
+  Map,
+  PenTool,
   Trophy,
   Trash2,
   Undo2,
@@ -37,6 +40,9 @@ const ghostBtnRed =
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-red-900/50 hover:bg-red-950/40 hover:text-red-200';
 
 export interface HeaderProps {
+  currentView?: 'journey' | 'sandbox';
+  onSwitchView?: (view: 'journey' | 'sandbox') => void;
+  onOpenCards?: () => void;
   shortcutsOpen: boolean;
   onShortcutsOpenChange: (open: boolean) => void;
   onTemplates: () => void;
@@ -50,6 +56,9 @@ export interface HeaderProps {
 }
 
 export function Header({
+  currentView = 'sandbox',
+  onSwitchView,
+  onOpenCards,
   shortcutsOpen,
   onShortcutsOpenChange,
   onTemplates,
@@ -91,6 +100,35 @@ export function Header({
           className="hidden items-center justify-center gap-1 md:flex md:flex-1"
           aria-label="Design actions"
         >
+          {onSwitchView ? (
+            <>
+              <button
+                type="button"
+                className={`${ghostBtn} ${currentView === 'journey' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                onClick={() => onSwitchView('journey')}
+                title="Journey"
+              >
+                <Map className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Journey</span>
+              </button>
+              <button
+                type="button"
+                className={`${ghostBtn} ${currentView === 'sandbox' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                onClick={() => onSwitchView('sandbox')}
+                title="Sandbox"
+              >
+                <PenTool className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Sandbox</span>
+              </button>
+              {onOpenCards ? (
+                <button type="button" className={ghostBtn} onClick={onOpenCards} title="Interview cards">
+                  <Layers className="h-4 w-4 shrink-0" strokeWidth={2} />
+                  <span>Cards</span>
+                </button>
+              ) : null}
+              <div className="mx-0.5 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
+            </>
+          ) : null}
           <button
             type="button"
             className={ghostBtn}
@@ -219,6 +257,31 @@ export function Header({
             <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
               <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
             </button>
+          {onSwitchView ? (
+            <>
+              <button
+                type="button"
+                className={`${ghostBtn} px-2 ${currentView === 'journey' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                onClick={() => onSwitchView('journey')}
+                aria-label="Journey"
+              >
+                <Map className="h-4 w-4" strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                className={`${ghostBtn} px-2 ${currentView === 'sandbox' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                onClick={() => onSwitchView('sandbox')}
+                aria-label="Sandbox"
+              >
+                <PenTool className="h-4 w-4" strokeWidth={2} />
+              </button>
+              {onOpenCards ? (
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenCards} aria-label="Cards">
+                  <Layers className="h-4 w-4" strokeWidth={2} />
+                </button>
+              ) : null}
+            </>
+          ) : null}
           </div>
           <a
             href={githubHref}
