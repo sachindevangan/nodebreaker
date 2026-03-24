@@ -28,9 +28,10 @@ export function TutorialOverlay() {
       <AnimatePresence mode="wait">
         <motion.section
           key={isMinimized ? 'minimized' : 'expanded'}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
+          initial={{ x: -400, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          exit={{ x: -400, opacity: 0 }}
+          transition={{ duration: 0.2, ease: 'easeOut' }}
           className="pointer-events-auto w-[400px] max-w-[calc(100vw-1.5rem)] rounded-xl border border-zinc-700 bg-zinc-900/95 shadow-2xl backdrop-blur-md"
           style={{ borderLeftWidth: 4, borderLeftColor: activeTutorial.color }}
         >

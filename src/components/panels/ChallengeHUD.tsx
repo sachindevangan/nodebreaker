@@ -1,4 +1,5 @@
 import { CheckCircle2, Circle, Lightbulb, Minimize2, Trophy, XCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useFlowStore } from '@/store/useFlowStore';
@@ -95,7 +96,12 @@ export function ChallengeHUD() {
   if (!activeChallenge) return null;
 
   return (
-    <div className="pointer-events-none absolute right-3 top-14 z-[36] w-[420px] max-w-[calc(100vw-1.5rem)]">
+    <motion.div
+      initial={{ x: 300, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="pointer-events-none absolute right-3 top-14 z-[36] w-[420px] max-w-[calc(100vw-1.5rem)]"
+    >
       <section className="pointer-events-auto rounded-xl border border-zinc-700 bg-zinc-900/95 shadow-2xl">
         <div className="flex items-center justify-between border-b border-zinc-800 px-3 py-2">
           <div>
@@ -182,6 +188,6 @@ export function ChallengeHUD() {
           </div>
         )}
       </section>
-    </div>
+    </motion.div>
   );
 }

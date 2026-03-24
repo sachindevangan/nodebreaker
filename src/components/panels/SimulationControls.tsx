@@ -1,4 +1,5 @@
 import { Pause, Play, Square } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useSimStore } from '@/store/useSimStore';
 
 export function SimulationControls() {
@@ -13,12 +14,22 @@ export function SimulationControls() {
   const setSpeed = useSimStore((s) => s.setSpeed);
   const setTrafficVolume = useSimStore((s) => s.setTrafficVolume);
 
-  if (!simulationSessionActive) return null;
-
   return (
-    <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex justify-center px-3 pt-2">
-      <div
+    <AnimatePresence>
+      {simulationSessionActive ? (
+      <motion.div
+        initial={{ y: -60, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: -60, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex justify-center px-3 pt-2"
+      >
+      <motion.div
         className="pointer-events-auto flex w-full max-w-6xl flex-wrap items-center gap-3 rounded-lg border border-zinc-700/80 bg-gray-900/90 px-3 py-2 shadow-xl backdrop-blur-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
         role="toolbar"
         aria-label="Simulation controls"
       >
@@ -94,7 +105,9 @@ export function SimulationControls() {
         <div className="ml-auto border-l border-zinc-700/80 pl-3 font-mono text-[11px] tabular-nums text-zinc-400">
           Tick: {tickCount.toLocaleString()}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }

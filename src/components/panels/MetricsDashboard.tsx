@@ -1,4 +1,5 @@
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, Minus } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getComponentConfig } from '@/constants/components';
 import type { NodeMetrics } from '@/simulation/models';
@@ -145,8 +146,13 @@ export function MetricsDashboard() {
           )}
         </button>
 
-        {expanded ? (
-          <div
+        <AnimatePresence initial={false}>
+          {expanded ? (
+          <motion.div
+            initial={{ y: 200, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 200, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="h-48 overflow-hidden rounded-b-lg border border-t-0 border-zinc-700/80 bg-gray-900/95 shadow-xl backdrop-blur-md"
             role="region"
             aria-label="Simulation metrics"
@@ -258,8 +264,9 @@ export function MetricsDashboard() {
                 </div>
               </div>
             )}
-          </div>
+          </motion.div>
         ) : null}
+        </AnimatePresence>
       </div>
     </div>
   );

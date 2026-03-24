@@ -1,8 +1,9 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
+import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { Plus, Skull } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { getChaosEventDefinition } from '@/constants/chaosEvents';
 import { getComponentKnowledge } from '@/constants/knowledge';
 import type { ChaosEvent } from '@/simulation/chaos';
@@ -60,12 +61,19 @@ function PlusHandle({
   position: Position;
   anchor: keyof typeof HANDLE_ANCHOR;
 }) {
+  const delayByAnchor: Record<keyof typeof HANDLE_ANCHOR, string> = {
+    top: '0ms',
+    left: '50ms',
+    right: '100ms',
+    bottom: '150ms',
+  };
   return (
     <Handle
       id={id}
       type={type}
       position={position}
       className={`${plusHandleClass} ${HANDLE_ANCHOR[anchor]} hover:!text-[var(--nb-accent)]`}
+      style={{ transitionDelay: delayByAnchor[anchor] }}
     >
       <Plus className="pointer-events-none h-3 w-3 text-[var(--text)]" strokeWidth={2.5} />
     </Handle>
@@ -80,7 +88,11 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
   const chaosEvents = useChaosStore((s) => s.activeEvents);
   const openKnowledge = useKnowledgeStore((s) => s.openKnowledge);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [startPulse, setStartPulse] = useState(false);
   const hoverTimerRef = useRef<number | null>(null);
+  const prevChaosCount = useRef(0);
+  const prevSession = useRef(false);
 
   const myChaos = useMemo(
     () => chaosEvents.filter((e) => e.isActive && e.targetNodeId === id),
@@ -117,6 +129,22 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
   ].join(', ') + chaosPulse;
   const knowledgeSummary = type ? getComponentKnowledge(type).summary : null;
 
+  useEffect(() => {
+    if (simulationSessionActive && !prevSession.current) {
+      setStartPulse(true);
+      window.setTimeout(() => setStartPulse(false), 320);
+    }
+    prevSession.current = simulationSessionActive;
+  }, [simulationSessionActive]);
+
+  useEffect(() => {
+    if (myChaos.length > prevChaosCount.current) {
+      setShake(true);
+      window.setTimeout(() => setShake(false), 300);
+    }
+    prevChaosCount.current = myChaos.length;
+  }, [myChaos.length]);
+
   return (
     <div
       className="group relative flex flex-col items-center gap-2 overflow-visible pb-1"
@@ -151,13 +179,27 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
           ENTRY
         </span>
       ) : null}
-      <div
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{
+          scale: startPulse ? [1, 1.05, 1] : 1,
+          opacity: 1,
+          x: shake ? [-3, 3, -2, 2, 0] : 0,
+        }}
+        transition={{
+          scale: { duration: 0.3, ease: 'easeOut' },
+          x: { duration: 0.3, ease: 'easeOut' },
+          opacity: { duration: 0.2, ease: 'easeOut' },
+          type: 'spring',
+          stiffness: 500,
+          damping: 25,
+        }}
         className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-[var(--node-bg)] px-3 py-4 shadow-inner ${
           crashed ? 'opacity-50' : ''
         } ${dropPulse ? 'animate-pulse' : ''} ${
           simulationSessionActive && underChaos ? 'animate-[pulse_2.5s_ease-in-out_infinite] ring-1 ring-red-500/40' : ''
         }`}
-        style={{ boxShadow }}
+        style={{ boxShadow, transition: 'box-shadow 0.2s ease', willChange: 'transform' }}
       >
         <PlusHandle id="in-top" type="target" position={Position.Top} anchor="top" />
         <PlusHandle id="in-left" type="target" position={Position.Left} anchor="left" />
@@ -165,7 +207,7 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
         <PlusHandle id="out-bottom" type="source" position={Position.Bottom} anchor="bottom" />
         <span
           className={`absolute right-2 top-2 z-[55] h-2 w-2 rounded-full ${simStatus === 'down' ? 'animate-pulse' : ''}`}
-          style={dotStyle}
+          style={{ ...dotStyle, transition: 'background-color 0.3s ease' }}
           title={simStatus}
           aria-hidden
         />
@@ -180,13 +222,16 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
               const CIcon = getChaosPaletteIcon(def.icon);
               const pulse = ev.type === 'latency_spike';
               return (
-                <span
+                <motion.span
                   key={ev.id}
                   title={def.label}
                   className={pulse ? 'inline-flex animate-pulse' : 'inline-flex'}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
                 >
                   <CIcon className="h-3.5 w-3.5" style={{ color: def.color }} strokeWidth={2} />
-                </span>
+                </motion.span>
               );
             })}
           </div>
@@ -202,7 +247,7 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
             </span>
           </div>
         ) : null}
-      </div>
+      </motion.div>
       <div className="relative z-0 max-w-[160px] text-center">
         <div className="inline-block rounded-full bg-[var(--node-bg)] px-3 py-1">
           <span className="text-xs font-medium tracking-tight text-[var(--text)]">{data.label}</span>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import {
   BarChart3,
@@ -48,6 +49,7 @@ function PaletteCard({
 }) {
   const Icon = getNodeIcon(config.icon);
   const knowledge = getComponentKnowledge(config.type);
+  const [dragging, setDragging] = useState(false);
 
   return (
     <div
@@ -58,12 +60,15 @@ function PaletteCard({
         // #endregion
         e.dataTransfer.setData(NODEBREAKER_DRAG_MIME, config.type);
         e.dataTransfer.effectAllowed = 'move';
+        setDragging(true);
       }}
-      className="group relative cursor-grab select-none rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-center transition-[border-color,box-shadow] duration-200 hover:border-zinc-500 active:cursor-grabbing"
+      onDragEnd={() => setDragging(false)}
+      className="group relative cursor-grab select-none rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-center transition-[border-color,box-shadow,transform] duration-150 hover:-translate-y-0.5 hover:border-zinc-500 active:cursor-grabbing"
       style={
         {
           ['--nb-palette-glow' as string]: hexToRgba(config.color, 0.42),
           opacity: dimmed ? 0.6 : 1,
+          transform: dragging ? 'scale(0.95)' : undefined,
         } as CSSProperties
       }
       onMouseEnter={(e) => {
@@ -143,23 +148,37 @@ export function ComponentPalette() {
           <button
             type="button"
             onClick={() => setTab('components')}
-            className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+            className={`relative flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               tab === 'components'
                 ? 'border border-cyan-500/40 bg-[var(--surface-hover)] text-[var(--text)]'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
+            {tab === 'components' ? (
+              <motion.span
+                layoutId="palette-tab-active"
+                className="absolute inset-0 -z-10 rounded-md border border-cyan-500/40 bg-[var(--surface-hover)]"
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              />
+            ) : null}
             Components
           </button>
           <button
             type="button"
             onClick={() => setTab('chaos')}
-            className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
+            className={`relative flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               tab === 'chaos'
                 ? 'border border-cyan-500/40 bg-[var(--surface-hover)] text-[var(--text)]'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
+            {tab === 'chaos' ? (
+              <motion.span
+                layoutId="palette-tab-active"
+                className="absolute inset-0 -z-10 rounded-md border border-cyan-500/40 bg-[var(--surface-hover)]"
+                transition={{ duration: 0.2, ease: 'easeOut' }}
+              />
+            ) : null}
             Chaos Items
           </button>
         </div>
@@ -183,12 +202,15 @@ export function ComponentPalette() {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-        {tab === 'chaos' ? (
-          <ChaosPalette />
-        ) : filteredByCategory.length === 0 ? (
-          <p className="px-1 py-8 text-center text-xs text-[var(--text-secondary)]">No components match your search.</p>
-        ) : (
-          <div className="flex flex-col gap-6">
+        <AnimatePresence mode="wait">
+          {tab === 'chaos' ? (
+            <motion.div key="chaos" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+              <ChaosPalette />
+            </motion.div>
+          ) : filteredByCategory.length === 0 ? (
+            <motion.p key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-1 py-8 text-center text-xs text-[var(--text-secondary)]">No components match your search.</motion.p>
+          ) : (
+            <motion.div key="components" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex flex-col gap-6">
             {filteredByCategory.map((section) => {
               const CatIcon = CATEGORY_ICONS[section.name as keyof typeof CATEGORY_ICONS];
               return (
@@ -212,8 +234,9 @@ export function ComponentPalette() {
                 </section>
               );
             })}
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="shrink-0 border-t border-[var(--border)] p-3">

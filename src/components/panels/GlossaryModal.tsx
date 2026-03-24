@@ -1,4 +1,5 @@
 import { BookOpen, Search, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useMemo, useState } from 'react';
 import { GLOSSARY_TERMS } from '@/constants/glossary';
 import { useKnowledgeStore } from '@/store/useKnowledgeStore';
@@ -18,11 +19,11 @@ export function GlossaryModal() {
     return [...items].sort((a, b) => a.term.localeCompare(b.term));
   }, [query]);
 
-  if (!glossaryOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={closeGlossary}>
-      <div className="mx-auto flex h-full max-w-5xl flex-col rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+    <AnimatePresence>
+    {glossaryOpen ? (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[100] bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" onClick={closeGlossary}>
+      <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }} className="mx-auto flex h-full max-w-5xl flex-col rounded-xl border border-zinc-700 bg-zinc-950 shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <header className="flex items-center justify-between border-b border-zinc-800 px-5 py-4">
           <div className="flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-cyan-400" />
@@ -63,7 +64,9 @@ export function GlossaryModal() {
             ))}
           </div>
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
+    ) : null}
+    </AnimatePresence>
   );
 }

@@ -1,4 +1,5 @@
 import { Lightbulb, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import { useToastStore, type ToastItem as ToastItemType } from '@/store/useToastStore';
 
@@ -40,8 +41,13 @@ function ToastItemView({ item }: { item: ToastItemType }) {
   const isInsight = item.learnMore !== undefined;
 
   return (
-    <div
+    <motion.div
       role="status"
+      layout
+      initial={{ x: -100, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: -100, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
       className={`pointer-events-auto flex max-w-sm items-start gap-2 rounded-lg border px-3 py-2.5 shadow-lg backdrop-blur-sm ${
         isInsight
           ? 'border-violet-500/60 bg-gradient-to-r from-indigo-950/95 to-violet-950/95'
@@ -71,7 +77,7 @@ function ToastItemView({ item }: { item: ToastItemType }) {
       >
         <X className="h-3.5 w-3.5" strokeWidth={2} />
       </button>
-    </div>
+    </motion.div>
   );
 }
 
@@ -84,9 +90,11 @@ export function ToastViewport() {
       aria-live="polite"
       aria-relevant="additions"
     >
-      {toasts.map((t) => (
-        <ToastItemView key={t.id} item={t} />
-      ))}
+      <AnimatePresence initial={false}>
+        {toasts.map((t) => (
+          <ToastItemView key={t.id} item={t} />
+        ))}
+      </AnimatePresence>
     </div>
   );
 }

@@ -5,9 +5,15 @@ import { GlobalConfirmDialog } from '@/components/ui';
 import type { JourneyStage } from '@/constants/journey';
 import { JOURNEY_STAGES } from '@/constants/journey';
 import { useChallengeStore } from '@/store/useChallengeStore';
+import { useChaosStore } from '@/store/useChaosStore';
+import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useJourneyStore } from '@/store/useJourneyStore';
+import { useSimStore } from '@/store/useSimStore';
 import { useThemeStore } from '@/store/useThemeStore';
+import { useToastStore } from '@/store/useToastStore';
 import { useTutorialStore } from '@/store/useTutorialStore';
+import { decodeSharedDesign } from '@/utils/sharing';
 
 export default function App() {
   const theme = useThemeStore((s) => s.theme);
@@ -49,6 +55,33 @@ export default function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const encoded = params.get('d');
+    if (!encoded) return;
+    const decoded = decodeSharedDesign(encoded);
+    if (!decoded) {
+      useToastStore.getState().push({
+        kind: 'error',
+        message: 'Could not load shared design - invalid data',
+      });
+      return;
+    }
+    useChaosStore.getState().clearAllChaos();
+    useSimStore.getState().stopSession();
+    useHistoryStore.getState().clear();
+    useFlowStore.getState().replaceGraph(decoded.nodes, decoded.edges);
+    useToastStore.getState().push({
+      kind: 'success',
+      message: `Loaded shared design: ${decoded.name}`,
+    });
+    setCurrentView('sandbox');
+    params.delete('d');
+    const next = params.toString();
+    const cleanUrl = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }, []);
 
   useEffect(() => {
     for (const tutorialId of completedTutorials) {

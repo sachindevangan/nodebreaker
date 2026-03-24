@@ -101,6 +101,7 @@ export function TemplateSelector({ isOpen, onClose, onReopen }: TemplateSelector
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
             className="fixed inset-0 z-[110] flex items-center justify-center bg-black/65 p-4 backdrop-blur-sm"
             role="dialog"
             aria-modal="true"
@@ -111,7 +112,7 @@ export function TemplateSelector({ isOpen, onClose, onReopen }: TemplateSelector
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
               className="max-h-[92vh] w-full max-w-6xl overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface)] shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >

@@ -13,6 +13,7 @@ import {
   Trash2,
   Undo2,
   Redo2,
+  Share2,
   Upload,
   X,
   Zap,
@@ -57,6 +58,7 @@ export interface HeaderProps {
   onExportJson: () => void;
   onExportPng: () => void;
   onExportSvg: () => void;
+  onShare: () => void;
   onImportClick: () => void;
   onResetCanvas: () => void;
   onOpenGlossary: () => void;
@@ -77,6 +79,7 @@ export function Header({
   onExportJson,
   onExportPng,
   onExportSvg,
+  onShare,
   onImportClick,
   onResetCanvas,
   onOpenGlossary,
@@ -214,6 +217,10 @@ export function Header({
             <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Templates</span>
           </button>
+          <button type="button" className={ghostBtn} onClick={onShare} title="Share design">
+            <Share2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <span>Share</span>
+          </button>
           {extraActions}
         </nav>
 
@@ -268,6 +275,9 @@ export function Header({
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
               <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onShare} aria-label="Share design">
+              <Share2 className="h-4 w-4" strokeWidth={2} />
             </button>
           {onSwitchView ? (
             <>

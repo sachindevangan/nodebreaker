@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Check,
   Flame,
@@ -129,17 +130,25 @@ export function JourneyMap({
 
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-auto px-4 py-8">
           <div className="mx-auto max-w-5xl">
-            {stageNodes.map(({ stage, completed, current }) => {
+            {stageNodes.map(({ stage, completed, current }, idx) => {
               const Icon = ICONS[stage.icon] ?? Server;
               const isOdd = stage.number % 2 === 1;
               const progress = getStageProgress(stage.id);
               return (
-                <div
+                <motion.div
                   key={stage.id}
                   data-stage-id={stage.id}
                   className={`relative mb-10 flex items-center ${isOdd ? 'justify-start' : 'justify-end'}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.1, duration: 0.2, ease: 'easeOut' }}
                 >
-                  <div className="absolute left-1/2 top-0 -ml-px h-[140%] w-0.5 bg-zinc-700/70" />
+                  <motion.div
+                    className="absolute left-1/2 top-0 -ml-px h-[140%] w-0.5 bg-zinc-700/70"
+                    initial={{ scaleY: 0, transformOrigin: 'top' }}
+                    animate={{ scaleY: 1 }}
+                    transition={{ delay: idx * 0.08, duration: 0.25, ease: 'easeOut' }}
+                  />
                   <button
                     type="button"
                     onClick={() => setSelectedStage(stage)}
@@ -148,10 +157,18 @@ export function JourneyMap({
                     }`}
                     style={{ width: 'min(92%, 460px)' }}
                   >
-                    <span
+                    <motion.span
                       className={`relative inline-flex items-center justify-center rounded-full border ${
                         current ? 'h-20 w-20' : 'h-16 w-16'
                       } ${completed ? 'border-emerald-400 bg-emerald-600/20' : 'border-zinc-600 bg-zinc-900'} `}
+                      animate={
+                        current
+                          ? { boxShadow: ['0 0 0 0 rgba(59,130,246,0.35)', '0 0 0 8px rgba(59,130,246,0)', '0 0 0 0 rgba(59,130,246,0)'] }
+                          : completed
+                            ? { boxShadow: ['0 0 0 0 rgba(34,197,94,0.25)', '0 0 0 6px rgba(34,197,94,0)', '0 0 0 0 rgba(34,197,94,0)'] }
+                            : undefined
+                      }
+                      transition={{ duration: current ? 2 : 3, repeat: Infinity, ease: 'easeOut' }}
                     >
                       <Icon className="h-6 w-6" style={{ color: stage.color }} />
                       {completed ? (
@@ -159,7 +176,7 @@ export function JourneyMap({
                           <Check className="h-3 w-3 text-white" />
                         </span>
                       ) : null}
-                    </span>
+                    </motion.span>
                     <span className="min-w-0 flex-1">
                       <p className="text-xs text-zinc-500">Stage {stage.number}</p>
                       <p className="truncate text-sm font-semibold text-zinc-100">{stage.title}</p>
@@ -168,16 +185,21 @@ export function JourneyMap({
                     </span>
                     {current ? <span className="animate-pulse text-xs font-semibold text-blue-300">Continue →</span> : null}
                   </button>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
       </div>
 
+      <AnimatePresence>
       {selectedStage ? (
-        <div className="fixed inset-0 z-[150] bg-black/70 p-4 backdrop-blur-sm" onClick={() => setSelectedStage(null)}>
-          <div
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="fixed inset-0 z-[150] bg-black/70 p-4 backdrop-blur-sm" onClick={() => setSelectedStage(null)}>
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="mx-auto max-w-2xl rounded-xl border border-zinc-700 bg-zinc-900 p-5"
             onClick={(e) => e.stopPropagation()}
           >
@@ -241,9 +263,10 @@ export function JourneyMap({
                 <Trophy className="h-3.5 w-3.5" /> Challenge completed
               </p>
             ) : null}
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       ) : null}
+      </AnimatePresence>
     </div>
   );
 }

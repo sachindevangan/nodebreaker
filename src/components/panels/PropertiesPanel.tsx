@@ -141,10 +141,10 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
         {panelOpen && node && cfg && Icon ? (
           <motion.aside
             key={node.id}
-            initial={{ x: 16, opacity: 0 }}
+            initial={{ x: 320, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 16, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+            exit={{ x: 320, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
             className="flex h-full w-full flex-col border-l border-[var(--border)] bg-[var(--panel-bg)]"
             style={{ borderLeftColor: accent }}
             aria-label="Node properties"

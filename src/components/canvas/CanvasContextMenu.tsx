@@ -248,6 +248,17 @@ export function CanvasContextMenu({ menu, onClose, onFitView }: CanvasContextMen
       >
         Load template
       </button>
+      <button
+        type="button"
+        role="menuitem"
+        className={btn}
+        onClick={() => {
+          chrome?.openShare();
+          onClose();
+        }}
+      >
+        Share design
+      </button>
     </div>
   );
 }

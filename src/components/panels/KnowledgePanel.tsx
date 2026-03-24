@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect } from 'react';
 import { getComponentConfig } from '@/constants/components';
 import { GLOSSARY_BY_TERM } from '@/constants/glossary';
@@ -26,7 +27,14 @@ export function KnowledgePanel() {
     const term = GLOSSARY_BY_TERM.get(activeTarget.term);
     if (!term) return null;
     return (
-      <aside className="absolute right-0 top-0 z-[85] flex h-full w-[420px] flex-col border-l border-zinc-700 bg-zinc-950/95 shadow-2xl backdrop-blur-sm">
+      <AnimatePresence>
+      <motion.aside
+        initial={{ x: 320, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: 320, opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+        className="absolute right-0 top-0 z-[85] flex h-full w-[420px] flex-col border-l border-zinc-700 bg-zinc-950/95 shadow-2xl backdrop-blur-sm"
+      >
         <header className="flex items-start justify-between border-b border-zinc-800 px-4 py-4">
           <div>
             <h2 className="text-lg font-semibold text-zinc-100">{term.term}</h2>
@@ -53,7 +61,8 @@ export function KnowledgePanel() {
             </div>
           </div>
         </div>
-      </aside>
+      </motion.aside>
+      </AnimatePresence>
     );
   }
 
@@ -63,7 +72,14 @@ export function KnowledgePanel() {
   const Icon = getNodeIcon(cfg.icon);
 
   return (
-    <aside className="absolute right-0 top-0 z-[85] flex h-full w-[420px] flex-col border-l border-zinc-700 bg-zinc-950/95 shadow-2xl backdrop-blur-sm">
+    <AnimatePresence>
+    <motion.aside
+      initial={{ x: 320, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      exit={{ x: 320, opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="absolute right-0 top-0 z-[85] flex h-full w-[420px] flex-col border-l border-zinc-700 bg-zinc-950/95 shadow-2xl backdrop-blur-sm"
+    >
       <header className="flex items-start justify-between border-b border-zinc-800 px-4 py-4">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
@@ -124,6 +140,7 @@ export function KnowledgePanel() {
           </div>
         </section>
       </div>
-    </aside>
+    </motion.aside>
+    </AnimatePresence>
   );
 }

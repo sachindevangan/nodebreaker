@@ -20,6 +20,7 @@ import {
 } from '@/components/panels';
 import { ComponentPalette } from '@/components/sidebar';
 import { ToastViewport } from '@/components/ui/Toast';
+import { ShareModal } from '@/components/ui';
 import { AppChromeContext } from '@/context/AppChromeContext';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useChaosStore } from '@/store/useChaosStore';
@@ -37,6 +38,7 @@ import {
   validateDesignFile,
 } from '@/utils/serialization';
 import { exportCanvasAsPng, exportCanvasAsSvg } from '@/utils/export';
+import { encodeDesignToShareUrl, isShareUrlTooLong } from '@/utils/sharing';
 import { Header } from './Header';
 
 interface AppShellProps {
@@ -56,6 +58,9 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
   const [challengesOpen, setChallengesOpen] = useState(false);
   const [briefingChallengeId, setBriefingChallengeId] = useState<string | null>(null);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareCopied, setShareCopied] = useState(false);
   const [interviewModeActive, setInterviewModeActive] = useState(false);
   const [leftWidth, setLeftWidth] = useState(() => {
     return parseInt(localStorage.getItem('nb-left-w') || '260');
@@ -72,9 +77,40 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
     () => ({
       openTemplates: () => setTemplatesOpen(true),
       requestImport: () => importInputRef.current?.click(),
+      openShare: () => {
+        setShareCopied(false);
+        setShareOpen(true);
+      },
     }),
     []
   );
+
+  const handleShare = useCallback(async () => {
+    const { nodes, edges } = useFlowStore.getState();
+    if (nodes.length === 0) {
+      useToastStore.getState().push({ kind: 'warning', message: 'Add components first' });
+      return;
+    }
+    const name = nodes[0]?.data.label?.trim() || 'NodeBreaker Design';
+    const url = encodeDesignToShareUrl(name, nodes, edges);
+    if (isShareUrlTooLong(url)) {
+      useToastStore.getState().push({
+        kind: 'warning',
+        message: 'Design too complex to share via URL. Use Export -> JSON instead.',
+      });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      useToastStore.getState().push({ kind: 'success', message: 'Share link copied to clipboard!' });
+      setShareCopied(true);
+    } catch {
+      useToastStore.getState().push({ kind: 'error', message: 'Could not copy link to clipboard' });
+      setShareCopied(false);
+    }
+    setShareUrl(url);
+    setShareOpen(true);
+  }, []);
 
   const handleResetCanvas = useCallback(() => {
     useChaosStore.getState().clearAllChaos();
@@ -169,6 +205,24 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
         isOpen={briefingChallengeId !== null}
         onClose={() => setBriefingChallengeId(null)}
       />
+      <ShareModal
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        url={shareUrl}
+        nodeCount={useFlowStore.getState().nodes.length}
+        edgeCount={useFlowStore.getState().edges.length}
+        copied={shareCopied}
+        onCopy={async () => {
+          if (!shareUrl) return;
+          try {
+            await navigator.clipboard.writeText(shareUrl);
+            setShareCopied(true);
+            useToastStore.getState().push({ kind: 'success', message: 'Share link copied to clipboard!' });
+          } catch {
+            useToastStore.getState().push({ kind: 'error', message: 'Could not copy link to clipboard' });
+          }
+        }}
+      />
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[var(--bg)]">
         <Header
           currentView={currentView}
@@ -194,6 +248,7 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
           onExportJson={handleExportJson}
           onExportPng={handleExportPng}
           onExportSvg={handleExportSvg}
+          onShare={handleShare}
           onImportClick={() => importInputRef.current?.click()}
           onResetCanvas={handleResetCanvas}
           onOpenGlossary={openGlossary}
