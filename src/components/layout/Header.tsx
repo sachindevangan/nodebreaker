@@ -34,7 +34,7 @@ export function Header({
   onTemplates,
   onExport,
   onImportClick,
-  githubHref = 'https://github.com/YOUR_USERNAME/nodebreaker',
+  githubHref = 'https://github.com/sachindevangan/nodebreaker',
 }: HeaderProps) {
   return (
     <header className="flex h-12 shrink-0 items-center gap-4 border-b border-zinc-800 bg-zinc-950 px-3 sm:px-4">

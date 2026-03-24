@@ -22,7 +22,7 @@ React • TypeScript • Vite • React Flow • Zustand • Tailwind CSS • Fr
 ## Getting Started
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/nodebreaker.git
+git clone https://github.com/sachindevangan/nodebreaker.git
 cd nodebreaker
 npm install
 npm run dev

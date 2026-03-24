@@ -23,15 +23,58 @@ export interface NodeBreakerNodeData extends Record<string, unknown> {
   /** Queue */
   maxQueueDepth?: number;
   consumerCount?: number;
+  /** Lambda */
+  coldStartMs?: number;
+  timeoutMs?: number;
+  /** Container */
+  replicas?: number;
+  cpuLimit?: string;
+  /** Search */
+  indexCount?: number;
+  shardCount?: number;
+  /** Kafka */
+  partitions?: number;
+  replicationFactor?: number;
+  /** AuthService */
+  tokenTTL?: number;
+  maxSessions?: number;
+  /** RateLimiter */
+  maxRequestsPerMin?: number;
+  windowMs?: number;
 }
 
 export type NodeBreakerNodeType =
   | 'loadBalancer'
+  | 'cdn'
+  | 'dns'
+  | 'apiGateway'
+  | 'waf'
+  | 'ingress'
   | 'service'
+  | 'worker'
+  | 'lambda'
+  | 'container'
+  | 'cronJob'
   | 'database'
   | 'cache'
+  | 'search'
+  | 'dataWarehouse'
+  | 'blobStorage'
+  | 'objectStore'
   | 'queue'
-  | 'cdn';
+  | 'kafka'
+  | 'eventBus'
+  | 'pubSub'
+  | 'reverseProxy'
+  | 'edgeRouter'
+  | 'loadBalancerL4'
+  | 'loadBalancerL7'
+  | 'authService'
+  | 'rateLimiter'
+  | 'firewall'
+  | 'logger'
+  | 'healthCheck'
+  | 'metricsCollector';
 
 export type FlowNode = Node<NodeBreakerNodeData, NodeBreakerNodeType>;
 export type FlowEdge = Edge;

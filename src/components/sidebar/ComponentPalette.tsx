@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Cpu, HardDrive, LayoutGrid, Radio, Search } from 'lucide-react';
+import {
+  BarChart3,
+  Cpu,
+  HardDrive,
+  LayoutGrid,
+  Lock,
+  Radio,
+  Router,
+  Search,
+} from 'lucide-react';
 import {
   COMPONENT_TYPE_CONFIGS,
   PALETTE_CATEGORY_ORDER,
@@ -17,8 +26,12 @@ type PaletteTab = 'components' | 'chaos';
 
 const CATEGORY_ICONS: Record<(typeof PALETTE_CATEGORY_ORDER)[number], LucideIcon> = {
   'Traffic & Edge': Radio,
+  Network: Router,
   Compute: Cpu,
   Data: HardDrive,
+  Messaging: Radio,
+  Security: Lock,
+  Monitoring: BarChart3,
 };
 
 function PaletteCard({ config }: { config: ComponentTypeConfig }) {
@@ -64,7 +77,12 @@ export function ComponentPalette() {
   const filteredByCategory = useMemo(() => {
     const q = query.trim().toLowerCase();
     const filtered = q
-      ? COMPONENT_TYPE_CONFIGS.filter((c) => c.label.toLowerCase().includes(q))
+      ? COMPONENT_TYPE_CONFIGS.filter(
+          (c) =>
+            c.label.toLowerCase().includes(q) ||
+            c.type.toLowerCase().includes(q) ||
+            c.category.toLowerCase().includes(q)
+        )
       : [...COMPONENT_TYPE_CONFIGS];
 
     const map = new Map<string, ComponentTypeConfig[]>();
@@ -74,10 +92,13 @@ export function ComponentPalette() {
       map.set(c.category, list);
     }
 
-    return PALETTE_CATEGORY_ORDER.map((name) => ({
+    return PALETTE_CATEGORY_ORDER.filter((name) => {
+      const items = map.get(name);
+      return items && items.length > 0;
+    }).map((name) => ({
       name,
       items: map.get(name) ?? [],
-    })).filter((section) => section.items.length > 0);
+    }));
   }, [query]);
 
   return (

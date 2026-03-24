@@ -51,22 +51,26 @@ const urlShortener: ArchitectureTemplate = {
   id: 'url-shortener',
   name: 'URL Shortener',
   description:
-    'Edge cache, load balancer, resolver service, Redis, and PostgreSQL — cache absorbs most reads; DB is the weak link.',
+    'DNS, CDN, load balancer, API gateway, resolver service, Redis, and PostgreSQL — cache absorbs most reads; DB is the weak link.',
   difficulty: 'Easy',
-  previewHint: '5 nodes · 4 links',
-  nodeCount: 5,
-  edgeCount: 4,
+  previewHint: '7 nodes · 6 links',
+  nodeCount: 7,
+  edgeCount: 6,
   build: () => {
     const nodes: FlowNode[] = [
+      node('t-dns', 'dns', { x: -160, y: 220 }, 'DNS', 100_000, 2, 500_000),
       node('t-cdn', 'cdn', { x: 40, y: 220 }, 'CDN', 500_000, 12, 1_000_000),
-      node('t-lb', 'loadBalancer', { x: 260, y: 220 }, 'Load Balancer', 50_000, 5, 80_000),
-      node('t-svc', 'service', { x: 520, y: 220 }, 'URL Resolver', 10_000, 20, 25_000),
-      node('t-cache', 'cache', { x: 780, y: 120 }, 'Redis', 100_000, 1, 400_000),
-      node('t-db', 'database', { x: 780, y: 320 }, 'PostgreSQL', 2_000, 8, 120_000),
+      node('t-lb', 'loadBalancer', { x: 220, y: 220 }, 'Load Balancer', 50_000, 5, 80_000),
+      node('t-gw', 'apiGateway', { x: 400, y: 220 }, 'API Gateway', 20_000, 10, 100_000),
+      node('t-svc', 'service', { x: 580, y: 220 }, 'URL Resolver', 10_000, 20, 25_000),
+      node('t-cache', 'cache', { x: 840, y: 120 }, 'Redis', 100_000, 1, 400_000),
+      node('t-db', 'database', { x: 840, y: 320 }, 'PostgreSQL', 2_000, 8, 120_000),
     ];
     const edges: FlowEdge[] = [
+      edge('t-dns', 't-cdn'),
       edge('t-cdn', 't-lb'),
-      edge('t-lb', 't-svc'),
+      edge('t-lb', 't-gw'),
+      edge('t-gw', 't-svc'),
       edge('t-svc', 't-cache'),
       edge('t-svc', 't-db'),
     ];
@@ -119,7 +123,7 @@ const ecommerce: ArchitectureTemplate = {
     const nodes: FlowNode[] = [
       node('e-cdn', 'cdn', { x: 20, y: 260 }, 'CDN', 600_000, 11, 900_000),
       node('e-lb', 'loadBalancer', { x: 220, y: 260 }, 'Load Balancer', 45_000, 5, 90_000),
-      node('e-gw', 'service', { x: 440, y: 260 }, 'API Gateway', 20_000, 12, 50_000),
+      node('e-gw', 'apiGateway', { x: 440, y: 260 }, 'API Gateway', 20_000, 12, 50_000),
       node('e-pay', 'service', { x: 680, y: 140 }, 'Payment', 8_000, 35, 20_000),
       node('e-inv', 'service', { x: 680, y: 260 }, 'Inventory', 12_000, 22, 30_000),
       node('e-db', 'database', { x: 920, y: 260 }, 'Orders DB', 3_500, 10, 150_000),

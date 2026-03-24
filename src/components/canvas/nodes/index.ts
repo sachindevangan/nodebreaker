@@ -1,25 +1,12 @@
 import type { NodeTypes } from '@xyflow/react';
-import { CacheNode } from './CacheNode';
-import { CDNNode } from './CDNNode';
-import { DatabaseNode } from './DatabaseNode';
-import { LoadBalancerNode } from './LoadBalancerNode';
-import { QueueNode } from './QueueNode';
-import { ServiceNode } from './ServiceNode';
+import { COMPONENT_TYPE_CONFIGS } from '@/constants/components';
+import { ConfigurableNode } from './ConfigurableNode';
 
 export { BaseNode } from './BaseNode';
-export { CacheNode } from './CacheNode';
-export { CDNNode } from './CDNNode';
-export { DatabaseNode } from './DatabaseNode';
-export { LoadBalancerNode } from './LoadBalancerNode';
-export { QueueNode } from './QueueNode';
-export { ServiceNode } from './ServiceNode';
+export { ConfigurableNode } from './ConfigurableNode';
 export { getNodeIcon } from './nodeIcons';
 
-export const flowNodeTypes = {
-  loadBalancer: LoadBalancerNode,
-  service: ServiceNode,
-  database: DatabaseNode,
-  cache: CacheNode,
-  queue: QueueNode,
-  cdn: CDNNode,
-} as const satisfies NodeTypes;
+/** All node types use ConfigurableNode, keyed by component type from config. */
+export const flowNodeTypes: NodeTypes = Object.fromEntries(
+  COMPONENT_TYPE_CONFIGS.map((c) => [c.type, ConfigurableNode])
+) as NodeTypes;

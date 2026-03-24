@@ -326,6 +326,145 @@ export function PropertiesPanel() {
                   />
                 </>
               ) : null}
+
+              {node.type === 'lambda' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-coldstart`}
+                    label="Cold start"
+                    value={node.data.coldStartMs ?? 500}
+                    min={0}
+                    max={10000}
+                    step={10}
+                    onChange={(v) => patch({ coldStartMs: v })}
+                    suffix="ms"
+                  />
+                  <SliderInput
+                    id={`${node.id}-timeout`}
+                    label="Timeout"
+                    value={node.data.timeoutMs ?? 30000}
+                    min={1000}
+                    max={900000}
+                    step={1000}
+                    onChange={(v) => patch({ timeoutMs: v })}
+                    suffix="ms"
+                  />
+                </>
+              ) : null}
+
+              {node.type === 'container' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-replicas`}
+                    label="Replicas"
+                    value={node.data.replicas ?? 3}
+                    min={1}
+                    max={100}
+                    step={1}
+                    onChange={(v) => patch({ replicas: v })}
+                  />
+                  <TextInput
+                    id={`${node.id}-cpulimit`}
+                    label="CPU limit"
+                    value={node.data.cpuLimit ?? '1000m'}
+                    onChange={(v) => patch({ cpuLimit: v })}
+                  />
+                </>
+              ) : null}
+
+              {node.type === 'search' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-indexcount`}
+                    label="Index count"
+                    value={node.data.indexCount ?? 10}
+                    min={1}
+                    max={1000}
+                    step={1}
+                    onChange={(v) => patch({ indexCount: v })}
+                  />
+                  <SliderInput
+                    id={`${node.id}-shardcount`}
+                    label="Shard count"
+                    value={node.data.shardCount ?? 5}
+                    min={1}
+                    max={100}
+                    step={1}
+                    onChange={(v) => patch({ shardCount: v })}
+                  />
+                </>
+              ) : null}
+
+              {node.type === 'kafka' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-partitions`}
+                    label="Partitions"
+                    value={node.data.partitions ?? 12}
+                    min={1}
+                    max={1000}
+                    step={1}
+                    onChange={(v) => patch({ partitions: v })}
+                  />
+                  <SliderInput
+                    id={`${node.id}-replication`}
+                    label="Replication factor"
+                    value={node.data.replicationFactor ?? 3}
+                    min={1}
+                    max={16}
+                    step={1}
+                    onChange={(v) => patch({ replicationFactor: v })}
+                  />
+                </>
+              ) : null}
+
+              {node.type === 'authService' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-tokenTTL`}
+                    label="Token TTL"
+                    value={node.data.tokenTTL ?? 3600}
+                    min={60}
+                    max={86400}
+                    step={60}
+                    onChange={(v) => patch({ tokenTTL: v })}
+                    suffix="s"
+                  />
+                  <SliderInput
+                    id={`${node.id}-maxSessions`}
+                    label="Max sessions"
+                    value={node.data.maxSessions ?? 10000}
+                    min={100}
+                    max={1_000_000}
+                    step={100}
+                    onChange={(v) => patch({ maxSessions: v })}
+                  />
+                </>
+              ) : null}
+
+              {node.type === 'rateLimiter' ? (
+                <>
+                  <SliderInput
+                    id={`${node.id}-maxRpm`}
+                    label="Max requests/min"
+                    value={node.data.maxRequestsPerMin ?? 1000}
+                    min={1}
+                    max={1_000_000}
+                    step={10}
+                    onChange={(v) => patch({ maxRequestsPerMin: v })}
+                  />
+                  <SliderInput
+                    id={`${node.id}-windowMs`}
+                    label="Window"
+                    value={node.data.windowMs ?? 60000}
+                    min={1000}
+                    max={3600000}
+                    step={1000}
+                    onChange={(v) => patch({ windowMs: v })}
+                    suffix="ms"
+                  />
+                </>
+              ) : null}
             </section>
 
             <section className="mt-8 border-t border-zinc-800 pt-6">
