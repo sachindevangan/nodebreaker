@@ -31,6 +31,12 @@ export function AppShell() {
   const openGlossary = useKnowledgeStore((s) => s.openGlossary);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(() => {
+    return parseInt(localStorage.getItem('nb-left-w') || '260');
+  });
+  const [rightWidth, setRightWidth] = useState(() => {
+    return parseInt(localStorage.getItem('nb-right-w') || '320');
+  });
   const importInputRef = useRef<HTMLInputElement>(null);
 
   const closeShortcutsModal = useCallback(() => setShortcutsOpen(false), []);
@@ -124,9 +130,33 @@ export function AppShell() {
           onOpenGlossary={openGlossary}
         />
         <div className="flex min-h-0 flex-1 overflow-hidden">
-          <div className="flex h-full min-h-0 w-[260px] shrink-0 flex-col">
+          <div className="flex h-full min-h-0 flex-shrink-0 flex-col" style={{ width: leftWidth }}>
             <ComponentPalette />
           </div>
+          <div
+            className="w-1 hover:w-1 hover:bg-blue-500/40 cursor-col-resize 
+    flex-shrink-0 transition-colors"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const startX = e.clientX;
+              const startW = leftWidth;
+              const move = (ev: MouseEvent) => {
+                const w = Math.max(200, Math.min(450, startW + ev.clientX - startX));
+                setLeftWidth(w);
+                localStorage.setItem('nb-left-w', String(w));
+              };
+              const up = () => {
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', up);
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+              };
+              document.body.style.cursor = 'col-resize';
+              document.body.style.userSelect = 'none';
+              document.addEventListener('mousemove', move);
+              document.addEventListener('mouseup', up);
+            }}
+          />
           <main
             className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
             aria-label="Design canvas"
@@ -137,7 +167,27 @@ export function AppShell() {
             <MetricsDashboard />
             <KnowledgePanel />
           </main>
-          <PropertiesPanel />
+          <PropertiesPanel
+            panelWidth={rightWidth}
+            onResizeStart={(startX) => {
+              const startW = rightWidth;
+              const move = (ev: MouseEvent) => {
+                const w = Math.max(250, Math.min(500, startW - (ev.clientX - startX)));
+                setRightWidth(w);
+                localStorage.setItem('nb-right-w', String(w));
+              };
+              const up = () => {
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('mouseup', up);
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+              };
+              document.body.style.cursor = 'col-resize';
+              document.body.style.userSelect = 'none';
+              document.addEventListener('mousemove', move);
+              document.addEventListener('mouseup', up);
+            }}
+          />
         </div>
         <GlossaryModal />
         <ToastViewport />

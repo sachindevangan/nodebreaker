@@ -18,8 +18,8 @@ import {
 } from '@/constants/components';
 import { NODEBREAKER_DRAG_MIME } from '@/hooks/useDragToCanvas';
 import { getNodeIcon } from '@/components/canvas/nodes/nodeIcons';
+import { InfoTooltip } from '@/components/ui';
 import { useSimStore } from '@/store/useSimStore';
-import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import { getComponentKnowledge } from '@/constants/knowledge';
 import { hexToRgba } from '@/utils/math';
 import { ChaosPalette } from './ChaosPalette';
@@ -37,8 +37,6 @@ const CATEGORY_ICONS: Record<(typeof PALETTE_CATEGORY_ORDER)[number], LucideIcon
 };
 
 function PaletteCard({ config }: { config: ComponentTypeConfig }) {
-  const [showTip, setShowTip] = useState(false);
-  const openKnowledge = useKnowledgeStore((s) => s.openKnowledge);
   const Icon = getNodeIcon(config.icon);
   const knowledge = getComponentKnowledge(config.type);
 
@@ -46,6 +44,9 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
     <div
       draggable
       onDragStart={(e) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7699/ingest/1f64e223-b5c9-4f0c-bf28-285d4e212d98',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0b8e06'},body:JSON.stringify({sessionId:'0b8e06',runId:'pre-fix',hypothesisId:'H4',location:'ComponentPalette.tsx:onDragStart',message:'Palette card drag start',data:{type:config.type,label:config.label},timestamp:Date.now()})}).catch(()=>{});
+        // #endregion
         e.dataTransfer.setData(NODEBREAKER_DRAG_MIME, config.type);
         e.dataTransfer.effectAllowed = 'move';
       }}
@@ -56,34 +57,19 @@ function PaletteCard({ config }: { config: ComponentTypeConfig }) {
         } as CSSProperties
       }
       onMouseEnter={(e) => {
-        setShowTip(true);
         e.currentTarget.style.boxShadow = '0 0 18px var(--nb-palette-glow)';
       }}
       onMouseLeave={(e) => {
-        setShowTip(false);
         e.currentTarget.style.boxShadow = '';
       }}
     >
       <div className="flex justify-center">
         <Icon className="h-7 w-7" style={{ color: config.color }} strokeWidth={1.75} />
       </div>
-      <p className="mt-2 text-[11px] font-medium leading-tight text-zinc-200">{config.label}</p>
-      {showTip ? (
-        <div className="pointer-events-none absolute left-1/2 top-full z-[90] mt-1 w-56 -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-left shadow-lg">
-          <p className="text-[11px] leading-snug text-zinc-100">{knowledge.summary}</p>
-          <button
-            type="button"
-            className="pointer-events-auto mt-1 text-[10px] font-medium text-cyan-300 hover:text-cyan-200"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              openKnowledge({ kind: 'component', componentType: config.type });
-            }}
-          >
-            Click to learn more
-          </button>
-        </div>
-      ) : null}
+      <p className="mt-2 inline-flex items-center justify-center text-[11px] font-medium leading-tight text-zinc-200">
+        {config.label}
+        <InfoTooltip title={config.label} description={knowledge.summary} side="right" />
+      </p>
     </div>
   );
 }
@@ -125,7 +111,7 @@ export function ComponentPalette() {
   }, [query]);
 
   return (
-    <div className="flex h-full min-h-0 w-[260px] shrink-0 flex-col border-r border-border bg-[#0c0c0e]">
+    <div className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-border bg-[#0c0c0e]">
       <div className="shrink-0 border-b border-zinc-800/90 px-3 pb-3 pt-3">
         <div className="flex items-center gap-2 text-zinc-100">
           <LayoutGrid className="h-4 w-4 text-zinc-400" strokeWidth={2} />

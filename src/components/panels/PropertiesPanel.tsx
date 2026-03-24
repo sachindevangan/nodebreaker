@@ -28,7 +28,12 @@ const ALGORITHM_OPTIONS: { value: string; label: string }[] = [
 
 const glossaryText = (term: string, fallback: string): string => GLOSSARY_BY_TERM.get(term)?.definition ?? fallback;
 
-export function PropertiesPanel() {
+type PropertiesPanelProps = {
+  panelWidth: number;
+  onResizeStart: (startX: number) => void;
+};
+
+export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelProps) {
   const selectedNodeId = useFlowStore((s) => s.selectedNodeId);
   const nodes = useFlowStore((s) => s.nodes);
   const node = useMemo((): FlowNode | null => {
@@ -104,11 +109,23 @@ export function PropertiesPanel() {
   const panelOpen = Boolean(node && cfg && Icon);
 
   return (
-    <div
-      className={`flex h-full min-h-0 shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-out ${
-        panelOpen ? 'w-[320px]' : 'w-0'
-      }`}
-    >
+    <>
+      {panelOpen ? (
+        <div
+          className="w-1 hover:w-1 hover:bg-blue-500/40 cursor-col-resize 
+    flex-shrink-0 transition-colors"
+          onMouseDown={(e) => {
+            e.preventDefault();
+            onResizeStart(e.clientX);
+          }}
+        />
+      ) : null}
+      <div
+        className={`flex h-full min-h-0 flex-shrink-0 flex-col overflow-hidden transition-[width] duration-200 ease-out ${
+          panelOpen ? '' : 'w-0'
+        }`}
+        style={panelOpen ? { width: panelWidth } : undefined}
+      >
       <ConfirmDialog
         isOpen={deleteDialogOpen}
         title="Delete node?"
@@ -128,7 +145,7 @@ export function PropertiesPanel() {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 16, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className="flex h-full w-[320px] flex-col border-l border-zinc-800 bg-gray-900"
+            className="flex h-full w-full flex-col border-l border-zinc-800 bg-gray-900"
             style={{ borderLeftColor: accent }}
             aria-label="Node properties"
           >
@@ -186,7 +203,6 @@ export function PropertiesPanel() {
                 onChange={(v) => patch({ throughput: v })}
                 suffix="req/s"
                 infoText={`${glossaryText('Throughput', 'Requests per second this component can process.')} Typical PostgreSQL is ~5-20k req/s, Redis can exceed 100k req/s.`}
-                infoTarget={{ kind: 'term', term: 'Throughput' }}
               />
 
               <SliderInput
@@ -199,7 +215,6 @@ export function PropertiesPanel() {
                 onChange={(v) => patch({ latency: v })}
                 suffix="ms"
                 infoText={glossaryText('Latency', 'Time to process one request in milliseconds.')}
-                infoTarget={{ kind: 'term', term: 'Latency' }}
               />
 
               <SliderInput
@@ -211,7 +226,6 @@ export function PropertiesPanel() {
                 step={1000}
                 onChange={(v) => patch({ capacity: v })}
                 infoText={glossaryText('Capacity', 'Maximum load before performance degrades or requests drop.')}
-                infoTarget={{ kind: 'term', term: 'Capacity' }}
               />
 
               <div className="flex flex-col gap-1">
@@ -222,7 +236,11 @@ export function PropertiesPanel() {
                   >
                     Status
                   </label>
-                  <InfoTooltip text="Service health indicator. In simulation this is auto-derived from utilization." />
+                  <InfoTooltip
+                    title="Status"
+                    description="Service health indicator. In simulation this is auto-derived from utilization."
+                    side="left"
+                  />
                 </span>
                 <select
                   id={`${node.id}-status`}
@@ -253,7 +271,6 @@ export function PropertiesPanel() {
                     options={ALGORITHM_OPTIONS}
                     onChange={(v) => patch({ algorithm: v as LoadBalancerAlgorithm })}
                     infoText="Routing strategy for distributing requests across downstream targets."
-                    infoTarget={{ kind: 'term', term: 'Load Balancing' }}
                   />
                   <ToggleInput
                     id={`${node.id}-rate-limit`}
@@ -261,7 +278,6 @@ export function PropertiesPanel() {
                     checked={Boolean(node.data.rateLimiting)}
                     onChange={(c) => patch({ rateLimiting: c, rateLimitRps: c ? node.data.rateLimitRps ?? 1000 : null })}
                     infoText={glossaryText('Rate Limiting', 'Controls request frequency over a window to prevent overload.')}
-                    infoTarget={{ kind: 'term', term: 'Rate Limiting' }}
                   />
                   {node.data.rateLimiting ? (
                     <SliderInput
@@ -540,6 +556,7 @@ export function PropertiesPanel() {
         </motion.aside>
         ) : null}
       </AnimatePresence>
-    </div>
+      </div>
+    </>
   );
 }

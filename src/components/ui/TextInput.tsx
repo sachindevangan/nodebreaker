@@ -1,5 +1,4 @@
 import type { InputHTMLAttributes } from 'react';
-import type { KnowledgeTarget } from '@/store/useKnowledgeStore';
 import { InfoTooltip } from './InfoTooltip';
 
 export type TextInputProps = {
@@ -8,7 +7,6 @@ export type TextInputProps = {
   value: string;
   onChange: (value: string) => void;
   infoText?: string;
-  infoTarget?: KnowledgeTarget;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'value' | 'onChange'>;
 
 export function TextInput({
@@ -17,7 +15,6 @@ export function TextInput({
   value,
   onChange,
   infoText,
-  infoTarget,
   className = '',
   ...rest
 }: TextInputProps) {
@@ -27,7 +24,7 @@ export function TextInput({
         <label htmlFor={id} className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
           {label}
         </label>
-        {infoText ? <InfoTooltip text={infoText} target={infoTarget} /> : null}
+        {infoText ? <InfoTooltip title={label} description={infoText} side="left" /> : null}
       </span>
       <input
         id={id}
