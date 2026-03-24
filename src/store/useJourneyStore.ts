@@ -279,10 +279,9 @@ export const useJourneyStore = create<JourneyStore>((set, get) => ({
   },
 
   isStageUnlocked: (stageId) => {
-    const state = get();
     const stage = getJourneyStageById(stageId);
     if (!stage) return false;
-    return stage.prerequisites.every((req) => state.completedStages.has(req));
+    return true;
   },
 
   getStageProgress: (stageId) => {

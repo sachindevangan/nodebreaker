@@ -24,6 +24,8 @@ interface ChallengeStore {
   currentScore: number;
   requirementStatuses: Map<string, boolean>;
   hintsRevealed: number;
+  revealedHintIds: Set<string>;
+  revealedHintMessages: string[];
   startTime: number | null;
   completedChallenges: Map<string, CompletedChallenge>;
   isEvaluating: boolean;
@@ -63,6 +65,8 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
   currentScore: 0,
   requirementStatuses: new Map(),
   hintsRevealed: 0,
+  revealedHintIds: new Set(),
+  revealedHintMessages: [],
   startTime: null,
   completedChallenges: readCompleted(),
   isEvaluating: false,
@@ -83,6 +87,8 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
         currentScore: 0,
         requirementStatuses: new Map(),
         hintsRevealed: 0,
+        revealedHintIds: new Set(),
+        revealedHintMessages: [],
         startTime: Date.now(),
         lastResult: null,
         isHudMinimized: false,
@@ -115,12 +121,55 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
   },
 
   revealHint: () => {
-    const { activeChallenge, hintsRevealed } = get();
+    const { activeChallenge, requirementStatuses, revealedHintIds } = get();
     if (!activeChallenge) return;
-    if (hintsRevealed >= activeChallenge.hints.length) return;
+
+    const isStaticRequirement = (checkType: Challenge['requirements'][number]['check']['type']) =>
+      checkType === 'has_component' ||
+      checkType === 'has_redundancy' ||
+      checkType === 'no_single_point_of_failure' ||
+      checkType === 'max_component_count';
+
+    const allRequirements = activeChallenge.requirements;
+    const pending = allRequirements.filter((req) => !requirementStatuses.get(req.id));
+    const unrevealedPending = pending.filter((req) => !revealedHintIds.has(req.id));
+    const nextRequirement = unrevealedPending[0];
+
+    if (nextRequirement) {
+      set((state) => {
+        const nextIds = new Set(state.revealedHintIds);
+        nextIds.add(nextRequirement.id);
+        return {
+          revealedHintIds: nextIds,
+          revealedHintMessages: [...state.revealedHintMessages, nextRequirement.hint],
+          hintsRevealed: nextIds.size,
+          currentScore: Math.max(0, state.currentScore - 5),
+        };
+      });
+      return;
+    }
+
+    const allPassed = allRequirements.every((req) => requirementStatuses.get(req.id));
+    if (allPassed) {
+      set((state) => ({
+        revealedHintMessages: [...state.revealedHintMessages, 'All requirements met! Click Submit to see your score.'],
+      }));
+      return;
+    }
+
+    const staticPending = pending.filter((req) => isStaticRequirement(req.check.type));
+    if (staticPending.length === 0) {
+      set((state) => ({
+        revealedHintMessages: [
+          ...state.revealedHintMessages,
+          'Your components look good. Run the simulation to verify performance requirements.',
+        ],
+      }));
+      return;
+    }
+
     set((state) => ({
-      hintsRevealed: state.hintsRevealed + 1,
-      currentScore: Math.max(0, state.currentScore - 5),
+      revealedHintMessages: [...state.revealedHintMessages, 'All hints used'],
     }));
   },
 
@@ -146,6 +195,8 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
       startTime: null,
       requirementStatuses: new Map(),
       hintsRevealed: 0,
+      revealedHintIds: new Set(),
+      revealedHintMessages: [],
     });
   },
 
@@ -155,6 +206,8 @@ export const useChallengeStore = create<ChallengeStore>((set, get) => ({
       currentScore: 0,
       requirementStatuses: new Map(),
       hintsRevealed: 0,
+      revealedHintIds: new Set(),
+      revealedHintMessages: [],
       startTime: null,
       isHudMinimized: false,
     });

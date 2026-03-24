@@ -45,6 +45,7 @@ export function ChallengeHUD() {
   const activeChallenge = useChallengeStore((s) => s.activeChallenge);
   const requirementStatuses = useChallengeStore((s) => s.requirementStatuses);
   const hintsRevealed = useChallengeStore((s) => s.hintsRevealed);
+  const revealedHintMessages = useChallengeStore((s) => s.revealedHintMessages);
   const startTime = useChallengeStore((s) => s.startTime);
   const submitDesign = useChallengeStore((s) => s.submitDesign);
   const revealHint = useChallengeStore((s) => s.revealHint);
@@ -140,9 +141,9 @@ export function ChallengeHUD() {
               })}
             </div>
 
-            {hintsRevealed > 0 ? (
+            {revealedHintMessages.length > 0 ? (
               <div className="mt-3 rounded border border-amber-800/60 bg-amber-950/30 p-2">
-                {activeChallenge.hints.slice(0, hintsRevealed).map((hint, idx) => (
+                {revealedHintMessages.map((hint, idx) => (
                   <p key={hint} className="text-xs text-amber-100/90">
                     Hint {idx + 1}: {hint}
                   </p>
@@ -153,9 +154,8 @@ export function ChallengeHUD() {
             <div className="mt-3 flex items-center gap-2">
               <button
                 type="button"
-                disabled={hintsRevealed >= activeChallenge.hints.length}
                 onClick={revealHint}
-                className="inline-flex items-center gap-1 rounded-md border border-amber-800/60 bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-950/50 disabled:cursor-not-allowed disabled:opacity-40"
+                className="inline-flex items-center gap-1 rounded-md border border-amber-800/60 bg-amber-950/30 px-2.5 py-1.5 text-xs font-medium text-amber-100 hover:bg-amber-950/50"
               >
                 <Lightbulb className="h-3.5 w-3.5" strokeWidth={2} />
                 Hint (-5)

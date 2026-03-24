@@ -7,7 +7,6 @@ import {
   Layout,
   Layers,
   ListOrdered,
-  Lock,
   Server,
   ShieldAlert,
   TrendingUp,
@@ -130,7 +129,7 @@ export function JourneyMap({
 
         <div ref={scrollerRef} className="min-h-0 flex-1 overflow-auto px-4 py-8">
           <div className="mx-auto max-w-5xl">
-            {stageNodes.map(({ stage, completed, current, unlocked }) => {
+            {stageNodes.map(({ stage, completed, current }) => {
               const Icon = ICONS[stage.icon] ?? Server;
               const isOdd = stage.number % 2 === 1;
               const progress = getStageProgress(stage.id);
@@ -143,10 +142,10 @@ export function JourneyMap({
                   <div className="absolute left-1/2 top-0 -ml-px h-[140%] w-0.5 bg-zinc-700/70" />
                   <button
                     type="button"
-                    onClick={() => unlocked && setSelectedStage(stage)}
-                    className={`group relative z-10 flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                      unlocked ? 'border-zinc-700 bg-zinc-900/80 hover:border-zinc-500' : 'border-zinc-800 bg-zinc-900/40 opacity-60'
-                    } ${current ? 'ring-2 ring-blue-500/60' : ''}`}
+                    onClick={() => setSelectedStage(stage)}
+                    className={`group relative z-10 flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-3 text-left transition hover:border-zinc-500 ${
+                      current ? 'ring-2 ring-blue-500/60' : ''
+                    }`}
                     style={{ width: 'min(92%, 460px)' }}
                   >
                     <span
@@ -154,15 +153,10 @@ export function JourneyMap({
                         current ? 'h-20 w-20' : 'h-16 w-16'
                       } ${completed ? 'border-emerald-400 bg-emerald-600/20' : 'border-zinc-600 bg-zinc-900'} `}
                     >
-                      <Icon className="h-6 w-6" style={{ color: unlocked ? stage.color : '#71717a' }} />
+                      <Icon className="h-6 w-6" style={{ color: stage.color }} />
                       {completed ? (
                         <span className="absolute -right-1 -top-1 rounded-full bg-emerald-500 p-1">
                           <Check className="h-3 w-3 text-white" />
-                        </span>
-                      ) : null}
-                      {!unlocked ? (
-                        <span className="absolute -right-1 -top-1 rounded-full bg-zinc-800 p-1">
-                          <Lock className="h-3 w-3 text-zinc-300" />
                         </span>
                       ) : null}
                     </span>
@@ -172,7 +166,7 @@ export function JourneyMap({
                       <p className="truncate text-xs text-zinc-400">{stage.subtitle}</p>
                       <p className="mt-1 text-[11px] text-zinc-500">{progress}% complete</p>
                     </span>
-                    {current ? <span className="text-xs font-semibold text-blue-300">Continue →</span> : null}
+                    {current ? <span className="animate-pulse text-xs font-semibold text-blue-300">Continue →</span> : null}
                   </button>
                 </div>
               );

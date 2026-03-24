@@ -4,6 +4,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { scoreArchitecture } from '@/simulation/scorer';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useSimStore } from '@/store/useSimStore';
+import { useToastStore } from '@/store/useToastStore';
 
 type SessionSummary = {
   date: string;
@@ -78,6 +79,7 @@ export function InterviewTimer({ active, onActiveChange }: InterviewTimerProps) 
   const [hovered, setHovered] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [confirmStopOpen, setConfirmStopOpen] = useState(false);
+  const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [history, setHistory] = useState<SessionSummary[]>(() => readHistory());
   const [summary, setSummary] = useState<SessionSummary | null>(null);
 
@@ -250,6 +252,26 @@ export function InterviewTimer({ active, onActiveChange }: InterviewTimerProps) 
           setPaused(false);
         }}
       />
+      <ConfirmDialog
+        isOpen={confirmCloseOpen}
+        title="Close timer?"
+        message="The interview session will end without scoring."
+        confirmLabel="Close Timer"
+        cancelLabel="Cancel"
+        onConfirm={() => {
+          setConfirmCloseOpen(false);
+          setPaused(false);
+          setMinimized(false);
+          setHovered(false);
+          setSummary(null);
+          setRemainingSec(durationMin * 60);
+          onActiveChange(false);
+          useToastStore.getState().push({ kind: 'info', message: 'Interview ended' });
+        }}
+        onCancel={() => {
+          setConfirmCloseOpen(false);
+        }}
+      />
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -347,6 +369,15 @@ export function InterviewTimer({ active, onActiveChange }: InterviewTimerProps) 
               title="End interview (Esc)"
             >
               <Square className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmCloseOpen(true)}
+              className={`rounded-full p-1 text-gray-400 transition hover:bg-zinc-800 hover:text-white ${hovered ? 'opacity-100' : 'pointer-events-none w-0 opacity-0'}`}
+              aria-label="Close timer"
+              title="Close timer"
+            >
+              <X className="h-4 w-4" />
             </button>
           </div>
 
