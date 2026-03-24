@@ -1,5 +1,5 @@
 import { ArrowLeft, CheckCircle2, Lightbulb } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type JSX } from 'react';
 import type { JourneyStage, LearnBlock } from '@/constants/journey';
 import { useJourneyStore } from '@/store/useJourneyStore';
 
@@ -10,30 +10,83 @@ interface LearnViewProps {
 }
 
 function renderMarkdown(content: string) {
-  return content.split('\n').map((line, idx) => {
+  const lines = content.split('\n');
+  const out: JSX.Element[] = [];
+  for (let idx = 0; idx < lines.length; idx += 1) {
+    const line = lines[idx] ?? '';
+    const nextLine = lines[idx + 1] ?? '';
+    if (line.includes('|') && idx + 1 < lines.length && /^\|?[-\s|:]+\|?$/.test(nextLine.trim())) {
+      const header = line
+        .split('|')
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const rows: string[][] = [];
+      idx += 2;
+      while (idx < lines.length && (lines[idx] ?? '').includes('|')) {
+        rows.push(
+          (lines[idx] ?? '')
+            .split('|')
+            .map((c) => c.trim())
+            .filter(Boolean)
+        );
+        idx += 1;
+      }
+      idx -= 1;
+      out.push(
+        <div key={`table-${idx}`} className="overflow-x-auto">
+          <table className="w-full border-collapse rounded-md border border-zinc-700 text-left text-base">
+            <thead className="bg-zinc-900">
+              <tr>
+                {header.map((h) => (
+                  <th key={h} className="border border-zinc-700 px-3 py-2 font-semibold text-zinc-100">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rIdx) => (
+                <tr key={rIdx} className="bg-zinc-950/40">
+                  {row.map((cell, cIdx) => (
+                    <td key={`${rIdx}-${cIdx}`} className="border border-zinc-800 px-3 py-2 text-zinc-200">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      );
+      continue;
+    }
     if (line.startsWith('# ')) {
-      return (
+      out.push(
         <h2 key={idx} className="mt-8 text-2xl font-semibold text-zinc-100">
           {line.slice(2)}
         </h2>
       );
+      continue;
     }
     if (line.startsWith('## ')) {
-      return (
+      out.push(
         <h3 key={idx} className="mt-6 text-xl font-semibold text-zinc-100">
           {line.slice(3)}
         </h3>
       );
+      continue;
     }
     if (line.trim().startsWith('- ')) {
-      return (
+      out.push(
         <li key={idx} className="ml-6 list-disc text-lg leading-8 text-zinc-200">
           {line.replace(/^\-\s/, '')}
         </li>
       );
+      continue;
     }
     if (!line.trim()) {
-      return <div key={idx} className="h-3" />;
+      out.push(<div key={idx} className="h-3" />);
+      continue;
     }
     const withCode = line.split(/(`[^`]+`)/g).map((part, i) =>
       part.startsWith('`') && part.endsWith('`') ? (
@@ -56,12 +109,13 @@ function renderMarkdown(content: string) {
         )
       );
     });
-    return (
+    out.push(
       <p key={idx} className="text-lg leading-8 text-zinc-200">
         {nodes}
       </p>
     );
-  });
+  }
+  return out;
 }
 
 function DiagramBlock({ template }: { template?: string }) {

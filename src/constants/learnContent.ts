@@ -639,5 +639,559 @@ Watch the LB reroute traffic to remaining healthy services.`,
       },
     ],
   },
+  'stage-6': {
+    title: 'When Things Break',
+    estimatedMinutes: 12,
+    content: [
+      {
+        type: 'text',
+        content: `# Failure Is Not If, But When
+
+In distributed systems, things WILL break. Servers crash.
+Networks disconnect. Disks fill up. Databases corrupt. Cloud providers have outages.
+A squirrel chews through a fiber optic cable (this actually happened to Google in 2017).
+
+The question is not "how do I prevent failure?" - it's
+"how do I design systems that keep working DESPITE failure?"
+
+This mindset shift separates junior engineers from senior ones.
+Beginners design for the happy path. Experts design for what goes wrong.`,
+      },
+      {
+        type: 'text',
+        content: `# Single Point of Failure (SPOF)
+
+A Single Point of Failure is any component whose failure brings down the entire system.
+If you have:
+
+User -> Server -> Database
+
+Both the server AND the database are SPOFs.
+
+**How to find SPOFs:** For every component, ask:
+"What happens if this dies right now?"
+If the answer is "system goes down" - that is a SPOF.
+
+**How to eliminate SPOFs:** redundancy:
+- 1 server -> 2+ servers behind a load balancer
+- 1 database -> primary + replica(s)
+- 1 data center -> multi-region deployment
+- 1 load balancer -> pair of LBs with failover`,
+      },
+      {
+        type: 'analogy',
+        content:
+          'Think of an airplane. It has redundant engines, hydraulic systems, and backup controls. Flying is safe not because parts never fail, but because critical systems keep working during failure.',
+      },
+      {
+        type: 'text',
+        content: `# Redundancy Patterns
+
+**Active-Active**
+Both instances serve traffic at the same time.
+Pros: full utilization, near-instant failover.
+Cons: data synchronization complexity.
+
+**Active-Passive**
+One serves traffic, the other waits as standby.
+Pros: simpler.
+Cons: idle resources, slower failover.
+
+Rule of thumb:
+- Active-Active for stateless services
+- Active-Passive for strongly stateful components`,
+      },
+      {
+        type: 'text',
+        content: `# Health Checks and Failover
+
+**Health checks** detect broken components:
+- Shallow checks: process/port alive
+- Deep checks: can actually serve requests
+
+Typical failover flow:
+1. Health checks fail repeatedly
+2. Node marked unhealthy
+3. Traffic rerouted
+4. Alerts fire
+5. Node is restarted/replaced
+6. Traffic is gradually restored
+
+Key metrics:
+- **MTTR** (Mean Time To Recovery)
+- **MTBF** (Mean Time Between Failures)
+- **Availability = MTBF / (MTBF + MTTR)**`,
+      },
+      {
+        type: 'text',
+        content: `# The Nines of Availability
+
+Availability is measured in "nines":
+
+| Availability | Downtime/year | Downtime/month |
+|---|---|---|
+| 99% (two nines) | 3.65 days | 7.3 hours |
+| 99.9% (three nines) | 8.76 hours | 43.8 minutes |
+| 99.99% (four nines) | 52.6 minutes | 4.38 minutes |
+| 99.999% (five nines) | 5.26 minutes | 26.3 seconds |
+
+Most systems target 99.9% to 99.99%.
+Five nines is extremely expensive.
+
+Interview tip: ask "how many nines?" before designing.`,
+      },
+      {
+        type: 'text',
+        content: `# Circuit Breaker Pattern
+
+When a downstream service fails, sending more requests can worsen failure.
+Circuit breakers prevent cascading outages.
+
+States:
+- **Closed:** normal flow
+- **Open:** block calls quickly and return fallback/error
+- **Half-open:** allow limited probes before closing again
+
+This enables graceful degradation instead of full collapse.`,
+      },
+      {
+        type: 'interactive',
+        content: 'Break Things and Survive',
+        interactivePrompt: `Build: LB -> Service A + Service B -> Database
+
+Start simulation.
+Crash Service A and observe LB rerouting to Service B.
+
+Then crash Database and observe full failure.
+How would you remove the remaining SPOF?`,
+      },
+      {
+        type: 'quiz',
+        content: 'Failure Quiz',
+        quiz: {
+          question:
+            'Your system has 3 services behind a load balancer, each handling 33% traffic. One crashes. What happens?',
+          options: [
+            'System goes down immediately',
+            'LB removes failed node and splits traffic across remaining servers',
+            'LB keeps sending traffic to dead node forever',
+            'No traffic changes at all',
+          ],
+          correctIndex: 1,
+          explanation:
+            'With health checks, failed nodes are removed from rotation and traffic is redistributed to healthy nodes.',
+        },
+      },
+      {
+        type: 'quiz',
+        content: 'Availability Quiz',
+        quiz: {
+          question: 'Your SLA is 99.99% availability. Allowed downtime per month?',
+          options: ['43.8 minutes', '4.38 minutes', '26.3 seconds', '7.3 hours'],
+          correctIndex: 1,
+          explanation: '99.99% (four nines) corresponds to about 4.38 minutes of downtime per month.',
+        },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Failure is inevitable
+- SPOFs are reliability killers
+- Redundancy + health checks + failover are core
+- Circuit breakers prevent cascading failures
+- Availability targets ("nines") drive architecture`,
+      },
+    ],
+  },
+  'stage-7': {
+    title: 'Queues & Async Processing',
+    estimatedMinutes: 10,
+    content: [
+      {
+        type: 'text',
+        content: `# The Problem: Slow Work Blocks Fast Responses
+
+Some work is slow (image processing, video transcoding, emails, ML inference).
+If user requests wait for all of it, UX becomes unusable.
+
+Solution: respond fast for the user-facing action, and push heavy work to background workers.`,
+      },
+      {
+        type: 'text',
+        content: `# How Message Queues Work
+
+Queue flow:
+1. Producer writes message
+2. API responds quickly
+3. Consumer reads message
+4. Worker processes job
+5. Worker acknowledges completion
+
+Queues decouple producers and consumers, smoothing bursty load.`,
+      },
+      {
+        type: 'analogy',
+        content:
+          'A queue is like restaurant ticket rails: waiters keep taking orders while cooks process tickets at kitchen speed.',
+      },
+      {
+        type: 'text',
+        content: `# Delivery Guarantees
+
+**At-most-once:** fastest, may lose messages.
+**At-least-once:** most common, may duplicate processing.
+**Exactly-once:** expensive/complex, often approximated with dedupe.
+
+For at-least-once, make handlers **idempotent**.`,
+      },
+      {
+        type: 'text',
+        content: `# Backpressure
+
+If producers are permanently faster than consumers, queues grow without bound.
+Mitigate with:
+- queue limits
+- producer rate limiting
+- consumer auto-scaling
+- priority lanes
+
+Queues absorb spikes; they do not fix sustained capacity mismatch.`,
+      },
+      {
+        type: 'text',
+        content: `# Dead Letter Queues (DLQ)
+
+Poison messages that repeatedly fail should move to a DLQ after retry thresholds.
+Without a DLQ, one bad message can block useful progress and hide operational issues.`,
+      },
+      {
+        type: 'comparison',
+        content: 'Queue Technologies',
+        comparison: {
+          left: 'RabbitMQ / SQS',
+          leftItems: [
+            'Task queue semantics',
+            'Simple producer-consumer flow',
+            'Great for background jobs',
+            'Lower operational complexity',
+          ],
+          right: 'Kafka',
+          rightItems: [
+            'Durable event log semantics',
+            'Multiple consumer groups',
+            'Great for streaming + analytics',
+            'Higher throughput and complexity',
+          ],
+        },
+      },
+      {
+        type: 'interactive',
+        content: 'Queue as a Buffer',
+        interactivePrompt: `Build: Service -> Queue -> Database
+
+Simulate bursty traffic.
+Observe queue depth absorbing spikes while DB works at steady pace.
+Then consider what happens if average input still exceeds processing rate.`,
+      },
+      {
+        type: 'quiz',
+        content: 'Queue Quiz',
+        quiz: {
+          question: 'Need sub-100ms user response with 5s image processing. Best architecture?',
+          options: [
+            'Process image synchronously before response',
+            'Store upload, enqueue job, respond immediately',
+            'Use faster CPU only',
+            'Cache preprocessed images before upload',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Fast synchronous ACK + async queue worker is the standard pattern for slow background processing.',
+        },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Use queues to decouple and smooth load
+- Keep user-facing paths fast and synchronous
+- Push heavy work to async workers
+- Plan retries, idempotency, and DLQs`,
+      },
+    ],
+  },
+  'stage-8': {
+    title: 'Scaling to Millions',
+    estimatedMinutes: 12,
+    content: [
+      {
+        type: 'text',
+        content: `# Your App Just Went Viral
+
+Traffic jumps from hundreds to hundreds of thousands of requests per second.
+You must scale quickly and systematically.`,
+      },
+      {
+        type: 'comparison',
+        content: 'Vertical vs Horizontal Scaling',
+        comparison: {
+          left: 'Vertical Scaling (Scale Up)',
+          leftItems: [
+            'Bigger machine',
+            'Simple operationally',
+            'No code changes initially',
+            'Hard ceiling and SPOF risk',
+          ],
+          right: 'Horizontal Scaling (Scale Out)',
+          rightItems: [
+            'More machines',
+            'Requires statelessness + LB',
+            'Higher complexity',
+            'Better resilience and growth ceiling',
+          ],
+        },
+      },
+      {
+        type: 'text',
+        content: `# The Stateless Rule
+
+Horizontal scaling works best when app servers are stateless.
+Store sessions/state externally (Redis, DB, object store) so any instance can serve any request.`,
+      },
+      {
+        type: 'text',
+        content: `# Database Scaling
+
+Start with read replicas for read-heavy traffic.
+Use sharding when a single primary can no longer sustain throughput/storage.
+
+Sharding requires careful key choice and creates cross-shard query complexity.`,
+      },
+      {
+        type: 'text',
+        content: `# CDN: Bring Content Closer
+
+CDNs reduce latency and origin load by serving cached content from edge locations.
+Use for static assets and cacheable responses, not highly personalized volatile data.`,
+      },
+      {
+        type: 'text',
+        content: `# Back-of-Envelope Estimation
+
+Estimate:
+1. DAU/MAU
+2. Requests per second (average + peak multipliers)
+3. Storage growth
+4. Bandwidth
+
+These estimates justify architecture decisions in interviews.`,
+      },
+      {
+        type: 'interactive',
+        content: 'Scale Your System',
+        interactivePrompt: `Start: LB -> 1 Service -> DB
+Observe service bottleneck.
+
+Add multiple services behind LB.
+Then observe DB pressure and add cache.
+Follow the bottleneck as it moves through layers.`,
+      },
+      {
+        type: 'quiz',
+        content: 'Scaling Quiz',
+        quiz: {
+          question: '10M users, 20 req/day each. Peak design target is usually?',
+          options: ['~230 req/s', '~2,300 req/s', '~10,000 req/s', '~200M req/s'],
+          correctIndex: 2,
+          explanation:
+            'Average is around 2,300 req/s, and peak often reaches 3-5x average, around 10,000 req/s.',
+        },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Vertical scaling is fast but limited
+- Horizontal scaling is the long-term path
+- Stateless app tier is essential
+- Read replicas and sharding address DB limits
+- CDNs reduce latency at global scale`,
+      },
+    ],
+  },
+  'stage-9': {
+    title: 'The Full Design',
+    estimatedMinutes: 15,
+    content: [
+      {
+        type: 'text',
+        content: `# The System Design Interview Framework
+
+Use this flow:
+1. Clarify requirements
+2. Estimate scale
+3. Propose high-level architecture
+4. Deep dive one path/component
+5. Discuss bottlenecks and trade-offs`,
+      },
+      {
+        type: 'text',
+        content: `# Example: URL Shortener
+
+Requirements:
+- create short links
+- redirect quickly
+- collect analytics
+
+Typical high-level path:
+DNS -> CDN -> LB -> API -> Cache -> DB
+                           -> Queue -> Worker -> Analytics store`,
+      },
+      {
+        type: 'text',
+        content: `# Write and Read Flows
+
+Write flow: generate code, persist mapping, return short URL.
+Read flow: edge/cache lookup first, DB fallback, async analytics event emission.`,
+      },
+      {
+        type: 'text',
+        content: `# Trade-offs You Should Discuss
+
+- Consistency vs availability
+- SQL vs NoSQL
+- Cache freshness vs latency
+- Sync vs async processing
+- Monolith vs microservices`,
+      },
+      {
+        type: 'text',
+        content: `# What Interviewers Evaluate
+
+- Communication clarity
+- Structured thinking
+- Requirement and scale awareness
+- Trade-off literacy
+- Ability to go deep when asked`,
+      },
+      {
+        type: 'interactive',
+        content: 'Design a URL Shortener',
+        interactivePrompt: `Build a complete URL shortener architecture in the sandbox.
+Include edge caching, API layer, persistent store, and async analytics pipeline.
+Set realistic capacities and identify first bottleneck under load.`,
+      },
+      {
+        type: 'quiz',
+        content: 'Interview Quiz',
+        quiz: {
+          question: 'Interviewer asks to design chat. What should you do first?',
+          options: [
+            'Draw DB schema immediately',
+            'Clarify requirements and expected scale',
+            'Debate frameworks',
+            'Choose cloud vendor services first',
+          ],
+          correctIndex: 1,
+          explanation: 'Requirements and scale assumptions drive architecture. Ask first, design second.',
+        },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Follow a repeatable framework
+- Ask clarifying questions before drawing
+- Use scale estimates to justify architecture
+- Explain trade-offs explicitly`,
+      },
+    ],
+  },
+  'stage-10': {
+    title: 'Chaos Engineering',
+    estimatedMinutes: 10,
+    content: [
+      {
+        type: 'text',
+        content: `# Breaking Things on Purpose
+
+Chaos engineering validates resilience by injecting failures in controlled ways.
+Confidence comes from evidence, not assumptions.`,
+      },
+      {
+        type: 'text',
+        content: `# Core Principles
+
+1. Define a hypothesis
+2. Minimize blast radius
+3. Observe with strong telemetry
+4. Automate recurring experiments
+5. Fix and institutionalize learnings`,
+      },
+      {
+        type: 'text',
+        content: `# Types of Experiments
+
+- Infrastructure: node/zone outages
+- Network: latency, packet loss, partitions
+- Application: dependency errors/timeouts
+- Data/state: corruption, lag, clock skew`,
+      },
+      {
+        type: 'text',
+        content: `# Graceful Degradation
+
+Goal is not "never fail."
+Goal is "fail partially and recover quickly."
+
+Use timeouts, retries with backoff, circuit breakers, and fallbacks to avoid cascades.`,
+      },
+      {
+        type: 'text',
+        content: `# Game Days
+
+Run planned reliability drills:
+plan scenario -> execute -> monitor -> recover -> retrospective.
+This builds response muscle memory and improves runbooks.`,
+      },
+      {
+        type: 'interactive',
+        content: 'Run a Chaos Experiment',
+        interactivePrompt: `Build a resilient topology with redundancy.
+Inject failures one at a time:
+- crash one service
+- add cache latency
+- crash primary DB
+
+Compare observed behavior to your hypotheses and redesign where needed.`,
+      },
+      {
+        type: 'quiz',
+        content: 'Chaos Engineering Quiz',
+        quiz: {
+          question: 'Why run Chaos Monkey-style failures in production?',
+          options: [
+            'To reduce infra costs',
+            'To verify resilience mechanisms under real conditions',
+            'To replace staging tests entirely',
+            'To detect syntax bugs',
+          ],
+          correctIndex: 1,
+          explanation:
+            'Controlled production experiments validate that failover and resilience mechanisms actually work under real traffic.',
+        },
+      },
+      {
+        type: 'text',
+        content: `# Key Takeaways
+
+- Chaos engineering builds confidence via experiments
+- Start with low-risk blast radius
+- Prefer graceful degradation over catastrophic failure
+- Feed findings back into architecture and operations`,
+      },
+    ],
+  },
 };
 
