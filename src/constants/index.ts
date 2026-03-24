@@ -1,5 +1,6 @@
 export * from './chaosEvents';
 export * from './components';
+export * from './curriculum';
 export * from './glossary';
 export * from './knowledge';
 export * from './templates';

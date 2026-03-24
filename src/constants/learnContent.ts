@@ -1,4 +1,17 @@
-import type { LearnSection } from './journey';
+export interface LearnBlock {
+  type: 'text' | 'diagram' | 'interactive' | 'analogy' | 'comparison' | 'quiz';
+  content: string;
+  diagramTemplate?: string;
+  interactivePrompt?: string;
+  comparison?: { left: string; leftItems: string[]; right: string; rightItems: string[] };
+  quiz?: { question: string; options: string[]; correctIndex: number; explanation: string };
+}
+
+export interface LearnSection {
+  title: string;
+  content: LearnBlock[];
+  estimatedMinutes: number;
+}
 
 export const LEARN_CONTENT_BY_STAGE: Record<string, LearnSection> = {
   'stage-1': {

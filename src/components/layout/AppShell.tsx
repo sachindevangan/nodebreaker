@@ -7,7 +7,6 @@ import {
   ChallengeHUD,
   ChallengeLauncher,
   ChallengeResults,
-  GlossaryModal,
   InterviewTimer,
   KnowledgePanel,
   MetricsDashboard,
@@ -42,13 +41,20 @@ import { encodeDesignToShareUrl, isShareUrlTooLong } from '@/utils/sharing';
 import { Header } from './Header';
 
 interface AppShellProps {
-  currentView?: 'journey' | 'sandbox';
-  onSwitchView?: (view: 'journey' | 'sandbox') => void;
-  onOpenCards?: () => void;
+  currentView?: 'academy' | 'sandbox';
+  onSwitchView?: (view: 'academy' | 'sandbox') => void;
+  onOpenTips?: () => void;
+  onBackToAcademy?: () => void;
   overlay?: ReactNode;
 }
 
-export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, overlay }: AppShellProps) {
+export function AppShell({
+  currentView = 'sandbox',
+  onSwitchView,
+  onOpenTips,
+  onBackToAcademy,
+  overlay,
+}: AppShellProps) {
   const openGlossary = useKnowledgeStore((s) => s.openGlossary);
   const startChallenge = useChallengeStore((s) => s.startChallenge);
   const lastResult = useChallengeStore((s) => s.lastResult);
@@ -227,7 +233,9 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
         <Header
           currentView={currentView}
           onSwitchView={onSwitchView}
-          onOpenCards={onOpenCards}
+          onOpenTips={onOpenTips}
+          onBackToAcademy={onBackToAcademy}
+          hideCanvasTools={false}
           shortcutsOpen={shortcutsOpen}
           onShortcutsOpenChange={setShortcutsOpen}
           onTemplates={() => setTemplatesOpen(true)}
@@ -324,7 +332,6 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
             }}
           />
         </div>
-        <GlossaryModal />
         <ToastViewport />
         <ChallengeResults
           onRetry={() => {

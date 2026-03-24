@@ -1,15 +1,13 @@
 import {
   BookOpen,
-  GraduationCap,
   Github,
+  GraduationCap,
   Keyboard,
-  Layers,
   LayoutTemplate,
-  Map,
+  Lightbulb,
   Moon,
   PenTool,
   Sun,
-  Trophy,
   Trash2,
   Undo2,
   Redo2,
@@ -17,6 +15,7 @@ import {
   Upload,
   X,
   Zap,
+  Trophy,
 } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -46,10 +45,15 @@ const ghostBtn =
 const ghostBtnRed =
   'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-red-900/50 hover:bg-red-950/40 hover:text-red-200';
 
+const pillInner =
+  'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors';
+
 export interface HeaderProps {
-  currentView?: 'journey' | 'sandbox';
-  onSwitchView?: (view: 'journey' | 'sandbox') => void;
-  onOpenCards?: () => void;
+  currentView?: 'academy' | 'sandbox';
+  onSwitchView?: (view: 'academy' | 'sandbox') => void;
+  onOpenTips?: () => void;
+  onBackToAcademy?: () => void;
+  hideCanvasTools?: boolean;
   shortcutsOpen: boolean;
   onShortcutsOpenChange: (open: boolean) => void;
   onTemplates: () => void;
@@ -70,7 +74,9 @@ export interface HeaderProps {
 export function Header({
   currentView = 'sandbox',
   onSwitchView,
-  onOpenCards,
+  onOpenTips,
+  onBackToAcademy,
+  hideCanvasTools = false,
   shortcutsOpen,
   onShortcutsOpenChange,
   onTemplates,
@@ -92,6 +98,8 @@ export function Header({
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
+  const showTools = !hideCanvasTools;
+
   return (
     <>
       <ConfirmDialog
@@ -105,206 +113,219 @@ export function Header({
         }}
         onCancel={() => setResetConfirmOpen(false)}
       />
-      <header className="flex h-12 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--header-bg)] px-3 sm:px-4">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--header-bg)] px-3 sm:gap-4 sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
           <Zap className="h-5 w-5 shrink-0 text-cyan-400" strokeWidth={2} aria-hidden />
           <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--text)]">
-              NodeBreaker
-            </h1>
+            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--text)]">NodeBreaker</h1>
           </div>
         </div>
 
-        <nav
-          className="hidden items-center justify-center gap-1 md:flex md:flex-1"
-          aria-label="Design actions"
-        >
+        <nav className="hidden min-w-0 flex-[2] items-center justify-center gap-1 md:flex" aria-label="Main">
           {onSwitchView ? (
-            <>
+            <div className="inline-flex items-center rounded-full border border-[var(--border)] p-0.5">
               <button
                 type="button"
-                className={`${ghostBtn} ${currentView === 'journey' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
-                onClick={() => onSwitchView('journey')}
-                title="Journey"
+                className={`${pillInner} ${
+                  currentView === 'academy'
+                    ? 'bg-[var(--surface-hover)] text-[var(--text)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                }`}
+                onClick={() => onSwitchView('academy')}
+                title="Academy"
               >
-                <Map className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Journey</span>
+                <BookOpen className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
+                <span>Academy</span>
               </button>
               <button
                 type="button"
-                className={`${ghostBtn} ${currentView === 'sandbox' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
+                className={`${pillInner} ${
+                  currentView === 'sandbox'
+                    ? 'bg-[var(--surface-hover)] text-[var(--text)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                }`}
                 onClick={() => onSwitchView('sandbox')}
                 title="Sandbox"
               >
-                <PenTool className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <PenTool className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 <span>Sandbox</span>
               </button>
-              {onOpenCards ? (
-                <button type="button" className={ghostBtn} onClick={onOpenCards} title="Interview cards">
-                  <Layers className="h-4 w-4 shrink-0" strokeWidth={2} />
-                  <span>Cards</span>
-                </button>
-              ) : null}
+            </div>
+          ) : null}
+          {showTools ? (
+            <>
               <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={undo}
+                disabled={!canUndo}
+                title="Undo"
+                aria-label="Undo"
+              >
+                <Undo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="hidden lg:inline">Undo</span>
+              </button>
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={redo}
+                disabled={!canRedo}
+                title="Redo"
+                aria-label="Redo"
+              >
+                <Redo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="hidden lg:inline">Redo</span>
+              </button>
+              <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
+              <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
+                <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Import</span>
+              </button>
+              <ExportMenu onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
+              <button
+                type="button"
+                className={ghostBtnRed}
+                onClick={() => setResetConfirmOpen(true)}
+                title="Reset canvas"
+                aria-label="Reset canvas"
+              >
+                <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span className="hidden lg:inline">Reset</span>
+              </button>
+              <div className="mx-1 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={() => onShortcutsOpenChange(true)}
+                title="Keyboard shortcuts"
+              >
+                <Keyboard className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Shortcuts</span>
+              </button>
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={onTutorials}
+                title="Tutorials"
+                disabled={interviewModeActive}
+              >
+                <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Tutorials</span>
+              </button>
+              <button
+                type="button"
+                className={ghostBtn}
+                onClick={onChallenges}
+                title="Challenges"
+                disabled={interviewModeActive}
+              >
+                <Trophy className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Challenges</span>
+              </button>
+              <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
+                <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Templates</span>
+              </button>
+              <button type="button" className={ghostBtn} onClick={onShare} title="Share design">
+                <Share2 className="h-4 w-4 shrink-0" strokeWidth={2} />
+                <span>Share</span>
+              </button>
+              {extraActions}
             </>
           ) : null}
-          <button
-            type="button"
-            className={ghostBtn}
-            onClick={undo}
-            disabled={!canUndo}
-            title="Undo"
-            aria-label="Undo"
-          >
-            <Undo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden lg:inline">Undo</span>
-          </button>
-          <button
-            type="button"
-            className={ghostBtn}
-            onClick={redo}
-            disabled={!canRedo}
-            title="Redo"
-            aria-label="Redo"
-          >
-            <Redo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden lg:inline">Redo</span>
-          </button>
-          <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
-          <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
-            <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Import</span>
-          </button>
-          <ExportMenu onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
-          <button
-            type="button"
-            className={ghostBtnRed}
-            onClick={() => setResetConfirmOpen(true)}
-            title="Reset canvas"
-            aria-label="Reset canvas"
-          >
-            <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden lg:inline">Reset</span>
-          </button>
-          <div className="mx-1 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
-          <button
-            type="button"
-            className={ghostBtn}
-            onClick={() => onShortcutsOpenChange(true)}
-            title="Keyboard shortcuts"
-          >
-            <Keyboard className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Shortcuts</span>
-          </button>
+        </nav>
+
+        <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
+          {currentView === 'sandbox' && onBackToAcademy ? (
+            <button
+              type="button"
+              onClick={onBackToAcademy}
+              className="mr-1 hidden text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text)] sm:inline"
+            >
+              Back to Academy
+            </button>
+          ) : null}
+          {onOpenTips ? (
+            <button type="button" className={ghostBtn} onClick={onOpenTips} title="Interview tips">
+              <Lightbulb className="h-4 w-4 shrink-0" strokeWidth={2} />
+              <span className="hidden lg:inline">Tips</span>
+            </button>
+          ) : null}
           <button
             type="button"
             className={`${ghostBtn} px-2`}
             onClick={onOpenGlossary}
-            title="Learn glossary"
-            aria-label="Learn glossary"
+            title="Glossary"
+            aria-label="Glossary"
           >
             <BookOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
           </button>
-          <button type="button" className={ghostBtn} onClick={onTutorials} title="Tutorials" disabled={interviewModeActive}>
-            <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Tutorials</span>
-          </button>
-          <button type="button" className={ghostBtn} onClick={onChallenges} title="Challenges" disabled={interviewModeActive}>
-            <Trophy className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Challenges</span>
-          </button>
-          <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
-            <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Templates</span>
-          </button>
-          <button type="button" className={ghostBtn} onClick={onShare} title="Share design">
-            <Share2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span>Share</span>
-          </button>
-          {extraActions}
-        </nav>
 
-        <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
           <div className="flex items-center gap-0.5 md:hidden">
-            <button
-              type="button"
-              className={`${ghostBtn} px-2`}
-              onClick={undo}
-              disabled={!canUndo}
-              aria-label="Undo"
-            >
-              <Undo2 className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button
-              type="button"
-              className={`${ghostBtn} px-2`}
-              onClick={redo}
-              disabled={!canRedo}
-              aria-label="Redo"
-            >
-              <Redo2 className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
-              <Upload className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <ExportMenu compact onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
-            <button
-              type="button"
-              className={`${ghostBtnRed} px-2`}
-              onClick={() => setResetConfirmOpen(true)}
-              aria-label="Reset canvas"
-            >
-              <Trash2 className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button
-              type="button"
-              className={`${ghostBtn} px-2`}
-              onClick={() => onShortcutsOpenChange(true)}
-              aria-label="Shortcuts"
-            >
-              <Keyboard className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenGlossary} aria-label="Learn">
-              <BookOpen className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials" disabled={interviewModeActive}>
-              <GraduationCap className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges" disabled={interviewModeActive}>
-              <Trophy className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
-              <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
-            </button>
-            <button type="button" className={`${ghostBtn} px-2`} onClick={onShare} aria-label="Share design">
-              <Share2 className="h-4 w-4" strokeWidth={2} />
-            </button>
-          {onSwitchView ? (
-            <>
-              <button
-                type="button"
-                className={`${ghostBtn} px-2 ${currentView === 'journey' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
-                onClick={() => onSwitchView('journey')}
-                aria-label="Journey"
-              >
-                <Map className="h-4 w-4" strokeWidth={2} />
-              </button>
-              <button
-                type="button"
-                className={`${ghostBtn} px-2 ${currentView === 'sandbox' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
-                onClick={() => onSwitchView('sandbox')}
-                aria-label="Sandbox"
-              >
-                <PenTool className="h-4 w-4" strokeWidth={2} />
-              </button>
-              {onOpenCards ? (
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onOpenCards} aria-label="Cards">
-                  <Layers className="h-4 w-4" strokeWidth={2} />
+            {showTools ? (
+              <>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={undo} disabled={!canUndo} aria-label="Undo">
+                  <Undo2 className="h-4 w-4" strokeWidth={2} />
                 </button>
-              ) : null}
-            </>
-          ) : null}
-          {extraActions}
+                <button type="button" className={`${ghostBtn} px-2`} onClick={redo} disabled={!canRedo} aria-label="Redo">
+                  <Redo2 className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
+                  <Upload className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <ExportMenu compact onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
+                <button
+                  type="button"
+                  className={`${ghostBtnRed} px-2`}
+                  onClick={() => setResetConfirmOpen(true)}
+                  aria-label="Reset canvas"
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  className={`${ghostBtn} px-2`}
+                  onClick={() => onShortcutsOpenChange(true)}
+                  aria-label="Shortcuts"
+                >
+                  <Keyboard className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials" disabled={interviewModeActive}>
+                  <GraduationCap className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges" disabled={interviewModeActive}>
+                  <Trophy className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
+                  <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button type="button" className={`${ghostBtn} px-2`} onClick={onShare} aria-label="Share design">
+                  <Share2 className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </>
+            ) : null}
+            {onSwitchView ? (
+              <div className="inline-flex rounded-full border border-[var(--border)] p-0.5">
+                <button
+                  type="button"
+                  className={`${pillInner} px-2 ${currentView === 'academy' ? 'bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
+                  onClick={() => onSwitchView('academy')}
+                  aria-label="Academy"
+                >
+                  <BookOpen className="h-4 w-4" strokeWidth={2} />
+                </button>
+                <button
+                  type="button"
+                  className={`${pillInner} px-2 ${currentView === 'sandbox' ? 'bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
+                  onClick={() => onSwitchView('sandbox')}
+                  aria-label="Sandbox"
+                >
+                  <PenTool className="h-4 w-4" strokeWidth={2} />
+                </button>
+              </div>
+            ) : null}
+            {extraActions}
           </div>
           <button
             type="button"

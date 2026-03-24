@@ -1,3 +1,4 @@
+export { useAcademyStore } from './useAcademyStore';
 export { useChaosStore } from './useChaosStore';
 export { useChallengeStore } from './useChallengeStore';
 export { useConfirmStore } from './useConfirmStore';

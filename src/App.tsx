@@ -1,56 +1,66 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AcademyDemoOverlay, AcademyPage, InterviewTips, TopicPage } from '@/components/academy';
 import { AppShell } from '@/components/layout';
-import { BuildView, InterviewCardModal, InterviewCards, JourneyMap, LearnView } from '@/components/journey';
+import { Header } from '@/components/layout/Header';
 import { GlobalConfirmDialog } from '@/components/ui';
-import type { JourneyStage } from '@/constants/journey';
-import { JOURNEY_STAGES } from '@/constants/journey';
-import { useChallengeStore } from '@/store/useChallengeStore';
+import { GlossaryModal } from '@/components/panels/GlossaryModal';
+import type { SimulatorDemo } from '@/constants/curriculum';
+import { useAcademyStore } from '@/store/useAcademyStore';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
-import { useJourneyStore } from '@/store/useJourneyStore';
+import { useKnowledgeStore } from '@/store/useKnowledgeStore';
 import { useSimStore } from '@/store/useSimStore';
 import { useThemeStore } from '@/store/useThemeStore';
 import { useToastStore } from '@/store/useToastStore';
-import { useTutorialStore } from '@/store/useTutorialStore';
+import { parseChaosEventType } from '@/utils/academyChaos';
+import { buildGraphFromSimulatorDemo } from '@/utils/academyDemoGraph';
+import { getEntryNodeIds } from '@/utils/graph';
 import { decodeSharedDesign } from '@/utils/sharing';
+
+interface DemoSession {
+  topicId: string;
+  instruction: string;
+  demo?: SimulatorDemo;
+}
+
+function launchSandboxFromTopic(opts: { topicId: string; instruction: string; demo?: SimulatorDemo }): void {
+  useChaosStore.getState().clearAllChaos();
+  useSimStore.getState().stopSession();
+  useHistoryStore.getState().clear();
+
+  const demo = opts.demo;
+  if (demo && (demo.templateId || (demo.setupNodes?.length ?? 0) > 0)) {
+    const { nodes, edges } = buildGraphFromSimulatorDemo(demo);
+    useFlowStore.getState().replaceGraph(nodes, edges);
+    if (demo.simulationAutoStart) {
+      useSimStore.getState().startSession();
+      const chaosType = demo.chaosToInject ? parseChaosEventType(demo.chaosToInject) : null;
+      if (chaosType) {
+        const { nodes: n, edges: e } = useFlowStore.getState();
+        const entry = getEntryNodeIds(n, e)[0];
+        if (entry) {
+          useChaosStore.getState().injectChaos(chaosType, entry);
+        }
+      }
+    }
+  } else {
+    useFlowStore.getState().replaceGraph([], []);
+  }
+}
+
+const noop = (): void => {};
 
 export default function App() {
   const theme = useThemeStore((s) => s.theme);
-  const [currentView, setCurrentView] = useState<'journey' | 'sandbox'>('journey');
-  const [activeLearnStage, setActiveLearnStage] = useState<JourneyStage | null>(null);
-  const [activeBuildStage, setActiveBuildStage] = useState<JourneyStage | null>(null);
-  const [cardsOpen, setCardsOpen] = useState(false);
-  const [collectedCardStage, setCollectedCardStage] = useState<JourneyStage | null>(null);
-  const [cardModalOpen, setCardModalOpen] = useState(false);
-  const [learnSandboxState, setLearnSandboxState] = useState<{ stage: JourneyStage; prompt: string } | null>(null);
+  const [view, setView] = useState<'academy' | 'sandbox'>('academy');
+  const [topicId, setTopicId] = useState<string | null>(null);
+  const [demoSession, setDemoSession] = useState<DemoSession | null>(null);
+  const [tipsOpen, setTipsOpen] = useState(false);
 
-  const completeTutorialPart = useJourneyStore((s) => s.completeTutorial);
-  const completeChallengePart = useJourneyStore((s) => s.completeChallenge);
-  const collectInterviewCard = useJourneyStore((s) => s.collectInterviewCard);
-  const lastXPGain = useJourneyStore((s) => s.lastXPGain);
-  const clearXPGain = useJourneyStore((s) => s.clearXPGain);
-
-  const completedTutorials = useTutorialStore((s) => s.completedTutorials);
-  const completedChallenges = useChallengeStore((s) => s.completedChallenges);
-  const startTutorial = useTutorialStore((s) => s.startTutorial);
-  const startChallenge = useChallengeStore((s) => s.startChallenge);
-
-  const stageByTutorialId = useMemo(() => {
-    const pairs: Array<[string, string]> = JOURNEY_STAGES.filter((stage) => stage.parts.tutorial).map((stage) => [
-      stage.parts.tutorial!,
-      stage.id,
-    ]);
-    return new Map<string, string>(pairs);
-  }, []);
-
-  const stageByChallengeId = useMemo(() => {
-    const pairs: Array<[string, string]> = JOURNEY_STAGES.filter((stage) => stage.parts.challenge).map((stage) => [
-      stage.parts.challenge!,
-      stage.id,
-    ]);
-    return new Map<string, string>(pairs);
-  }, []);
+  const lastXPGain = useAcademyStore((s) => s.lastXPGain);
+  const clearXPGain = useAcademyStore((s) => s.clearXPGain);
+  const openGlossary = useKnowledgeStore((s) => s.openGlossary);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -76,7 +86,9 @@ export default function App() {
       kind: 'success',
       message: `Loaded shared design: ${decoded.name}`,
     });
-    setCurrentView('sandbox');
+    setView('sandbox');
+    setTopicId(null);
+    setDemoSession(null);
     params.delete('d');
     const next = params.toString();
     const cleanUrl = `${window.location.pathname}${next ? `?${next}` : ''}${window.location.hash}`;
@@ -84,112 +96,85 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    for (const tutorialId of completedTutorials) {
-      const stageId = stageByTutorialId.get(tutorialId);
-      if (stageId) completeTutorialPart(stageId);
-    }
-  }, [completedTutorials, stageByTutorialId, completeTutorialPart]);
-
-  useEffect(() => {
-    for (const challengeId of completedChallenges.keys()) {
-      const stageId = stageByChallengeId.get(challengeId);
-      if (stageId) completeChallengePart(stageId);
-    }
-  }, [completedChallenges, stageByChallengeId, completeChallengePart]);
-
-  useEffect(() => {
     if (!lastXPGain) return;
     const timeout = window.setTimeout(() => clearXPGain(), 1800);
     return () => window.clearTimeout(timeout);
   }, [lastXPGain, clearXPGain]);
 
-  if (activeLearnStage) {
-    return (
-      <>
-        <LearnView
-          stage={activeLearnStage}
-          onBack={() => setActiveLearnStage(null)}
-          onTryInSandbox={(prompt) => {
-            setLearnSandboxState({ stage: activeLearnStage, prompt });
-            setActiveLearnStage(null);
-            setCurrentView('sandbox');
-          }}
-        />
-        <GlobalConfirmDialog />
-      </>
-    );
-  }
+  const shell = topicId ? (
+    <TopicPage
+      topicId={topicId}
+      onBack={() => setTopicId(null)}
+      onNavigateTopic={(id) => setTopicId(id)}
+      onGoSandbox={(opts) => {
+        launchSandboxFromTopic(opts);
+        setDemoSession({
+          topicId: opts.topicId,
+          instruction: opts.instruction,
+          demo: opts.demo,
+        });
+        setTopicId(null);
+        setView('sandbox');
+      }}
+    />
+  ) : view === 'academy' ? (
+    <div className="flex min-h-screen flex-col bg-[var(--bg)]">
+      <Header
+        currentView="academy"
+        onSwitchView={(v) => {
+          setView(v);
+          if (v === 'academy') setDemoSession(null);
+        }}
+        onOpenTips={() => setTipsOpen(true)}
+        hideCanvasTools
+        shortcutsOpen={false}
+        onShortcutsOpenChange={noop}
+        onTemplates={noop}
+        onTutorials={noop}
+        onChallenges={noop}
+        onExportJson={noop}
+        onExportPng={noop}
+        onExportSvg={noop}
+        onShare={noop}
+        onImportClick={noop}
+        onResetCanvas={noop}
+        onOpenGlossary={openGlossary}
+      />
+      <AcademyPage onOpenTopic={(id) => setTopicId(id)} onSkipToSandbox={() => setView('sandbox')} />
+    </div>
+  ) : (
+    <AppShell
+      currentView={view}
+      onSwitchView={(v) => {
+        setView(v);
+        if (v === 'academy') setDemoSession(null);
+      }}
+      onOpenTips={() => setTipsOpen(true)}
+      onBackToAcademy={() => {
+        setView('academy');
+        setDemoSession(null);
+      }}
+      overlay={
+        demoSession ? (
+          <AcademyDemoOverlay
+            topicId={demoSession.topicId}
+            instruction={demoSession.instruction}
+            onBackToTopic={() => {
+              setView('academy');
+              setTopicId(demoSession.topicId);
+              setDemoSession(null);
+            }}
+          />
+        ) : null
+      }
+    />
+  );
 
   return (
     <>
-      {currentView === 'journey' ? (
-        <JourneyMap
-          onOpenLearn={(stage) => setActiveLearnStage(stage)}
-          onOpenBuild={(stage) => {
-            setActiveBuildStage(stage);
-            setCurrentView('sandbox');
-          }}
-          onOpenSandbox={() => setCurrentView('sandbox')}
-          onOpenCards={() => setCardsOpen(true)}
-          onStartTutorial={(tutorialId) => {
-            setCurrentView('sandbox');
-            startTutorial(tutorialId);
-          }}
-          onStartChallenge={(challengeId) => {
-            setCurrentView('sandbox');
-            startChallenge(challengeId);
-          }}
-          onCollectCard={(stage) => {
-            collectInterviewCard(stage.id);
-            setCollectedCardStage(stage);
-            setCardModalOpen(true);
-          }}
-        />
-      ) : (
-        <AppShell
-          currentView={currentView}
-          onSwitchView={setCurrentView}
-          onOpenCards={() => setCardsOpen(true)}
-          overlay={
-            activeBuildStage ? (
-              <BuildView
-                stage={activeBuildStage}
-                onBackToJourney={() => {
-                  setActiveBuildStage(null);
-                  setCurrentView('journey');
-                }}
-              />
-            ) : learnSandboxState ? (
-              <div className="pointer-events-none fixed inset-0 z-[160]">
-                <div className="pointer-events-auto absolute left-4 top-4 max-w-sm rounded-xl border border-cyan-700/50 bg-zinc-900/95 p-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActiveLearnStage(learnSandboxState.stage);
-                      setCurrentView('journey');
-                      setLearnSandboxState(null);
-                    }}
-                    className="mb-3 rounded-md border border-zinc-700 px-2 py-1 text-xs text-zinc-200 hover:bg-zinc-800"
-                  >
-                    Back to Learn
-                  </button>
-                  <h3 className="text-sm font-semibold text-cyan-200">Try this in the Sandbox</h3>
-                  <p className="mt-2 whitespace-pre-line text-sm text-zinc-200">{learnSandboxState.prompt}</p>
-                </div>
-              </div>
-            ) : null
-          }
-        />
-      )}
-      {cardsOpen ? <InterviewCards onClose={() => setCardsOpen(false)} /> : null}
-      <InterviewCardModal
-        stage={collectedCardStage}
-        isOpen={cardModalOpen}
-        onClose={() => {
-          setCardModalOpen(false);
-          setCollectedCardStage(null);
-        }}
-      />
+      {shell}
+      <GlossaryModal />
+      <InterviewTips isOpen={tipsOpen} onClose={() => setTipsOpen(false)} />
       {lastXPGain > 0 ? (
         <div className="pointer-events-none fixed right-6 top-16 z-[180] rounded-full border border-emerald-500/50 bg-emerald-950/80 px-3 py-1 text-xs font-semibold text-emerald-200">
           +{lastXPGain} XP!
