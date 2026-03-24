@@ -19,7 +19,7 @@ export type BaseNodeProps = NodeProps<FlowNode> & {
 };
 
 const plusHandleClass =
-  '!pointer-events-none !z-[60] !flex !h-5 !w-5 !min-h-[20px] !min-w-[20px] !items-center !justify-center !rounded-full !border-2 !border-zinc-600 !bg-zinc-700 !cursor-crosshair !opacity-0 !shadow-sm !transition-all !duration-200 group-hover:!pointer-events-auto group-hover:!opacity-100 hover:!border-[var(--nb-accent)] hover:!bg-zinc-600';
+  '!pointer-events-none !z-[60] !flex !h-5 !w-5 !min-h-[20px] !min-w-[20px] !items-center !justify-center !rounded-full !border-2 !border-[var(--node-border)] !bg-[var(--surface-hover)] !cursor-crosshair !opacity-0 !shadow-sm !transition-all !duration-200 group-hover:!pointer-events-auto group-hover:!opacity-100 hover:!border-[var(--nb-accent)] hover:!bg-[var(--surface)]';
 
 /** Anchor handles to the card box (half in / half out on the border). */
 const HANDLE_ANCHOR = {
@@ -67,7 +67,7 @@ function PlusHandle({
       position={position}
       className={`${plusHandleClass} ${HANDLE_ANCHOR[anchor]} hover:!text-[var(--nb-accent)]`}
     >
-      <Plus className="pointer-events-none h-3 w-3 text-zinc-200" strokeWidth={2.5} />
+      <Plus className="pointer-events-none h-3 w-3 text-[var(--text)]" strokeWidth={2.5} />
     </Handle>
   );
 }
@@ -131,7 +131,7 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
       }}
     >
       {showTooltip && type ? (
-        <div className="pointer-events-auto absolute -top-12 left-1/2 z-[90] w-64 -translate-x-1/2 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-2 text-[11px] text-zinc-100 shadow-lg">
+        <div className="pointer-events-auto absolute -top-12 left-1/2 z-[90] w-64 -translate-x-1/2 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-[11px] text-[var(--text)] shadow-lg">
           {data.label}: {knowledgeSummary} Click for details.
           <button
             type="button"
@@ -152,7 +152,7 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
         </span>
       ) : null}
       <div
-        className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-zinc-900/95 px-3 py-4 shadow-inner ${
+        className={`relative z-0 w-[132px] overflow-visible rounded-xl bg-[var(--node-bg)] px-3 py-4 shadow-inner ${
           crashed ? 'opacity-50' : ''
         } ${dropPulse ? 'animate-pulse' : ''} ${
           simulationSessionActive && underChaos ? 'animate-[pulse_2.5s_ease-in-out_infinite] ring-1 ring-red-500/40' : ''
@@ -204,12 +204,12 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
         ) : null}
       </div>
       <div className="relative z-0 max-w-[160px] text-center">
-        <div className="inline-block rounded-full bg-zinc-900/90 px-3 py-1">
-          <span className="text-xs font-medium tracking-tight text-zinc-100">{data.label}</span>
+        <div className="inline-block rounded-full bg-[var(--node-bg)] px-3 py-1">
+          <span className="text-xs font-medium tracking-tight text-[var(--text)]">{data.label}</span>
         </div>
         <div className="mt-1.5 flex flex-wrap justify-center gap-1">
           <span
-            className={`rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium ${simulationSessionActive && metrics ? 'text-cyan-300' : 'text-zinc-400'}`}
+            className={`rounded-full bg-[var(--node-bg)] px-2 py-0.5 text-[10px] font-medium ${simulationSessionActive && metrics ? 'text-cyan-300' : 'text-[var(--text-secondary)]'}`}
             title={
               simulationSessionActive && metrics
                 ? 'Processed throughput (this tick, req/s)'
@@ -220,7 +220,7 @@ export function BaseNode({ id, type, data, selected, icon: Icon, accentColor }: 
               ? formatThroughput(metrics.currentLoad)
               : formatThroughput(data.throughput)}
           </span>
-          <span className="rounded-full bg-zinc-900/80 px-2 py-0.5 text-[10px] font-medium text-zinc-400">
+          <span className="rounded-full bg-[var(--node-bg)] px-2 py-0.5 text-[10px] font-medium text-[var(--text-secondary)]">
             {formatLatencyMs(data.latency)}
           </span>
         </div>

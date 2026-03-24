@@ -5,5 +5,6 @@ export { useFlowStore } from './useFlowStore';
 export { useKnowledgeStore } from './useKnowledgeStore';
 export { useSimStore } from './useSimStore';
 export { useTutorialStore } from './useTutorialStore';
+export { useThemeStore } from './useThemeStore';
 export { useToastStore } from './useToastStore';
 export type { ToastItem, ToastKind } from './useToastStore';

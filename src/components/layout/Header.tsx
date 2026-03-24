@@ -6,7 +6,9 @@ import {
   Layers,
   LayoutTemplate,
   Map,
+  Moon,
   PenTool,
+  Sun,
   Trophy,
   Trash2,
   Undo2,
@@ -19,6 +21,7 @@ import { useState, type ReactNode } from 'react';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { ExportMenu } from '@/components/ui';
 import { useHistory } from '@/hooks/useHistory';
+import { useThemeStore } from '@/store/useThemeStore';
 
 const SHORTCUT_ROWS: { keys: string; description: string }[] = [
   { keys: 'Ctrl+Z', description: 'Undo' },
@@ -37,10 +40,10 @@ const SHORTCUT_ROWS: { keys: string; description: string }[] = [
 ];
 
 const ghostBtn =
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700/80 hover:bg-zinc-800/60 hover:text-zinc-100';
+  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]';
 
 const ghostBtnRed =
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-red-900/50 hover:bg-red-950/40 hover:text-red-200';
+  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-red-900/50 hover:bg-red-950/40 hover:text-red-200';
 
 export interface HeaderProps {
   currentView?: 'journey' | 'sandbox';
@@ -83,6 +86,8 @@ export function Header({
 }: HeaderProps) {
   const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
   const { undo, redo, canUndo, canRedo } = useHistory();
+  const theme = useThemeStore((s) => s.theme);
+  const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
   return (
     <>
@@ -97,11 +102,11 @@ export function Header({
         }}
         onCancel={() => setResetConfirmOpen(false)}
       />
-      <header className="flex h-12 shrink-0 items-center gap-4 border-b border-zinc-800 bg-zinc-950 px-3 sm:px-4">
+      <header className="flex h-12 shrink-0 items-center gap-4 border-b border-[var(--border)] bg-[var(--header-bg)] px-3 sm:px-4">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
           <Zap className="h-5 w-5 shrink-0 text-cyan-400" strokeWidth={2} aria-hidden />
           <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold tracking-tight text-zinc-100">
+            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--text)]">
               NodeBreaker
             </h1>
           </div>
@@ -115,7 +120,7 @@ export function Header({
             <>
               <button
                 type="button"
-                className={`${ghostBtn} ${currentView === 'journey' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                className={`${ghostBtn} ${currentView === 'journey' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
                 onClick={() => onSwitchView('journey')}
                 title="Journey"
               >
@@ -124,7 +129,7 @@ export function Header({
               </button>
               <button
                 type="button"
-                className={`${ghostBtn} ${currentView === 'sandbox' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                className={`${ghostBtn} ${currentView === 'sandbox' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
                 onClick={() => onSwitchView('sandbox')}
                 title="Sandbox"
               >
@@ -137,7 +142,7 @@ export function Header({
                   <span>Cards</span>
                 </button>
               ) : null}
-              <div className="mx-0.5 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
+              <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
             </>
           ) : null}
           <button
@@ -162,7 +167,7 @@ export function Header({
             <Redo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="hidden lg:inline">Redo</span>
           </button>
-          <div className="mx-0.5 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
+          <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
           <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
             <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Import</span>
@@ -178,7 +183,7 @@ export function Header({
             <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span className="hidden lg:inline">Reset</span>
           </button>
-          <div className="mx-1 h-5 w-px shrink-0 bg-zinc-700/90" aria-hidden />
+          <div className="mx-1 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
           <button
             type="button"
             className={ghostBtn}
@@ -268,7 +273,7 @@ export function Header({
             <>
               <button
                 type="button"
-                className={`${ghostBtn} px-2 ${currentView === 'journey' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                className={`${ghostBtn} px-2 ${currentView === 'journey' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
                 onClick={() => onSwitchView('journey')}
                 aria-label="Journey"
               >
@@ -276,7 +281,7 @@ export function Header({
               </button>
               <button
                 type="button"
-                className={`${ghostBtn} px-2 ${currentView === 'sandbox' ? 'border-zinc-700 bg-zinc-800 text-zinc-100' : ''}`}
+                className={`${ghostBtn} px-2 ${currentView === 'sandbox' ? 'border-[var(--border)] bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
                 onClick={() => onSwitchView('sandbox')}
                 aria-label="Sandbox"
               >
@@ -291,11 +296,20 @@ export function Header({
           ) : null}
           {extraActions}
           </div>
+          <button
+            type="button"
+            className={`${ghostBtn} border-[var(--border)] px-2 sm:px-2.5`}
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+          >
+            {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" strokeWidth={2} /> : <Moon className="h-4 w-4 shrink-0" strokeWidth={2} />}
+          </button>
           <a
             href={githubHref}
             target="_blank"
             rel="noopener noreferrer"
-            className={`${ghostBtn} border-zinc-800/80 px-2 sm:px-2.5`}
+            className={`${ghostBtn} border-[var(--border)] px-2 sm:px-2.5`}
             title="View on GitHub"
             aria-label="GitHub repository"
           >
@@ -313,17 +327,17 @@ export function Header({
             onClick={() => onShortcutsOpenChange(false)}
           >
             <div
-              className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl"
+              className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-start justify-between gap-3">
-                <h2 id="nb-shortcuts-title" className="text-base font-semibold text-zinc-100">
+                <h2 id="nb-shortcuts-title" className="text-base font-semibold text-[var(--text)]">
                   Keyboard shortcuts
                 </h2>
                 <button
                   type="button"
                   onClick={() => onShortcutsOpenChange(false)}
-                  className="rounded-md p-1 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+                  className="rounded-md p-1 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
                   aria-label="Close"
                 >
                   <X className="h-4 w-4" strokeWidth={2} />
@@ -332,10 +346,10 @@ export function Header({
               <ul className="mt-4 space-y-3">
                 {SHORTCUT_ROWS.map((row) => (
                   <li key={row.keys} className="flex gap-3 text-sm">
-                    <kbd className="shrink-0 rounded border border-zinc-600 bg-zinc-950 px-2 py-0.5 font-mono text-[11px] text-cyan-200">
+                    <kbd className="shrink-0 rounded border border-[var(--border)] bg-[var(--bg)] px-2 py-0.5 font-mono text-[11px] text-cyan-200">
                       {row.keys}
                     </kbd>
-                    <span className="text-zinc-400">{row.description}</span>
+                    <span className="text-[var(--text-secondary)]">{row.description}</span>
                   </li>
                 ))}
               </ul>

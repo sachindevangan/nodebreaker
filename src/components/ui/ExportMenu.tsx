@@ -25,8 +25,8 @@ export function ExportMenu({ onExportPng, onExportSvg, onExportJson, compact = f
   }, [open]);
 
   const btnClass = compact
-    ? 'inline-flex h-9 items-center gap-1 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700/80 hover:bg-zinc-800/60 hover:text-zinc-100'
-    : 'inline-flex h-9 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-zinc-400 transition-colors hover:border-zinc-700/80 hover:bg-zinc-800/60 hover:text-zinc-100';
+    ? 'inline-flex h-9 items-center gap-1 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]'
+    : 'inline-flex h-9 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]';
 
   return (
     <div className="relative" ref={containerRef}>
@@ -35,10 +35,10 @@ export function ExportMenu({ onExportPng, onExportSvg, onExportJson, compact = f
         {!compact ? <span>Export</span> : null}
       </button>
       {open ? (
-        <div className="absolute right-0 top-10 z-[120] min-w-44 rounded-md border border-zinc-700 bg-zinc-900 p-1 shadow-xl">
+        <div className="absolute right-0 top-10 z-[120] min-w-44 rounded-md border border-[var(--border)] bg-[var(--surface)] p-1 shadow-xl">
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-[var(--text)] hover:bg-[var(--surface-hover)]"
             onClick={() => {
               onExportPng();
               setOpen(false);
@@ -48,7 +48,7 @@ export function ExportMenu({ onExportPng, onExportSvg, onExportJson, compact = f
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-[var(--text)] hover:bg-[var(--surface-hover)]"
             onClick={() => {
               onExportSvg();
               setOpen(false);
@@ -58,7 +58,7 @@ export function ExportMenu({ onExportPng, onExportSvg, onExportJson, compact = f
           </button>
           <button
             type="button"
-            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-zinc-200 hover:bg-zinc-800"
+            className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-[var(--text)] hover:bg-[var(--surface-hover)]"
             onClick={() => {
               onExportJson();
               setOpen(false);

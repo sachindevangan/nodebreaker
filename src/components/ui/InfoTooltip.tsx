@@ -29,9 +29,7 @@ export function InfoTooltip({ title, description, side = 'right' }: InfoTooltipP
         ref={ref}
         onMouseEnter={show}
         onMouseLeave={() => setVisible(false)}
-        className="inline-flex items-center justify-center w-4 h-4 
-          rounded-full bg-gray-700 hover:bg-gray-600 text-gray-400 
-          text-xs ml-1 cursor-help"
+        className="ml-1 inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full bg-[var(--surface-hover)] text-xs text-[var(--text-secondary)] hover:brightness-110"
       >
         i
       </button>
@@ -47,10 +45,9 @@ export function InfoTooltip({ title, description, side = 'right' }: InfoTooltipP
             maxWidth: 300,
             pointerEvents: 'none',
           }}
-          className="bg-gray-800 rounded-lg p-3 shadow-2xl border 
-            border-gray-700 text-sm text-gray-200"
+          className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-sm text-[var(--text)] shadow-2xl"
         >
-          <div className="font-semibold text-white mb-1">{title}</div>
+          <div className="mb-1 font-semibold text-[var(--text)]">{title}</div>
           <div>{description}</div>
         </div>,
         document.body

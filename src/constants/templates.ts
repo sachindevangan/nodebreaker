@@ -1,178 +1,97 @@
 import { createDefaultNodeData } from '@/constants/defaults';
-import type { FlowEdge, FlowNode } from '@/types';
-import type { NodeBreakerNodeType } from '@/types';
+import type { FlowEdge, FlowNode, NodeBreakerNodeType } from '@/types';
 
-export type TemplateDifficulty = 'Easy' | 'Medium' | 'Hard';
+export type TemplateDifficulty = 'easy' | 'intermediate' | 'advanced';
+export type TemplateCategory =
+  | 'Social Media'
+  | 'Real-time'
+  | 'E-commerce'
+  | 'Fintech'
+  | 'Media'
+  | 'Infrastructure'
+  | 'Developer Tools'
+  | 'Search'
+  | 'Logistics';
+
+type N = readonly [string, NodeBreakerNodeType, number, number, string, number, number, number];
+type E = readonly [string, string];
+type Def = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: TemplateDifficulty;
+  category: TemplateCategory;
+  nodes: readonly N[];
+  edges: readonly E[];
+};
 
 export interface ArchitectureTemplate {
   id: string;
+  title: string;
   name: string;
   description: string;
   difficulty: TemplateDifficulty;
+  category: TemplateCategory;
   previewHint: string;
   nodeCount: number;
   edgeCount: number;
   build: () => { nodes: FlowNode[]; edges: FlowEdge[] };
 }
 
-function node(
-  id: string,
-  type: NodeBreakerNodeType,
-  position: { x: number; y: number },
-  label: string,
-  throughput: number,
-  latency: number,
-  capacity: number
-): FlowNode {
+const m = (v: number): number => v * 250;
+const y = { t: 40, u: 170, m: 300, d: 430, x: 560, xx: 690 } as const;
+const e = (s: string, t: string): FlowEdge => ({ id: `e-${s}-${t}`, source: s, target: t, type: 'animated' });
+
+function n([id, type, x, py, label, throughput, latency, capacity]: N): FlowNode {
   return {
     id,
     type,
-    position,
+    position: { x: m(x), y: py },
     selected: false,
-    data: createDefaultNodeData(type, label, {
-      throughput,
-      latency,
-      capacity,
-      status: 'healthy',
-    }),
+    data: createDefaultNodeData(type, label, { throughput, latency, capacity, status: 'healthy' }),
   };
 }
 
-function edge(source: string, target: string): FlowEdge {
+function t(def: Def): ArchitectureTemplate {
   return {
-    id: `e-${source}-${target}`,
-    source,
-    target,
-    type: 'animated',
+    id: def.id,
+    title: def.title,
+    name: def.title,
+    description: def.description,
+    difficulty: def.difficulty,
+    category: def.category,
+    previewHint: `${def.nodes.length} nodes · ${def.edges.length} links`,
+    nodeCount: def.nodes.length,
+    edgeCount: def.edges.length,
+    build: () => ({ nodes: def.nodes.map(n), edges: def.edges.map(([s, tt]) => e(s, tt)) }),
   };
 }
 
-const urlShortener: ArchitectureTemplate = {
-  id: 'url-shortener',
-  name: 'URL Shortener',
-  description:
-    'DNS, CDN, load balancer, API gateway, resolver service, Redis, and PostgreSQL — cache absorbs most reads; DB is the weak link.',
-  difficulty: 'Easy',
-  previewHint: '7 nodes · 6 links',
-  nodeCount: 7,
-  edgeCount: 6,
-  build: () => {
-    const nodes: FlowNode[] = [
-      node('t-dns', 'dns', { x: -160, y: 220 }, 'DNS', 100_000, 2, 500_000),
-      node('t-cdn', 'cdn', { x: 40, y: 220 }, 'CDN', 500_000, 12, 1_000_000),
-      node('t-lb', 'loadBalancer', { x: 220, y: 220 }, 'Load Balancer', 50_000, 5, 80_000),
-      node('t-gw', 'apiGateway', { x: 400, y: 220 }, 'API Gateway', 20_000, 10, 100_000),
-      node('t-svc', 'service', { x: 580, y: 220 }, 'URL Resolver', 10_000, 20, 25_000),
-      node('t-cache', 'cache', { x: 840, y: 120 }, 'Redis', 100_000, 1, 400_000),
-      node('t-db', 'database', { x: 840, y: 320 }, 'PostgreSQL', 2_000, 8, 120_000),
-    ];
-    const edges: FlowEdge[] = [
-      edge('t-dns', 't-cdn'),
-      edge('t-cdn', 't-lb'),
-      edge('t-lb', 't-gw'),
-      edge('t-gw', 't-svc'),
-      edge('t-svc', 't-cache'),
-      edge('t-svc', 't-db'),
-    ];
-    return { nodes, edges };
-  },
-};
+const defs: readonly Def[] = [
+  t1(), t2(), t3(), t4(), t5(), t6(), t7(), t8(), t9(), t10(),
+  t11(), t12(), t13(), t14(), t15(), t16(), t17(), t18(), t19(), t20(),
+];
 
-const chatApp: ArchitectureTemplate = {
-  id: 'chat-app',
-  name: 'Chat Application',
-  description:
-    'API and WebSocket paths from an LB, message broker, session cache, and messages database — fan-out and async flow.',
-  difficulty: 'Medium',
-  previewHint: '7 nodes · 7 links',
-  nodeCount: 7,
-  edgeCount: 7,
-  build: () => {
-    const nodes: FlowNode[] = [
-      node('c-lb', 'loadBalancer', { x: 40, y: 280 }, 'Load Balancer', 40_000, 4, 100_000),
-      node('c-api', 'service', { x: 280, y: 200 }, 'API Service', 15_000, 18, 40_000),
-      node('c-q', 'queue', { x: 520, y: 120 }, 'Message Broker', 25_000, 3, 500_000),
-      node('c-cache', 'cache', { x: 520, y: 280 }, 'Session Store', 80_000, 1, 300_000),
-      node('c-ws', 'service', { x: 280, y: 400 }, 'WebSocket Service', 12_000, 8, 35_000),
-      node('c-db', 'database', { x: 520, y: 400 }, 'Messages DB', 4_000, 6, 200_000),
-      node('c-cdn', 'cdn', { x: -140, y: 280 }, 'CDN', 400_000, 10, 800_000),
-    ];
-    const edges: FlowEdge[] = [
-      edge('c-cdn', 'c-lb'),
-      edge('c-lb', 'c-api'),
-      edge('c-lb', 'c-ws'),
-      edge('c-api', 'c-q'),
-      edge('c-api', 'c-cache'),
-      edge('c-ws', 'c-db'),
-      edge('c-q', 'c-db'),
-    ];
-    return { nodes, edges };
-  },
-};
+function t1(): Def { return { id: 'url-shortener', title: 'URL Shortener', description: 'DNS/CDN edge and resolver with Redis + PostgreSQL.', difficulty: 'easy', category: 'Infrastructure', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['cdn','cdn',1,y.m,'CDN',500000,12,1000000],['lb','loadBalancer',2,y.m,'Load Balancer',50000,5,80000],['gw','apiGateway',3,y.m,'API Gateway',20000,10,100000],['svc','service',4,y.m,'URL Resolver',10000,20,25000],['cache','cache',5,y.u,'Redis',100000,1,400000],['db','database',5,y.d,'PostgreSQL',2000,8,120000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','svc'],['svc','cache'],['svc','db']] }; }
+function t2(): Def { return { id: 'chat-app', title: 'Chat Application', description: 'Load balancer branches to API/WebSocket with queue fan-out.', difficulty: 'intermediate', category: 'Real-time', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['lb','loadBalancer',1,y.m,'Load Balancer',40000,4,100000],['api','service',2,y.u,'API Service',15000,18,40000],['ws','service',2,y.d,'WebSocket Service',12000,8,35000],['q','queue',3,y.u,'Message Queue',25000,3,500000],['cache','cache',3,y.m,'Session Cache',80000,1,300000],['db','database',4,y.d,'Messages DB',4000,6,200000]], edges: [['dns','lb'],['lb','api'],['lb','ws'],['api','q'],['api','cache'],['ws','db'],['q','db']] }; }
+function t3(): Def { return { id: 'ecommerce-checkout', title: 'E-Commerce Checkout', description: 'Checkout services with async order events to persistence.', difficulty: 'intermediate', category: 'E-commerce', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['cdn','cdn',1,y.m,'CDN',600000,11,900000],['lb','loadBalancer',2,y.m,'Load Balancer',45000,5,90000],['gw','apiGateway',3,y.m,'API Gateway',20000,12,50000],['pay','service',4,y.u,'Payment Service',8000,35,20000],['inv','service',4,y.m,'Inventory Service',12000,22,30000],['q','queue',4,y.d,'Order Events',18000,4,400000],['db','database',5,y.m,'Orders DB',3500,10,150000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','pay'],['gw','inv'],['gw','q'],['pay','db'],['inv','db'],['q','db']] }; }
+function t4(): Def { return { id: 'micro-bottleneck', title: 'Microservices Bottleneck', description: 'Service B and DB are intentional throughput chokepoints.', difficulty: 'advanced', category: 'Infrastructure', nodes: [['lb','loadBalancer',1,y.m,'Load Balancer',10000,4,60000],['a','service',2,y.m,'Service A',5000,15,25000],['b','service',3,y.m,'Service B',500,40,8000],['db','database',4,y.m,'Database',100,12,50000]], edges: [['lb','a'],['a','b'],['b','db']] }; }
+function t5(): Def { return { id: 'twitter-feed', title: 'Twitter Feed', description: 'Feed fan-out-on-write with Redis cache, Kafka stream, and graph DB.', difficulty: 'advanced', category: 'Social Media', nodes: [['dns','dns',0,y.m,'DNS',120000,2,500000],['cdn','cdn',1,y.m,'CDN',450000,10,900000],['lb','loadBalancer',2,y.m,'Load Balancer',100000,4,280000],['gw','apiGateway',3,y.m,'API Gateway',50000,8,180000],['feed','service',4,y.m,'Feed Service',20000,20,60000],['feed-cache','cache',5,y.u,'Redis Feed Cache',200000,1,750000],['posts-db','database',5,y.d,'Posts DB',5000,8,220000],['fanout','service',4,y.d,'Fan-out Service',28000,18,80000],['kafka','kafka',5,y.x,'Kafka',500000,4,1200000],['worker','worker',6,y.x,'Feed Generator',95000,22,280000],['graph-db','database',6,y.d,'Graph DB',7000,10,260000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','feed'],['feed','feed-cache'],['feed','posts-db'],['gw','fanout'],['fanout','kafka'],['kafka','worker'],['worker','graph-db']] }; }
+function t6(): Def { return { id: 'netflix-streaming', title: 'Netflix Streaming', description: 'Auth, catalog, recommendations, and streaming against blob storage.', difficulty: 'advanced', category: 'Media', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['cdn','cdn',1,y.m,'CDN (Video Cache)',700000,9,1400000],['lb','loadBalancer',2,y.m,'Load Balancer',110000,3,320000],['gw','apiGateway',3,y.m,'API Gateway',65000,8,220000],['auth','authService',4,y.t,'Auth Service',22000,15,70000],['session','cache',5,y.t,'Session Cache',130000,1,500000],['content','service',4,y.m,'Content Service',26000,18,85000],['catalog','database',5,y.m,'Catalog DB',7000,9,260000],['reco','service',4,y.d,'Recommendation Service',16000,24,52000],['ml-cache','cache',5,y.d,'ML Cache',90000,2,300000],['prefs','database',6,y.d,'User Preferences DB',4500,10,220000],['stream','service',4,y.x,'Streaming Service',55000,12,170000],['videos','blobStorage',5,y.x,'Video Files',100000,16,2500000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','auth'],['auth','session'],['gw','content'],['content','catalog'],['gw','reco'],['reco','ml-cache'],['ml-cache','prefs'],['gw','stream'],['stream','videos']] }; }
+function t7(): Def { return { id: 'uber-ride-matching', title: 'Uber Ride Matching', description: 'Rider-driver match flow with location caches and event queues.', difficulty: 'advanced', category: 'Real-time', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['lb','loadBalancer',1,y.m,'Load Balancer',90000,3,250000],['gw','apiGateway',2,y.m,'API Gateway',55000,7,180000],['rider','service',3,y.u,'Rider Service',22000,18,60000],['rider-cache','cache',4,y.u,'Redis Rider Location',180000,1,600000],['rides-db','database',4,y.m,'Rides DB',6000,10,220000],['driver','service',3,y.m,'Driver Service',21000,18,56000],['driver-cache','cache',4,y.d,'Redis Driver Location',200000,1,620000],['match','service',3,y.d,'Matching Service',30000,12,80000],['events','queue',4,y.x,'Match Events',120000,3,800000],['notify','service',3,y.x,'Notification Service',35000,10,85000],['push-q','queue',4,y.xx,'Push Notifications',140000,3,900000]], edges: [['dns','lb'],['lb','gw'],['gw','rider'],['rider','rider-cache'],['rider','rides-db'],['gw','driver'],['driver','driver-cache'],['gw','match'],['match','events'],['gw','notify'],['notify','push-q']] }; }
+function t8(): Def { return { id: 'slack-messaging', title: 'Slack Messaging', description: 'Messaging, realtime pub/sub, uploads, and indexed search.', difficulty: 'advanced', category: 'Real-time', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['lb','loadBalancer',1,y.m,'Load Balancer',85000,3,220000],['gw','apiGateway',2,y.m,'API Gateway',45000,7,170000],['auth','authService',3,y.t,'Auth Service',16000,14,60000],['sessions','cache',4,y.t,'Sessions Cache',150000,1,500000],['message','service',3,y.u,'Message Service',25000,16,70000],['messages-db','database',4,y.u,'Messages DB',8000,8,260000],['recent','cache',4,y.m,'Recent Messages Cache',180000,1,600000],['ws','service',3,y.d,'WebSocket Service',50000,9,140000],['pubsub','pubSub',4,y.d,'Pub/Sub',200000,2,800000],['file','service',3,y.x,'File Service',12000,20,45000],['uploads','blobStorage',4,y.x,'Uploads Storage',25000,18,1200000],['search','service',3,y.xx,'Search Service',14000,20,50000],['es','search',4,y.xx,'Elasticsearch',7000,18,300000]], edges: [['dns','lb'],['lb','gw'],['gw','auth'],['auth','sessions'],['gw','message'],['message','messages-db'],['message','recent'],['gw','ws'],['ws','pubsub'],['gw','file'],['file','uploads'],['gw','search'],['search','es']] }; }
+function t9(): Def { return { id: 'stripe-payment-processing', title: 'Stripe Payment Processing', description: 'Rate-limited payment path with fraud checks and ledger settlement.', difficulty: 'advanced', category: 'Fintech', nodes: [['dns','dns',0,y.m,'DNS',90000,2,400000],['lb','loadBalancer',1,y.m,'Load Balancer',80000,3,210000],['gw','apiGateway',2,y.m,'API Gateway',45000,8,150000],['rl','rateLimiter',3,y.m,'Rate Limiter',150000,1,500000],['payment','service',4,y.u,'Payment Service',22000,24,70000],['transactions','database',5,y.u,'Transactions DB',6000,9,260000],['payment-events','queue',5,y.m,'Payment Events',180000,3,900000],['fraud','service',4,y.d,'Fraud Detection Service',18000,16,65000],['rules','cache',5,y.d,'Rules Cache',120000,1,400000],['settle-q','queue',4,y.x,'Settlement Queue',140000,4,700000],['settle-worker','worker',5,y.x,'Settlement Worker',30000,20,85000],['ledger','database',6,y.x,'Ledger DB',5000,11,240000],['webhook','service',4,y.xx,'Webhook Service',20000,18,60000],['notify-q','queue',5,y.xx,'Notification Queue',100000,3,500000]], edges: [['dns','lb'],['lb','gw'],['gw','rl'],['rl','payment'],['payment','transactions'],['payment','payment-events'],['rl','fraud'],['fraud','rules'],['rl','settle-q'],['settle-q','settle-worker'],['settle-worker','ledger'],['gw','webhook'],['webhook','notify-q']] }; }
+function t10(): Def { return { id: 'instagram-stories', title: 'Instagram Stories', description: 'Upload, transcode, and fan-out story feed with pub/sub notifications.', difficulty: 'advanced', category: 'Social Media', nodes: [['dns','dns',0,y.m,'DNS',100000,2,450000],['cdn','cdn',1,y.m,'CDN',500000,10,950000],['lb','loadBalancer',2,y.m,'Load Balancer',90000,4,240000],['gw','apiGateway',3,y.m,'API Gateway',50000,8,170000],['upload','service',4,y.u,'Upload Service',24000,22,70000],['proc-q','queue',5,y.u,'Processing Queue',140000,3,850000],['raw','blobStorage',5,y.m,'Raw Media Storage',30000,15,1500000],['worker','worker',4,y.d,'Processing Worker',35000,24,90000],['processed','blobStorage',5,y.d,'Processed Media',32000,16,1500000],['feed','service',4,y.x,'Feed Service',26000,17,78000],['feed-cache','cache',5,y.x,'Story Feed Cache',200000,1,700000],['stories','database',6,y.x,'Stories DB',7000,9,280000],['notify','service',4,y.xx,'Notification Service',28000,12,85000],['notify-q','queue',5,y.xx,'Notification Queue',120000,3,650000],['pubsub','pubSub',6,y.xx,'Pub/Sub',180000,2,900000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','upload'],['upload','proc-q'],['upload','raw'],['gw','worker'],['worker','processed'],['gw','feed'],['feed','feed-cache'],['feed-cache','stories'],['gw','notify'],['notify','notify-q'],['notify-q','pubsub']] }; }
+function t11(): Def { return { id: 'airbnb-search-booking', title: 'Airbnb Search & Booking', description: 'Search/listings pipeline and booking + payment with eventing.', difficulty: 'advanced', category: 'E-commerce', nodes: [['dns','dns',0,y.m,'DNS',90000,2,420000],['cdn','cdn',1,y.m,'CDN',300000,10,700000],['lb','loadBalancer',2,y.m,'Load Balancer',70000,4,200000],['gw','apiGateway',3,y.m,'API Gateway',40000,9,140000],['search-svc','service',4,y.t,'Search Service',16000,22,50000],['search-engine','search',5,y.t,'Elasticsearch',9000,16,320000],['search-cache','cache',5,y.u,'Search Results Cache',120000,1,500000],['listing-svc','service',4,y.u,'Listing Service',14000,20,46000],['listings-db','database',5,y.m,'Listings DB',6000,9,250000],['listings-cache','cache',6,y.m,'Listings Cache',90000,1,350000],['booking-svc','service',4,y.d,'Booking Service',12000,18,42000],['bookings-db','database',5,y.d,'Bookings DB',4500,10,220000],['booking-events','queue',5,y.x,'Booking Events',80000,3,600000],['payment-svc','service',4,y.x,'Payment Service',10000,25,35000],['payments-db','database',5,y.xx,'Payments DB',4000,11,180000],['notify-svc','service',4,y.xx,'Notification Service',13000,14,42000],['notify-q','queue',5,820,'Notification Queue',90000,3,550000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','search-svc'],['search-svc','search-engine'],['search-svc','search-cache'],['gw','listing-svc'],['listing-svc','listings-db'],['listings-db','listings-cache'],['gw','booking-svc'],['booking-svc','bookings-db'],['booking-svc','booking-events'],['gw','payment-svc'],['payment-svc','payments-db'],['gw','notify-svc'],['notify-svc','notify-q']] }; }
+function t12(): Def { return { id: 'github-repository', title: 'GitHub Repository', description: 'Auth, repository storage, CI queue, search, and notifications.', difficulty: 'advanced', category: 'Developer Tools', nodes: [['dns','dns',0,y.m,'DNS',85000,2,400000],['cdn','cdn',1,y.m,'CDN',260000,9,700000],['lb','loadBalancer',2,y.m,'Load Balancer',65000,4,180000],['gw','apiGateway',3,y.m,'API Gateway',38000,9,130000],['auth','authService',4,y.t,'Auth Service',14000,16,45000],['users','database',5,y.t,'Users DB',4500,8,200000],['repo','service',4,y.u,'Repo Service',18000,18,55000],['git-objects','blobStorage',5,y.u,'Git Objects',30000,12,1600000],['repo-meta','database',5,y.m,'Repo Metadata',5000,9,250000],['cicd','service',4,y.d,'CI/CD Service',14000,20,50000],['build-jobs','queue',5,y.d,'Build Jobs',70000,4,800000],['runners','worker',6,y.d,'Runners',40000,25,90000],['search-svc','service',4,y.x,'Search Service',11000,18,42000],['code-search','search',5,y.x,'Code Search',7000,16,320000],['notify','service',4,y.xx,'Notification Service',13000,14,45000],['notify-q','queue',5,y.xx,'Notification Queue',95000,3,620000],['pubsub','pubSub',6,y.xx,'Pub/Sub',160000,2,820000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','auth'],['auth','users'],['gw','repo'],['repo','git-objects'],['repo','repo-meta'],['gw','cicd'],['cicd','build-jobs'],['build-jobs','runners'],['gw','search-svc'],['search-svc','code-search'],['gw','notify'],['notify','notify-q'],['notify-q','pubsub']] }; }
+function t13(): Def { return { id: 'spotify-music-streaming', title: 'Spotify Music Streaming', description: 'Audio streaming, playlists, recommendations, and search.', difficulty: 'advanced', category: 'Media', nodes: [['dns','dns',0,y.m,'DNS',90000,2,450000],['cdn','cdn',1,y.m,'CDN (Audio Cache)',450000,10,950000],['lb','loadBalancer',2,y.m,'Load Balancer',85000,3,210000],['gw','apiGateway',3,y.m,'API Gateway',50000,8,160000],['auth','authService',4,y.t,'Auth Service',16000,15,50000],['session','cache',5,y.t,'Session Cache',150000,1,500000],['music','service',4,y.u,'Music Service',26000,17,76000],['audio-files','blobStorage',5,y.u,'Audio Files',42000,14,1700000],['songs','database',5,y.m,'Songs Catalog DB',7000,8,280000],['playlist','service',4,y.d,'Playlist Service',18000,14,60000],['playlist-db','database',5,y.d,'Playlist DB',6000,8,250000],['playlist-cache','cache',6,y.d,'Playlist Cache',100000,1,420000],['reco','service',4,y.x,'Recommendation Service',14000,24,45000],['reco-cache','cache',5,y.x,'Reco Cache',90000,2,320000],['dwh','dataWarehouse',6,y.x,'Data Warehouse',3000,120,800000],['search-svc','service',4,y.xx,'Search Service',12000,18,42000],['search-engine','search',5,y.xx,'Search Engine',7000,16,320000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','auth'],['auth','session'],['gw','music'],['music','audio-files'],['music','songs'],['gw','playlist'],['playlist','playlist-db'],['playlist-db','playlist-cache'],['gw','reco'],['reco','reco-cache'],['reco-cache','dwh'],['gw','search-svc'],['search-svc','search-engine']] }; }
+function t14(): Def { return { id: 'doordash-food-delivery', title: 'DoorDash Food Delivery', description: 'Order events, matching, live tracking pub/sub, and payment.', difficulty: 'advanced', category: 'Logistics', nodes: [['dns','dns',0,y.m,'DNS',80000,2,400000],['lb','loadBalancer',1,y.m,'Load Balancer',70000,4,180000],['gw','apiGateway',2,y.m,'API Gateway',42000,8,140000],['order','service',3,y.t,'Order Service',18000,16,55000],['orders','database',4,y.t,'Orders DB',5000,9,250000],['order-events','queue',4,y.u,'Order Events',100000,3,700000],['restaurant','service',3,y.u,'Restaurant Service',14000,17,45000],['menus','database',4,y.m,'Menus DB',4000,8,180000],['menus-cache','cache',5,y.m,'Menus Cache',80000,1,300000],['driver','service',3,y.d,'Driver Service',16000,14,50000],['driver-cache','cache',4,y.d,'Driver Locations',140000,1,500000],['matching','service',3,y.x,'Matching Service',22000,11,65000],['matching-q','queue',4,y.x,'Matching Queue',110000,3,700000],['tracking','service',3,y.xx,'Tracking Service',26000,10,85000],['tracking-cache','cache',4,820,'Live Tracking Cache',180000,1,700000],['tracking-pubsub','pubSub',5,860,'Tracking Pub/Sub',170000,2,750000],['payment','service',3,950,'Payment Service',10000,25,35000],['payments','database',4,950,'Payments DB',4000,10,180000]], edges: [['dns','lb'],['lb','gw'],['gw','order'],['order','orders'],['order','order-events'],['gw','restaurant'],['restaurant','menus'],['menus','menus-cache'],['gw','driver'],['driver','driver-cache'],['gw','matching'],['matching','matching-q'],['gw','tracking'],['tracking','tracking-cache'],['tracking-cache','tracking-pubsub'],['gw','payment'],['payment','payments']] }; }
+function t15(): Def { return { id: 'zoom-video-calling', title: 'Zoom Video Calling', description: 'WebRTC signaling, media relay, rooms state, and chat persistence.', difficulty: 'advanced', category: 'Real-time', nodes: [['dns','dns',0,y.m,'DNS',85000,2,400000],['lb','loadBalancer',1,y.m,'Load Balancer',80000,3,220000],['gw','apiGateway',2,y.m,'API Gateway',48000,7,170000],['auth','authService',3,y.t,'Auth Service',16000,14,55000],['auth-db','database',4,y.t,'Auth DB',5000,8,220000],['room','service',3,y.u,'Room Service',18000,13,60000],['active-rooms','cache',4,y.u,'Active Rooms Cache',150000,1,500000],['room-db','database',5,y.u,'Room DB',4500,8,200000],['signaling','service',3,y.d,'Signaling Service',24000,9,85000],['signal-pubsub','pubSub',4,y.d,'WebRTC Signaling',180000,2,700000],['media','service',3,y.x,'Media Service',50000,11,140000],['media-cdn','cdn',4,y.x,'Media CDN Relay',300000,8,900000],['chat','service',3,y.xx,'Chat Service',14000,16,50000],['chat-q','queue',4,y.xx,'Chat Queue',110000,3,650000],['chat-db','database',5,y.xx,'Chat DB',6000,9,240000]], edges: [['dns','lb'],['lb','gw'],['gw','auth'],['auth','auth-db'],['gw','room'],['room','active-rooms'],['active-rooms','room-db'],['gw','signaling'],['signaling','signal-pubsub'],['gw','media'],['media','media-cdn'],['gw','chat'],['chat','chat-q'],['chat-q','chat-db']] }; }
+function t16(): Def { return { id: 'amazon-s3-object-storage', title: 'Amazon S3 (Object Storage)', description: 'Object metadata, auth, distributed blob storage, and replication.', difficulty: 'advanced', category: 'Infrastructure', nodes: [['dns','dns',0,y.m,'DNS',90000,2,450000],['lb-l4','loadBalancerL4',1,y.m,'Load Balancer (L4)',120000,1,600000],['gw','apiGateway',2,y.m,'API Gateway',70000,7,200000],['auth','authService',3,y.t,'Auth Service',22000,15,70000],['auth-cache','cache',4,y.t,'Auth Cache',150000,1,550000],['meta','service',3,y.u,'Metadata Service',20000,16,65000],['meta-db','database',4,y.u,'Object Metadata DB',7000,9,300000],['meta-cache','cache',5,y.u,'Metadata Cache',120000,1,500000],['storage','service',3,y.d,'Storage Service',30000,14,90000],['blob','blobStorage',4,y.d,'Distributed Blob Storage',120000,10,4000000],['repl','service',3,y.x,'Replication Service',25000,18,75000],['repl-q','queue',4,y.x,'Replication Queue',130000,3,900000],['replica','blobStorage',5,y.x,'Replica Storage',110000,11,3500000]], edges: [['dns','lb-l4'],['lb-l4','gw'],['gw','auth'],['auth','auth-cache'],['gw','meta'],['meta','meta-db'],['meta','meta-cache'],['gw','storage'],['storage','blob'],['gw','repl'],['repl','repl-q'],['repl-q','replica']] }; }
+function t17(): Def { return { id: 'google-search', title: 'Google Search', description: 'Query pipeline with ranking, autocomplete, ads, and crawl workers.', difficulty: 'advanced', category: 'Search', nodes: [['dns','dns',0,y.m,'DNS',120000,2,600000],['cdn','cdn',1,y.m,'CDN',500000,9,1200000],['lb','loadBalancer',2,y.m,'Load Balancer',110000,3,300000],['gw','apiGateway',3,y.m,'API Gateway',70000,8,220000],['query','service',4,y.u,'Query Service',26000,16,90000],['web-index','search',5,y.u,'Web Index',14000,14,600000],['freq-cache','cache',5,y.m,'Frequent Queries Cache',220000,1,900000],['ranking','service',4,y.d,'Ranking Service',22000,20,80000],['ml-cache','cache',5,y.d,'ML Model Cache',130000,2,500000],['ads','service',4,y.x,'Ads Service',18000,15,60000],['ads-db','database',5,y.x,'Ads DB',8000,9,300000],['ads-cache','cache',6,y.x,'Ads Cache',120000,1,500000],['autocomplete','service',4,y.xx,'Autocomplete Service',35000,8,100000],['trie-cache','cache',5,y.xx,'Trie/Prefix Cache',250000,1,900000],['crawl','service',4,820,'Crawl Service',17000,24,60000],['crawl-q','queue',5,820,'Crawl Queue',150000,3,950000],['crawler','worker',6,820,'Web Crawler',60000,18,200000],['dwh','dataWarehouse',7,820,'Search Warehouse',5000,120,1200000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','query'],['query','web-index'],['query','freq-cache'],['gw','ranking'],['ranking','ml-cache'],['gw','ads'],['ads','ads-db'],['ads-db','ads-cache'],['gw','autocomplete'],['autocomplete','trie-cache'],['gw','crawl'],['crawl','crawl-q'],['crawl-q','crawler'],['crawler','dwh']] }; }
+function t18(): Def { return { id: 'whatsapp-messaging', title: 'WhatsApp Messaging', description: 'Encrypted message delivery with presence, media, and group services.', difficulty: 'advanced', category: 'Real-time', nodes: [['dns','dns',0,y.m,'DNS',120000,2,600000],['lb','loadBalancer',1,y.m,'Load Balancer',100000,3,300000],['gw','apiGateway',2,y.m,'API Gateway',60000,7,200000],['auth','authService',3,y.t,'Auth Service',20000,14,70000],['auth-db','database',4,y.t,'Auth DB',7000,8,280000],['message','service',3,y.u,'Message Service',30000,11,90000],['kafka','kafka',4,y.u,'Kafka Delivery',400000,4,1200000],['messages-db','database',5,y.u,'Encrypted Messages DB',9000,9,400000],['presence','service',3,y.d,'Presence Service',35000,8,100000],['online-cache','cache',4,y.d,'Online Status Cache',250000,1,900000],['media','service',3,y.x,'Media Service',18000,16,65000],['media-blob','blobStorage',4,y.x,'Media Storage',70000,12,2200000],['media-cdn','cdn',5,y.x,'Media CDN',350000,9,1000000],['group','service',3,y.xx,'Group Service',22000,13,70000],['groups-db','database',4,y.xx,'Groups DB',6000,9,240000],['groups-cache','cache',5,y.xx,'Groups Cache',140000,1,550000]], edges: [['dns','lb'],['lb','gw'],['gw','auth'],['auth','auth-db'],['gw','message'],['message','kafka'],['message','messages-db'],['gw','presence'],['presence','online-cache'],['gw','media'],['media','media-blob'],['media-blob','media-cdn'],['gw','group'],['group','groups-db'],['groups-db','groups-cache']] }; }
+function t19(): Def { return { id: 'robinhood-stock-trading', title: 'Robinhood Stock Trading', description: 'Order path with rate-limiting, market data pub/sub, and settlement ledger.', difficulty: 'advanced', category: 'Fintech', nodes: [['dns','dns',0,y.m,'DNS',100000,2,500000],['lb','loadBalancer',1,y.m,'Load Balancer',90000,3,260000],['gw','apiGateway',2,y.m,'API Gateway',55000,8,180000],['rl','rateLimiter',3,y.m,'Rate Limiter',170000,1,600000],['auth','authService',4,y.t,'Auth Service',18000,14,60000],['auth-cache','cache',5,y.t,'Auth Cache',150000,1,550000],['order','service',4,y.u,'Order Service',24000,15,80000],['match-q','queue',5,y.u,'Order Matching Queue',180000,3,1000000],['orders-db','database',5,y.m,'Orders DB',7000,9,300000],['market','service',4,y.d,'Market Data Service',35000,7,120000],['prices-cache','cache',5,y.d,'Live Prices Cache',250000,1,950000],['price-pub','pubSub',6,y.d,'Price Feed Pub/Sub',220000,2,900000],['portfolio','service',4,y.x,'Portfolio Service',17000,15,60000],['holdings','database',5,y.x,'Holdings DB',5000,10,230000],['portfolio-cache','cache',6,y.x,'Portfolio Cache',120000,1,500000],['settlement','worker',4,y.xx,'Settlement Worker',22000,20,70000],['settlement-q','queue',5,y.xx,'Settlement Queue',140000,3,800000],['ledger','database',6,y.xx,'Ledger DB',6000,10,280000]], edges: [['dns','lb'],['lb','gw'],['gw','rl'],['rl','auth'],['auth','auth-cache'],['rl','order'],['order','match-q'],['order','orders-db'],['rl','market'],['market','prices-cache'],['prices-cache','price-pub'],['rl','portfolio'],['portfolio','holdings'],['holdings','portfolio-cache'],['rl','settlement'],['settlement','settlement-q'],['settlement-q','ledger']] }; }
+function t20(): Def { return { id: 'tiktok-for-you-page', title: 'TikTok For You Page', description: 'Video ingest/transcode with personalized feed and interactions stream.', difficulty: 'advanced', category: 'Social Media', nodes: [['dns','dns',0,y.m,'DNS',110000,2,550000],['cdn','cdn',1,y.m,'CDN (Video Cache)',650000,9,1300000],['lb','loadBalancer',2,y.m,'Load Balancer',100000,3,280000],['gw','apiGateway',3,y.m,'API Gateway',60000,8,200000],['auth','authService',4,y.t,'Auth Service',18000,14,65000],['auth-cache','cache',5,y.t,'Auth Cache',180000,1,600000],['upload','service',4,y.u,'Upload Service',26000,19,80000],['transcode-q','queue',5,y.u,'Transcode Queue',220000,3,1000000],['transcode-worker','worker',6,y.u,'Transcode Worker',70000,20,220000],['videos','blobStorage',6,y.m,'Videos Storage',120000,14,2600000],['feed','service',4,y.d,'Feed Service',30000,16,90000],['personalized-cache','cache',5,y.d,'Personalized Feed Cache',260000,1,900000],['reco','service',5,y.x,'Recommendation Service',22000,22,70000],['ml-features','dataWarehouse',6,y.x,'ML Features Warehouse',7000,110,1400000],['interaction','service',4,y.xx,'Interaction Service',32000,10,100000],['engagement-kafka','kafka',5,y.xx,'Kafka Likes/Views',450000,4,1300000],['interactions-db','database',6,y.xx,'Interactions DB',9000,9,360000]], edges: [['dns','cdn'],['cdn','lb'],['lb','gw'],['gw','auth'],['auth','auth-cache'],['gw','upload'],['upload','transcode-q'],['transcode-q','transcode-worker'],['transcode-worker','videos'],['gw','feed'],['feed','personalized-cache'],['feed','reco'],['reco','ml-features'],['gw','interaction'],['interaction','engagement-kafka'],['interaction','interactions-db']] }; }
 
-const ecommerce: ArchitectureTemplate = {
-  id: 'ecommerce-checkout',
-  name: 'E-Commerce Checkout',
-  description:
-    'CDN to gateway, payment and inventory services, order queue, and primary database — mixed capacities.',
-  difficulty: 'Medium',
-  previewHint: '8 nodes · 9 links',
-  nodeCount: 8,
-  edgeCount: 9,
-  build: () => {
-    const nodes: FlowNode[] = [
-      node('e-cdn', 'cdn', { x: 20, y: 260 }, 'CDN', 600_000, 11, 900_000),
-      node('e-lb', 'loadBalancer', { x: 220, y: 260 }, 'Load Balancer', 45_000, 5, 90_000),
-      node('e-gw', 'apiGateway', { x: 440, y: 260 }, 'API Gateway', 20_000, 12, 50_000),
-      node('e-pay', 'service', { x: 680, y: 140 }, 'Payment', 8_000, 35, 20_000),
-      node('e-inv', 'service', { x: 680, y: 260 }, 'Inventory', 12_000, 22, 30_000),
-      node('e-db', 'database', { x: 920, y: 260 }, 'Orders DB', 3_500, 10, 150_000),
-      node('e-q', 'queue', { x: 680, y: 400 }, 'Order Events', 18_000, 4, 400_000),
-      node('e-cache', 'cache', { x: 440, y: 120 }, 'Promo Cache', 90_000, 1, 250_000),
-    ];
-    const edges: FlowEdge[] = [
-      edge('e-cdn', 'e-lb'),
-      edge('e-lb', 'e-gw'),
-      edge('e-gw', 'e-cache'),
-      edge('e-gw', 'e-pay'),
-      edge('e-gw', 'e-inv'),
-      edge('e-inv', 'e-db'),
-      edge('e-pay', 'e-db'),
-      edge('e-gw', 'e-q'),
-      edge('e-q', 'e-db'),
-    ];
-    return { nodes, edges };
-  },
-};
-
-const microBottleneck: ArchitectureTemplate = {
-  id: 'micro-bottleneck',
-  name: 'Microservices Bottleneck',
-  description:
-    'Deliberately tiered throughput so Service B and the database become hot spots as soon as you start the sim.',
-  difficulty: 'Hard',
-  previewHint: '4 nodes · 3 links',
-  nodeCount: 4,
-  edgeCount: 3,
-  build: () => {
-    const nodes: FlowNode[] = [
-      node('m-lb', 'loadBalancer', { x: 120, y: 260 }, 'Load Balancer', 10_000, 4, 60_000),
-      node('m-a', 'service', { x: 380, y: 260 }, 'Service A', 5_000, 15, 25_000),
-      node('m-b', 'service', { x: 640, y: 260 }, 'Service B', 500, 40, 8_000),
-      node('m-db', 'database', { x: 900, y: 260 }, 'Database', 100, 12, 50_000),
-    ];
-    const edges: FlowEdge[] = [edge('m-lb', 'm-a'), edge('m-a', 'm-b'), edge('m-b', 'm-db')];
-    return { nodes, edges };
-  },
-};
-
-export const ARCHITECTURE_TEMPLATES: readonly ArchitectureTemplate[] = [
-  urlShortener,
-  chatApp,
-  ecommerce,
-  microBottleneck,
-] as const;
-
-export function getTemplateById(id: string): ArchitectureTemplate | undefined {
-  return ARCHITECTURE_TEMPLATES.find((t) => t.id === id);
-}
+export const ARCHITECTURE_TEMPLATES: readonly ArchitectureTemplate[] = defs.map((d) => t(d));
+export function getTemplateById(id: string): ArchitectureTemplate | undefined { return ARCHITECTURE_TEMPLATES.find((tt) => tt.id === id); }

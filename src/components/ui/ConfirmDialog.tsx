@@ -56,7 +56,7 @@ export function ConfirmDialog({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ type: 'spring', stiffness: 420, damping: 28 }}
-            className="w-full max-w-md rounded-xl border border-zinc-700 bg-zinc-900 p-5 shadow-2xl shadow-black/50"
+            className="w-full max-w-md rounded-xl border border-[var(--border)] bg-[var(--surface)] p-5 shadow-2xl shadow-black/50"
             onMouseDown={(e) => e.stopPropagation()}
           >
             <div className="flex gap-3">
@@ -66,11 +66,11 @@ export function ConfirmDialog({
               <div className="min-w-0 flex-1">
                 <h2
                   id="confirm-dialog-title"
-                  className="text-base font-semibold tracking-tight text-zinc-100"
+                  className="text-base font-semibold tracking-tight text-[var(--text)]"
                 >
                   {title}
                 </h2>
-                <p id="confirm-dialog-desc" className="mt-2 text-sm leading-relaxed text-zinc-400">
+                <p id="confirm-dialog-desc" className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
                   {message}
                 </p>
               </div>
@@ -79,7 +79,7 @@ export function ConfirmDialog({
               <button
                 type="button"
                 onClick={onCancel}
-                className="rounded-lg border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-200 transition-colors hover:bg-zinc-700"
+                className="rounded-lg border border-[var(--border)] bg-[var(--surface-hover)] px-4 py-2 text-sm font-medium text-[var(--text)] transition-colors hover:brightness-105"
               >
                 {cancelLabel}
               </button>

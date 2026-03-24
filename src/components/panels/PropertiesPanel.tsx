@@ -145,26 +145,26 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 16, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 380, damping: 32 }}
-            className="flex h-full w-full flex-col border-l border-zinc-800 bg-gray-900"
+            className="flex h-full w-full flex-col border-l border-[var(--border)] bg-[var(--panel-bg)]"
             style={{ borderLeftColor: accent }}
             aria-label="Node properties"
           >
-          <header className="flex shrink-0 items-start gap-3 border-b border-zinc-800 p-4">
+          <header className="flex shrink-0 items-start gap-3 border-b border-[var(--border)] p-4">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-zinc-950/80"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[var(--surface)]"
               style={{ color: accent }}
             >
               <Icon className="h-6 w-6" strokeWidth={1.75} />
             </div>
             <div className="min-w-0 flex-1">
-              <h2 className="truncate text-base font-semibold tracking-tight text-zinc-100">
+              <h2 className="truncate text-base font-semibold tracking-tight text-[var(--text)]">
                 {node.data.label}
               </h2>
-              <p className="mt-0.5 text-[11px] italic text-zinc-500">
+              <p className="mt-0.5 text-[11px] italic text-[var(--text-secondary)]">
                 Double-click a component on the canvas for settings
               </p>
               <span
-                className="mt-2 inline-block rounded-md border border-zinc-700 bg-zinc-950 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-zinc-400"
+                className="mt-2 inline-block rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 font-mono text-[10px] uppercase tracking-wide text-[var(--text-secondary)]"
               >
                 {node.type}
               </span>
@@ -172,7 +172,7 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-md p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+              className="rounded-md p-1.5 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text)]"
               aria-label="Close properties"
             >
               <X className="h-4 w-4" strokeWidth={2} />
@@ -181,7 +181,7 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
 
           <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
             <section className="space-y-4">
-              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                 Settings
               </h3>
 
@@ -232,7 +232,7 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
                 <span className="inline-flex items-center gap-1">
                   <label
                     htmlFor={`${node.id}-status`}
-                    className="text-[11px] font-medium uppercase tracking-wide text-zinc-500"
+                    className="text-[11px] font-medium uppercase tracking-wide text-[var(--text-secondary)]"
                   >
                     Status
                   </label>
@@ -247,16 +247,16 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
                   value={statusDropdownValue}
                   disabled={statusControlledBySim}
                   onChange={(e) => patch({ status: e.target.value as NodeStatus })}
-                  className="rounded-md border border-zinc-700 bg-zinc-950 px-2.5 py-2 text-sm text-zinc-100 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2.5 py-2 text-sm text-[var(--text)] focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {STATUS_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value} className="bg-zinc-950">
+                    <option key={opt.value} value={opt.value} className="bg-[var(--surface)]">
                       {opt.label}
                     </option>
                   ))}
                 </select>
                 {statusControlledBySim ? (
-                  <p className="text-[10px] leading-snug text-zinc-500">
+                  <p className="text-[10px] leading-snug text-[var(--text-secondary)]">
                     Status controlled by simulation
                   </p>
                 ) : null}
@@ -505,11 +505,11 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
               ) : null}
             </section>
 
-            <section className="mt-8 border-t border-zinc-800 pt-6">
-              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500">
+            <section className="mt-8 border-t border-[var(--border)] pt-6">
+              <h3 className="text-[10px] font-semibold uppercase tracking-widest text-[var(--text-secondary)]">
                 Chaos
               </h3>
-              <p className="mt-1 text-[11px] text-zinc-600">
+              <p className="mt-1 text-[11px] text-[var(--text-muted)]">
                 Quick inject on this node (simulation must be running)
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -544,7 +544,7 @@ export function PropertiesPanel({ panelWidth, onResizeStart }: PropertiesPanelPr
             </section>
           </div>
 
-          <footer className="shrink-0 border-t border-zinc-800 p-4">
+          <footer className="shrink-0 border-t border-[var(--border)] p-4">
             <button
               type="button"
               onClick={() => setDeleteDialogOpen(true)}

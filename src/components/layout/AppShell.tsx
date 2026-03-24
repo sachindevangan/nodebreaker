@@ -169,7 +169,7 @@ export function AppShell({ currentView = 'sandbox', onSwitchView, onOpenCards, o
         isOpen={briefingChallengeId !== null}
         onClose={() => setBriefingChallengeId(null)}
       />
-      <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
+      <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-[var(--bg)]">
         <Header
           currentView={currentView}
           onSwitchView={onSwitchView}

@@ -2,23 +2,49 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme tokens (default) — aligned with constants/theme.ts */
 :root {
   color-scheme: dark;
-  --color-surface: #09090b;
-  --color-surface-elevated: #18181b;
-  --color-surface-muted: #27272a;
-  --color-border: #3f3f46;
-  --color-accent: #22d3ee;
+  --bg: #0f1117;
+  --surface: #1a1b23;
+  --surface-hover: #252630;
+  --border: #2e2f3a;
+  --text: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --canvas-bg: #0f1117;
+  --canvas-dots: #1e1f2a;
+  --node-bg: #1a1b23;
+  --node-border: #2e2f3a;
+  --panel-bg: #0f1117;
+  --header-bg: #0f1117;
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #f8fafc;
+  --surface-hover: #f1f5f9;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --canvas-bg: #f8fafc;
+  --canvas-dots: #e2e8f0;
+  --node-bg: #ffffff;
+  --node-border: #e2e8f0;
+  --panel-bg: #ffffff;
+  --header-bg: #ffffff;
 }
 
 @layer base {
   html {
-    @apply antialiased;
+    @apply antialiased transition-colors duration-200;
   }
 
   body {
-    @apply min-h-screen bg-surface text-zinc-100;
+    @apply min-h-screen;
+    background: var(--bg);
+    color: var(--text);
     margin: 0;
   }
 

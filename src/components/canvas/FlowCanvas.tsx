@@ -8,13 +8,14 @@ import {
   useReactFlow,
 } from '@xyflow/react';
 import type { Connection, OnSelectionChangeFunc } from '@xyflow/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
 import { useHistoryStore } from '@/store/useHistoryStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
 import { useSimulation } from '@/hooks/useSimulation';
 import { getComponentConfig } from '@/constants/components';
 import { flowNodeTypes } from '@/components/canvas/nodes';
+import { useThemeStore } from '@/store/useThemeStore';
 import type { FlowEdge, FlowNode } from '@/types';
 import { AnimatedEdge } from './AnimatedEdge';
 import {
@@ -33,20 +34,26 @@ const edgeTypes = {
   animated: AnimatedEdge,
 };
 
-const defaultEdgeOptions = {
-  type: 'animated' as const,
-  animated: false,
-  selectable: true,
-  deletable: true,
-  interactionWidth: 20,
-  style: {
-    stroke: '#3b82f6',
-    strokeWidth: 2,
-    filter: 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.55))',
-  },
-};
-
 function FlowCanvasInner() {
+  const theme = useThemeStore((s) => s.theme);
+  const isLight = theme === 'light';
+  const defaultEdgeOptions = useMemo(
+    () => ({
+      type: 'animated' as const,
+      animated: false,
+      selectable: true,
+      deletable: true,
+      interactionWidth: 20,
+      style: {
+        stroke: isLight ? '#1e40af' : '#3b82f6',
+        strokeWidth: 2,
+        filter: isLight
+          ? 'drop-shadow(0 0 2px rgba(30, 64, 175, 0.35))'
+          : 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.55))',
+      },
+    }),
+    [isLight]
+  );
   const nodes = useFlowStore((s) => s.nodes);
   const edges = useFlowStore((s) => s.edges);
   const storeOnNodesChange = useFlowStore((s) => s.onNodesChange);
@@ -177,30 +184,30 @@ function FlowCanvasInner() {
       onDragOver={onDragOver}
       onDrop={onDrop}
       onPaneClick={onPaneClick}
-      colorMode="dark"
+      colorMode={isLight ? 'light' : 'dark'}
       deleteKeyCode={['Delete', 'Backspace']}
       multiSelectionKeyCode="Shift"
       proOptions={{ hideAttribution: true }}
-      className="h-full w-full bg-zinc-950"
+      className="h-full w-full bg-[var(--canvas-bg)]"
     >
       <Background
         id="nodebreaker-dots"
         gap={20}
         size={1.25}
-        color="rgb(63 63 70 / 0.45)"
+        color="var(--canvas-dots)"
         variant={BackgroundVariant.Dots}
       />
       <Controls
         position="bottom-left"
         showInteractive={false}
-        className="overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900/95 shadow-xl [&_button]:border-zinc-600 [&_button]:bg-zinc-800 [&_button]:fill-zinc-200 [&_button:hover]:bg-zinc-700"
+        className="overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--surface)]/95 shadow-xl [&_button]:border-[var(--border)] [&_button]:bg-[var(--surface)] [&_button]:fill-[var(--text)] [&_button:hover]:bg-[var(--surface-hover)]"
       />
       <MiniMap
         position="bottom-right"
-        className="overflow-hidden rounded-lg border border-zinc-700 shadow-xl"
-        bgColor="rgb(9 9 11)"
-        maskColor="rgb(24 24 27 / 0.92)"
-        maskStrokeColor="rgb(63 63 70)"
+        className="overflow-hidden rounded-lg border border-[var(--border)] shadow-xl"
+        bgColor={isLight ? 'rgb(255 255 255)' : 'rgb(9 9 11)'}
+        maskColor={isLight ? 'rgb(226 232 240 / 0.9)' : 'rgb(24 24 27 / 0.92)'}
+        maskStrokeColor={isLight ? 'rgb(148 163 184)' : 'rgb(63 63 70)'}
         nodeStrokeWidth={2}
         nodeColor={(node) => {
           const t = node.type;
@@ -208,7 +215,7 @@ function FlowCanvasInner() {
           return getComponentConfig(t)?.color ?? 'rgb(82 82 91)';
         }}
         nodeStrokeColor={(node) =>
-          node.selected ? 'rgb(228 228 231)' : 'rgb(39 39 42)'
+          node.selected ? (isLight ? 'rgb(30 41 59)' : 'rgb(228 228 231)') : isLight ? 'rgb(148 163 184)' : 'rgb(39 39 42)'
         }
       />
       </ReactFlow>

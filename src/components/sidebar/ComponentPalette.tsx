@@ -59,7 +59,7 @@ function PaletteCard({
         e.dataTransfer.setData(NODEBREAKER_DRAG_MIME, config.type);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      className="group relative cursor-grab select-none rounded-lg border border-zinc-700/70 bg-zinc-900/85 p-3 text-center transition-[border-color,box-shadow] duration-200 hover:border-zinc-500 active:cursor-grabbing"
+      className="group relative cursor-grab select-none rounded-lg border border-[var(--border)] bg-[var(--surface)] p-3 text-center transition-[border-color,box-shadow] duration-200 hover:border-zinc-500 active:cursor-grabbing"
       style={
         {
           ['--nb-palette-glow' as string]: hexToRgba(config.color, 0.42),
@@ -84,7 +84,7 @@ function PaletteCard({
       <div className="flex justify-center">
         <Icon className="h-7 w-7" style={{ color: config.color }} strokeWidth={1.75} />
       </div>
-      <p className="mt-2 inline-flex items-center justify-center text-[11px] font-medium leading-tight text-zinc-200">
+      <p className="mt-2 inline-flex items-center justify-center text-[11px] font-medium leading-tight text-[var(--text)]">
         {config.label}
         <InfoTooltip title={config.label} description={knowledge.summary} side="right" />
       </p>
@@ -132,21 +132,21 @@ export function ComponentPalette() {
   }, [query]);
 
   return (
-    <div className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-border bg-[#0c0c0e]">
-      <div className="shrink-0 border-b border-zinc-800/90 px-3 pb-3 pt-3">
-        <div className="flex items-center gap-2 text-zinc-100">
-          <LayoutGrid className="h-4 w-4 text-zinc-400" strokeWidth={2} />
+    <div className="flex h-full min-h-0 w-full shrink-0 flex-col border-r border-[var(--border)] bg-[var(--panel-bg)]">
+      <div className="shrink-0 border-b border-[var(--border)] px-3 pb-3 pt-3">
+        <div className="flex items-center gap-2 text-[var(--text)]">
+          <LayoutGrid className="h-4 w-4 text-[var(--text-secondary)]" strokeWidth={2} />
           <h2 className="text-sm font-semibold tracking-tight">Components</h2>
         </div>
 
-        <div className="mt-3 flex gap-1 rounded-lg bg-zinc-900/80 p-0.5">
+        <div className="mt-3 flex gap-1 rounded-lg bg-[var(--surface)] p-0.5">
           <button
             type="button"
             onClick={() => setTab('components')}
             className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               tab === 'components'
-                ? 'border border-cyan-500/40 bg-zinc-800/90 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300'
+                ? 'border border-cyan-500/40 bg-[var(--surface-hover)] text-[var(--text)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
             Components
@@ -156,8 +156,8 @@ export function ComponentPalette() {
             onClick={() => setTab('chaos')}
             className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
               tab === 'chaos'
-                ? 'border border-cyan-500/40 bg-zinc-800/90 text-zinc-100'
-                : 'text-zinc-500 hover:text-zinc-300'
+                ? 'border border-cyan-500/40 bg-[var(--surface-hover)] text-[var(--text)]'
+                : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
             }`}
           >
             Chaos Items
@@ -167,7 +167,7 @@ export function ComponentPalette() {
         {tab === 'components' && (
           <div className="relative mt-3">
             <Search
-              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500"
+              className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--text-secondary)]"
               strokeWidth={2}
             />
             <input
@@ -175,7 +175,7 @@ export function ComponentPalette() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search components"
-              className="w-full rounded-lg border border-zinc-700/80 bg-zinc-900/90 py-2 pl-8 pr-2 text-xs text-zinc-100 placeholder:text-zinc-600 focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
+              className="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] py-2 pl-8 pr-2 text-xs text-[var(--text)] placeholder:text-[var(--text-muted)] focus:border-cyan-500/40 focus:outline-none focus:ring-1 focus:ring-cyan-500/30"
               aria-label="Search components"
             />
           </div>
@@ -186,14 +186,14 @@ export function ComponentPalette() {
         {tab === 'chaos' ? (
           <ChaosPalette />
         ) : filteredByCategory.length === 0 ? (
-          <p className="px-1 py-8 text-center text-xs text-zinc-500">No components match your search.</p>
+          <p className="px-1 py-8 text-center text-xs text-[var(--text-secondary)]">No components match your search.</p>
         ) : (
           <div className="flex flex-col gap-6">
             {filteredByCategory.map((section) => {
               const CatIcon = CATEGORY_ICONS[section.name as keyof typeof CATEGORY_ICONS];
               return (
                 <section key={section.name}>
-                  <div className="mb-2 flex items-center gap-2 text-zinc-400">
+                  <div className="mb-2 flex items-center gap-2 text-[var(--text-secondary)]">
                     {CatIcon ? <CatIcon className="h-3.5 w-3.5" strokeWidth={2} /> : null}
                     <h3 className="text-[10px] font-semibold uppercase tracking-wider">
                       {section.name}
@@ -216,7 +216,7 @@ export function ComponentPalette() {
         )}
       </div>
 
-      <div className="shrink-0 border-t border-zinc-800/90 p-3">
+      <div className="shrink-0 border-t border-[var(--border)] p-3">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -238,7 +238,7 @@ export function ComponentPalette() {
             </span>
           </button>
           <span
-            className="shrink-0 rounded-md border border-zinc-700/90 bg-zinc-900/90 px-2 py-2 text-[10px] font-semibold tabular-nums text-zinc-300"
+            className="shrink-0 rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-2 text-[10px] font-semibold tabular-nums text-[var(--text-secondary)]"
             title="Simulation speed"
           >
             {speed}x

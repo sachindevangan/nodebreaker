@@ -6,9 +6,11 @@ import type { JourneyStage } from '@/constants/journey';
 import { JOURNEY_STAGES } from '@/constants/journey';
 import { useChallengeStore } from '@/store/useChallengeStore';
 import { useJourneyStore } from '@/store/useJourneyStore';
+import { useThemeStore } from '@/store/useThemeStore';
 import { useTutorialStore } from '@/store/useTutorialStore';
 
 export default function App() {
+  const theme = useThemeStore((s) => s.theme);
   const [currentView, setCurrentView] = useState<'journey' | 'sandbox'>('journey');
   const [activeLearnStage, setActiveLearnStage] = useState<JourneyStage | null>(null);
   const [activeBuildStage, setActiveBuildStage] = useState<JourneyStage | null>(null);
@@ -43,6 +45,10 @@ export default function App() {
     ]);
     return new Map<string, string>(pairs);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
 
   useEffect(() => {
     for (const tutorialId of completedTutorials) {
