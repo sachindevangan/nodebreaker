@@ -1,55 +1,20 @@
-import type { NodeBreakerNodeType } from '@/types';
+import { CHAPTER_1_TOPICS } from '@/constants/content/chapter1';
+import { CHAPTER_2_TOPICS } from '@/constants/content/chapter2';
+import { CHAPTER_3_TOPICS } from '@/constants/content/chapter3';
+import type { Chapter, QuizQuestion, Topic } from '@/constants/curriculumTypes';
 
-export interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-  explanation: string;
-}
+export type {
+  Chapter,
+  QuizQuestion,
+  SimulatorDemo,
+  SimulatorDemoSetupEdge,
+  SimulatorDemoSetupNode,
+  Topic,
+} from '@/constants/curriculumTypes';
 
-export interface SimulatorDemoSetupNode {
-  type: NodeBreakerNodeType;
-  label: string;
-  position: { x: number; y: number };
-  data?: Record<string, unknown>;
-}
-
-export interface SimulatorDemoSetupEdge {
-  source: number;
-  target: number;
-}
-
-export interface SimulatorDemo {
-  description: string;
-  instruction: string;
-  templateId?: string;
-  setupNodes?: SimulatorDemoSetupNode[];
-  setupEdges?: SimulatorDemoSetupEdge[];
-  chaosToInject?: string;
-  simulationAutoStart?: boolean;
-}
-
-export interface Topic {
-  id: string;
-  title: string;
-  readContent: string;
-  simulatorDemo?: SimulatorDemo;
-  quizQuestions: QuizQuestion[];
-  interviewTip?: string;
-}
-
-export interface Chapter {
-  id: string;
-  number: number;
-  title: string;
-  description: string;
-  icon: string;
-  color: string;
-  topics: Topic[];
-}
-
-function topic(partial: Omit<Topic, 'readContent' | 'quizQuestions'> & { readContent?: string; quizQuestions?: QuizQuestion[] }): Topic {
+function topic(
+  partial: Omit<Topic, 'readContent' | 'quizQuestions'> & { readContent?: string; quizQuestions?: QuizQuestion[] }
+): Topic {
   return {
     readContent: partial.readContent ?? `Content coming soon. This topic covers ${partial.title}.`,
     quizQuestions: partial.quizQuestions ?? [],
@@ -73,31 +38,17 @@ function ch(
 }
 
 export const CURRICULUM: Chapter[] = [
-  ch(1, 'chapter-1', 'How The Internet Works', 'Packets, protocols, and how requests cross the wire.', 'Globe', '#3b82f6', [
-    topic({ id: 'what-happens-when-you-type-a-url', title: 'What Happens When You Type a URL?' }),
-    topic({ id: 'http-https-request-response', title: 'HTTP, HTTPS & Request/Response' }),
-    topic({ id: 'dns-the-internets-phone-book', title: "DNS: The Internet's Phone Book" }),
-    topic({ id: 'tcp-ip-and-udp', title: 'TCP/IP and UDP' }),
-    topic({ id: 'rest-apis', title: 'REST APIs' }),
-    topic({ id: 'websockets-real-time-communication', title: 'WebSockets & Real-Time Communication' }),
-  ]),
-  ch(2, 'chapter-2', 'Servers & Computing', 'How machines run your code and handle load.', 'Server', '#6366f1', [
-    topic({ id: 'what-is-a-server', title: 'What Is a Server?' }),
-    topic({ id: 'how-a-server-processes-requests', title: 'How a Server Processes Requests' }),
-    topic({ id: 'threads-processes-concurrency', title: 'Threads, Processes & Concurrency' }),
-    topic({ id: 'thread-pools-connection-handling', title: 'Thread Pools & Connection Handling' }),
-    topic({ id: 'stateless-vs-stateful', title: 'Stateless vs Stateful' }),
-    topic({ id: 'serverless-lambda', title: 'Serverless & Lambda' }),
-    topic({ id: 'containers-docker-kubernetes', title: 'Containers, Docker & Kubernetes' }),
-  ]),
-  ch(3, 'chapter-3', 'The Three Numbers', 'Throughput, latency, and capacity intuition.', 'Gauge', '#f59e0b', [
-    topic({ id: 'throughput', title: 'Throughput' }),
-    topic({ id: 'latency-numbers-every-engineer-should-know', title: 'Latency Numbers Every Engineer Should Know' }),
-    topic({ id: 'capacity-and-concurrent-connections', title: 'Capacity & Concurrent Connections' }),
-    topic({ id: 'utilization-the-danger-zone', title: 'Utilization: The Danger Zone' }),
-    topic({ id: 'bottlenecks-finding-the-weakest-link', title: 'Bottlenecks: Finding the Weakest Link' }),
-    topic({ id: 'slas-slos-slis', title: 'SLAs, SLOs & SLIs' }),
-  ]),
+  ch(1, 'chapter-1', 'How The Internet Works', 'Packets, protocols, and how requests cross the wire.', 'Globe', '#3b82f6', CHAPTER_1_TOPICS),
+  ch(
+    2,
+    'chapter-2',
+    'Servers & Computing',
+    'How machines run your code and handle load.',
+    'Server',
+    '#6366f1',
+    CHAPTER_2_TOPICS
+  ),
+  ch(3, 'chapter-3', 'The Three Numbers', 'Throughput, latency, and capacity intuition.', 'Gauge', '#f59e0b', CHAPTER_3_TOPICS),
   ch(4, 'chapter-4', 'Databases Deep Dive', 'Storage engines, consistency, and query paths.', 'Database', '#a855f7', [
     topic({ id: 'what-is-a-database', title: 'What Is a Database?' }),
     topic({ id: 'sql-databases', title: 'SQL Databases' }),
