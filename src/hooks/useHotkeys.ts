@@ -1,8 +1,12 @@
 import { useEffect } from 'react';
 import type { SimSpeed } from '@/simulation/models';
 import { contextMenuController } from '@/utils/contextMenuController';
+import { getClipboardBlueprint, setClipboardForCopy } from '@/utils/nodeClipboard';
+import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
+import { useToastStore } from '@/store/useToastStore';
 
 const SPEED_BY_DIGIT: readonly SimSpeed[] = [0.5, 1, 2, 5] as const;
 
@@ -17,7 +21,7 @@ function shouldIgnoreHotkeys(target: EventTarget | null): boolean {
 }
 
 /**
- * Global shortcuts for canvas simulation and selection.
+ * Global shortcuts for canvas simulation, selection, undo/redo, copy/paste.
  * `shortcutsModalOpen`: when true, Escape closes the help modal instead of clearing selection.
  */
 export function useHotkeys(shortcutsModalOpen: boolean, closeShortcutsModal: () => void): void {
@@ -37,6 +41,7 @@ export function useHotkeys(shortcutsModalOpen: boolean, closeShortcutsModal: () 
 
       const sim = useSimStore.getState();
       const flow = useFlowStore.getState();
+      const history = useHistoryStore.getState();
 
       if (e.key === 'Escape') {
         e.preventDefault();
@@ -48,13 +53,64 @@ export function useHotkeys(shortcutsModalOpen: boolean, closeShortcutsModal: () 
         return;
       }
 
-      if (e.key === 'Delete' || e.key === 'Backspace') {
-        const id = flow.selectedNodeId;
-        if (id) {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z') {
           e.preventDefault();
-          flow.deleteNode(id);
+          if (e.shiftKey) {
+            const snapshot = history.consumeRedo(flow.nodes, flow.edges);
+            if (snapshot) {
+              flow.replaceGraph(
+                snapshot.nodes.map((n) => ({ ...n, selected: false })),
+                snapshot.edges
+              );
+            }
+          } else {
+            const snapshot = history.consumeUndo(flow.nodes, flow.edges);
+            if (snapshot) {
+              useChaosStore.getState().clearAllChaos();
+              useSimStore.getState().stopSession();
+              flow.replaceGraph(
+                snapshot.nodes.map((n) => ({ ...n, selected: false })),
+                snapshot.edges
+              );
+            }
+          }
+          return;
         }
-        return;
+        if (e.key === 'y') {
+          e.preventDefault();
+          const snapshot = history.consumeRedo(flow.nodes, flow.edges);
+          if (snapshot) {
+            flow.replaceGraph(
+              snapshot.nodes.map((n) => ({ ...n, selected: false })),
+              snapshot.edges
+            );
+          }
+          return;
+        }
+        if (e.key === 'c') {
+          e.preventDefault();
+          const nodeId = flow.selectedNodeId;
+          if (nodeId) {
+            const node = flow.nodes.find((n) => n.id === nodeId);
+            if (node) {
+              setClipboardForCopy(node);
+            }
+          }
+          return;
+        }
+        if (e.key === 'v') {
+          e.preventDefault();
+          if (getClipboardBlueprint()) {
+            const { nodes, edges } = useFlowStore.getState();
+            useHistoryStore.getState().recordSnapshot(nodes, edges);
+            const label = flow.pasteFromClipboard();
+            if (label) {
+              useToastStore.getState().push({ kind: 'success', message: `Pasted ${label}` });
+            }
+          }
+          return;
+        }
       }
 
       if (e.code === 'Space') {

@@ -3,6 +3,7 @@ import type { DragEvent } from 'react';
 import type { XYPosition } from '@xyflow/react';
 import { createDefaultNodeData, getComponentConfig } from '@/constants/components';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import type { FlowNode, NodeBreakerNodeType } from '@/types';
 
 export const NODEBREAKER_DRAG_MIME = 'application/nodebreaker';
@@ -40,6 +41,8 @@ export function useDragToCanvas(
         data: createDefaultNodeData(nodeType, config.label, config.defaultData),
       };
 
+      const { nodes, edges } = useFlowStore.getState();
+      useHistoryStore.getState().recordSnapshot(nodes, edges);
       addNode(newNode);
     },
     [addNode, screenToFlowPosition]

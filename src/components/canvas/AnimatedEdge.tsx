@@ -53,6 +53,7 @@ function AnimatedEdgeInner(props: EdgeProps) {
     targetY,
     sourcePosition,
     targetPosition,
+    selected,
     animated,
     selectable,
     deletable,
@@ -108,24 +109,29 @@ function AnimatedEdgeInner(props: EdgeProps) {
   ]);
 
   const strokeWidth = useMemo(() => {
+    let base: number;
     if (!simulationSessionActive) {
       const fromStyle =
         style && typeof style.strokeWidth === 'number' ? style.strokeWidth : undefined;
-      return fromStyle ?? DEFAULT_STROKE_WIDTH;
+      base = fromStyle ?? DEFAULT_STROKE_WIDTH;
+    } else {
+      base = 1.2 + Math.min(3.8, activeCount * 0.35);
     }
-    return 1.2 + Math.min(3.8, activeCount * 0.35);
-  }, [activeCount, simulationSessionActive, style]);
+    return selected ? base + 1.5 : base;
+  }, [activeCount, selected, simulationSessionActive, style]);
 
   const edgeDomId = `nb-edge-path-${id.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
+  const defaultStroke = (style?.stroke as string | undefined) ?? '#3b82f6';
   const baseStroke =
     partitioned
       ? '#f87171'
       : !simulationSessionActive
-        ? ((style?.stroke as string | undefined) ?? '#3b82f6')
+        ? defaultStroke
         : overload
           ? '#f87171'
-          : (style?.stroke as string | undefined) ?? '#3b82f6';
+          : defaultStroke;
+  const stroke = selected && !partitioned ? '#93c5fd' : baseStroke;
 
   const baseFilter = !simulationSessionActive
     ? (style?.filter as string | undefined) ?? 'drop-shadow(0 0 4px rgba(59, 130, 246, 0.45))'
@@ -145,7 +151,7 @@ function AnimatedEdgeInner(props: EdgeProps) {
         interactionWidth={interactionWidth}
         style={{
           ...style,
-          stroke: baseStroke,
+          stroke,
           strokeWidth,
           filter: baseFilter,
           strokeDasharray: partitioned ? '7 5' : undefined,

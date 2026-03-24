@@ -5,14 +5,16 @@ import { ARCHITECTURE_TEMPLATES, type ArchitectureTemplate } from '@/constants/t
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 
 export interface TemplateSelectorProps {
   isOpen: boolean;
   onClose: () => void;
+  onReopen?: () => void;
 }
 
-export function TemplateSelector({ isOpen, onClose }: TemplateSelectorProps) {
+export function TemplateSelector({ isOpen, onClose, onReopen }: TemplateSelectorProps) {
   const nodes = useFlowStore((s) => s.nodes);
   const replaceGraph = useFlowStore((s) => s.replaceGraph);
   const [pending, setPending] = useState<ArchitectureTemplate | null>(null);
@@ -22,7 +24,9 @@ export function TemplateSelector({ isOpen, onClose }: TemplateSelectorProps) {
       const { nodes: nextNodes, edges: nextEdges } = t.build();
       useChaosStore.getState().clearAllChaos();
       useSimStore.getState().stopSession();
+      useHistoryStore.getState().clear();
       replaceGraph(nextNodes, nextEdges);
+      setPending(null);
       onClose();
     },
     [onClose, replaceGraph]
@@ -31,20 +35,25 @@ export function TemplateSelector({ isOpen, onClose }: TemplateSelectorProps) {
   const onPickTemplate = useCallback(
     (t: ArchitectureTemplate) => {
       if (nodes.length > 0) {
+        onClose();
         setPending(t);
         return;
       }
       applyTemplate(t);
     },
-    [applyTemplate, nodes.length]
+    [applyTemplate, nodes.length, onClose]
   );
 
   const confirmReplace = useCallback(() => {
     if (pending) {
       applyTemplate(pending);
-      setPending(null);
     }
   }, [applyTemplate, pending]);
+
+  const cancelReplace = useCallback(() => {
+    setPending(null);
+    onReopen?.();
+  }, [onReopen]);
 
   return (
     <>
@@ -54,7 +63,7 @@ export function TemplateSelector({ isOpen, onClose }: TemplateSelectorProps) {
         message="This will replace your current design. Continue?"
         confirmLabel="Continue"
         onConfirm={confirmReplace}
-        onCancel={() => setPending(null)}
+        onCancel={cancelReplace}
       />
       <AnimatePresence>
         {isOpen ? (

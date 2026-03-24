@@ -8,6 +8,7 @@ import type { ChaosEventType } from '@/simulation/chaos';
 import { getChaosEventDefinition } from '@/constants/chaosEvents';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 import { useToastStore } from '@/store/useToastStore';
 import type { FlowNode, LoadBalancerAlgorithm, NodeBreakerNodeData, NodeStatus } from '@/types';
@@ -60,6 +61,8 @@ export function PropertiesPanel() {
   const patch = useCallback(
     (partial: Partial<NodeBreakerNodeData>) => {
       if (!node) return;
+      const { nodes, edges } = useFlowStore.getState();
+      useHistoryStore.getState().recordSnapshot(nodes, edges);
       updateNodeData(node.id, partial);
     },
     [node, updateNodeData]
@@ -71,6 +74,8 @@ export function PropertiesPanel() {
 
   const confirmDelete = useCallback(() => {
     if (!node) return;
+    const { nodes, edges } = useFlowStore.getState();
+    useHistoryStore.getState().recordSnapshot(nodes, edges);
     deleteNode(node.id);
     setDeleteDialogOpen(false);
   }, [node, deleteNode]);

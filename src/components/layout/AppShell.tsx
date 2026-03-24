@@ -13,6 +13,7 @@ import { AppChromeContext } from '@/context/AppChromeContext';
 import { useHotkeys } from '@/hooks/useHotkeys';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 import { useToastStore } from '@/store/useToastStore';
 import {
@@ -38,6 +39,14 @@ export function AppShell() {
     }),
     []
   );
+
+  const handleResetCanvas = useCallback(() => {
+    useChaosStore.getState().clearAllChaos();
+    useSimStore.getState().stopSession();
+    useHistoryStore.getState().clear();
+    useFlowStore.getState().replaceGraph([], []);
+    useToastStore.getState().push({ kind: 'success', message: 'Canvas cleared' });
+  }, []);
 
   const handleExport = useCallback(() => {
     const { nodes, edges } = useFlowStore.getState();
@@ -76,6 +85,7 @@ export function AppShell() {
     const { nodes, edges } = designToFlowGraph(validated);
     useChaosStore.getState().clearAllChaos();
     useSimStore.getState().stopSession();
+    useHistoryStore.getState().clear();
     useFlowStore.getState().replaceGraph(nodes, edges);
     useToastStore.getState().push({
       kind: 'success',
@@ -94,7 +104,11 @@ export function AppShell() {
         tabIndex={-1}
         onChange={handleImportChange}
       />
-      <TemplateSelector isOpen={templatesOpen} onClose={() => setTemplatesOpen(false)} />
+      <TemplateSelector
+        isOpen={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        onReopen={() => setTemplatesOpen(true)}
+      />
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
         <Header
           shortcutsOpen={shortcutsOpen}
@@ -102,6 +116,7 @@ export function AppShell() {
           onTemplates={() => setTemplatesOpen(true)}
           onExport={handleExport}
           onImportClick={() => importInputRef.current?.click()}
+          onResetCanvas={handleResetCanvas}
         />
         <div className="flex min-h-0 flex-1 overflow-hidden">
           <div className="flex h-full min-h-0 w-[260px] shrink-0 flex-col">

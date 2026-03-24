@@ -32,8 +32,11 @@ export interface FlowStore {
   duplicateNode: (id: string) => void;
   /** Pastes clipboard blueprint at flow coordinates. Returns false if clipboard empty. */
   pasteNodeAt: (x: number, y: number) => boolean;
+  /** Paste from Ctrl+V at stored position +50 offset. Returns pasted node label or null. */
+  pasteFromClipboard: () => string | null;
   updateNodeData: (id: string, partial: Partial<NodeBreakerNodeData>) => void;
   deleteNode: (id: string) => void;
+  deleteEdge: (edgeId: string) => void;
 }
 
 export const useFlowStore = create<FlowStore>((set, get) => ({
@@ -56,7 +59,18 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
     });
   },
   onNodesChange: (changes: NodeChange<FlowNode>[]) => {
-    set({ nodes: applyNodeChanges(changes, get().nodes) });
+    const removedIds = new Set<string>();
+    for (const c of changes) {
+      if (c.type === 'remove' && 'id' in c) {
+        removedIds.add(c.id);
+        useChaosStore.getState().removeEventsForNode(c.id);
+      }
+    }
+    const nextNodes = applyNodeChanges(changes, get().nodes);
+    const { selectedNodeId } = get();
+    const clearedSelection =
+      selectedNodeId && removedIds.has(selectedNodeId) ? null : selectedNodeId;
+    set({ nodes: nextNodes, selectedNodeId: clearedSelection });
   },
   onEdgesChange: (changes: EdgeChange[]) => {
     set({ edges: applyEdgeChanges(changes, get().edges) });
@@ -105,6 +119,29 @@ export const useFlowStore = create<FlowStore>((set, get) => ({
       selectedNodeId: newNode.id,
     });
     return true;
+  },
+  pasteFromClipboard: () => {
+    const bp = getClipboardBlueprint();
+    if (!bp) return null;
+    const basePos = bp.position ?? { x: 0, y: 0 };
+    const pos = { x: basePos.x + 50, y: basePos.y + 50 };
+    const newNode: FlowNode = {
+      id: crypto.randomUUID(),
+      type: bp.type,
+      position: pos,
+      selected: true,
+      data: { ...bp.data },
+    };
+    set({
+      nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), { ...newNode, selected: true }],
+      selectedNodeId: newNode.id,
+    });
+    return newNode.data.label;
+  },
+  deleteEdge: (edgeId: string) => {
+    set({
+      edges: get().edges.filter((e) => e.id !== edgeId),
+    });
   },
   updateNodeData: (id: string, partial: Partial<NodeBreakerNodeData>) => {
     set({

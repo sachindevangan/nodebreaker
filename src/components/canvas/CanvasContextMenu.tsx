@@ -4,6 +4,7 @@ import { useAppChrome } from '@/context/AppChromeContext';
 import type { ChaosEventType } from '@/simulation/chaos';
 import { useChaosStore } from '@/store/useChaosStore';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 import { contextMenuController } from '@/utils/contextMenuController';
 import { getClipboardBlueprint } from '@/utils/nodeClipboard';
@@ -11,6 +12,7 @@ import { getClipboardBlueprint } from '@/utils/nodeClipboard';
 export type CanvasContextMenuState =
   | { kind: 'closed' }
   | { kind: 'node'; clientX: number; clientY: number; nodeId: string }
+  | { kind: 'edge'; clientX: number; clientY: number; edgeId: string }
   | { kind: 'pane'; clientX: number; clientY: number; flowX: number; flowY: number };
 
 export interface CanvasContextMenuProps {
@@ -26,6 +28,7 @@ export function CanvasContextMenu({ menu, onClose, onFitView }: CanvasContextMen
   const selectNodeOnCanvas = useFlowStore((s) => s.selectNodeOnCanvas);
   const duplicateNode = useFlowStore((s) => s.duplicateNode);
   const deleteNode = useFlowStore((s) => s.deleteNode);
+  const deleteEdge = useFlowStore((s) => s.deleteEdge);
   const pasteNodeAt = useFlowStore((s) => s.pasteNodeAt);
   const injectChaos = useChaosStore((s) => s.injectChaos);
 
@@ -110,6 +113,8 @@ export function CanvasContextMenu({ menu, onClose, onFitView }: CanvasContextMen
           role="menuitem"
           className={btn}
           onClick={() => {
+            const { nodes, edges } = useFlowStore.getState();
+            useHistoryStore.getState().recordSnapshot(nodes, edges);
             duplicateNode(nodeId);
             onClose();
           }}
@@ -163,11 +168,39 @@ export function CanvasContextMenu({ menu, onClose, onFitView }: CanvasContextMen
           role="menuitem"
           className={`${btn} text-red-400 hover:bg-red-950/40 hover:text-red-300`}
           onClick={() => {
+            const { nodes, edges } = useFlowStore.getState();
+            useHistoryStore.getState().recordSnapshot(nodes, edges);
             deleteNode(nodeId);
             onClose();
           }}
         >
           Delete node
+        </button>
+      </div>
+    );
+  }
+
+  if (menu.kind === 'edge') {
+    const { edgeId } = menu;
+    return (
+      <div
+        data-nb-context-menu
+        className="min-w-[180px] rounded-lg border border-zinc-700 bg-zinc-950/98 py-1 shadow-2xl backdrop-blur-md"
+        style={style}
+        role="menu"
+      >
+        <button
+          type="button"
+          role="menuitem"
+          className={`${btn} text-red-400 hover:bg-red-950/40 hover:text-red-300`}
+          onClick={() => {
+            const { nodes, edges } = useFlowStore.getState();
+            useHistoryStore.getState().recordSnapshot(nodes, edges);
+            deleteEdge(edgeId);
+            onClose();
+          }}
+        >
+          Delete connection
         </button>
       </div>
     );
@@ -186,6 +219,8 @@ export function CanvasContextMenu({ menu, onClose, onFitView }: CanvasContextMen
         className={btn}
         disabled={!canPaste}
         onClick={() => {
+          const { nodes, edges } = useFlowStore.getState();
+          useHistoryStore.getState().recordSnapshot(nodes, edges);
           if (pasteNodeAt(menu.flowX, menu.flowY)) onClose();
         }}
       >

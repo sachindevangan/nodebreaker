@@ -7,9 +7,10 @@ import {
   ReactFlowProvider,
   useReactFlow,
 } from '@xyflow/react';
-import type { OnSelectionChangeFunc } from '@xyflow/react';
+import type { Connection, OnSelectionChangeFunc } from '@xyflow/react';
 import { useCallback, useState } from 'react';
 import { useFlowStore } from '@/store/useFlowStore';
+import { useHistoryStore } from '@/store/useHistoryStore';
 import { useDragToCanvas } from '@/hooks/useDragToCanvas';
 import { useSimulation } from '@/hooks/useSimulation';
 import { getComponentConfig } from '@/constants/components';
@@ -29,6 +30,9 @@ const edgeTypes = {
 const defaultEdgeOptions = {
   type: 'animated' as const,
   animated: false,
+  selectable: true,
+  deletable: true,
+  interactionWidth: 20,
   style: {
     stroke: '#3b82f6',
     strokeWidth: 2,
@@ -39,9 +43,47 @@ const defaultEdgeOptions = {
 function FlowCanvasInner() {
   const nodes = useFlowStore((s) => s.nodes);
   const edges = useFlowStore((s) => s.edges);
-  const onNodesChange = useFlowStore((s) => s.onNodesChange);
-  const onEdgesChange = useFlowStore((s) => s.onEdgesChange);
-  const onConnect = useFlowStore((s) => s.onConnect);
+  const storeOnNodesChange = useFlowStore((s) => s.onNodesChange);
+  const storeOnEdgesChange = useFlowStore((s) => s.onEdgesChange);
+  const storeOnConnect = useFlowStore((s) => s.onConnect);
+
+  const onNodesChange = useCallback(
+    (changes: Parameters<typeof storeOnNodesChange>[0]) => {
+      const hasRemove = changes.some((c) => c.type === 'remove');
+      if (hasRemove) {
+        const { nodes, edges } = useFlowStore.getState();
+        useHistoryStore.getState().recordSnapshot(nodes, edges);
+      }
+      storeOnNodesChange(changes);
+    },
+    [storeOnNodesChange]
+  );
+
+  const onEdgesChange = useCallback(
+    (changes: Parameters<typeof storeOnEdgesChange>[0]) => {
+      const hasRemove = changes.some((c) => c.type === 'remove');
+      if (hasRemove) {
+        const { nodes, edges } = useFlowStore.getState();
+        useHistoryStore.getState().recordSnapshot(nodes, edges);
+      }
+      storeOnEdgesChange(changes);
+    },
+    [storeOnEdgesChange]
+  );
+
+  const onConnect = useCallback(
+    (connection: Connection) => {
+      const { nodes, edges } = useFlowStore.getState();
+      useHistoryStore.getState().recordSnapshot(nodes, edges);
+      storeOnConnect(connection);
+    },
+    [storeOnConnect]
+  );
+
+  const onNodeDragStart = useCallback(() => {
+    const { nodes, edges } = useFlowStore.getState();
+    useHistoryStore.getState().recordSnapshot(nodes, edges);
+  }, []);
   const clearSelectedNode = useFlowStore((s) => s.clearSelectedNode);
   const setSelectedNodeId = useFlowStore((s) => s.setSelectedNodeId);
 
@@ -103,6 +145,16 @@ function FlowCanvasInner() {
       onConnect={onConnect}
       onSelectionChange={onSelectionChange}
       onNodeContextMenu={onNodeContextMenu}
+      onNodeDragStart={onNodeDragStart}
+      onEdgeContextMenu={(e, edge) => {
+        e.preventDefault();
+        setContextMenu({
+          kind: 'edge',
+          clientX: e.clientX,
+          clientY: e.clientY,
+          edgeId: edge.id,
+        });
+      }}
       onPaneContextMenu={onPaneContextMenu}
       nodeTypes={flowNodeTypes}
       edgeTypes={edgeTypes}
@@ -111,7 +163,7 @@ function FlowCanvasInner() {
       onDrop={onDrop}
       onPaneClick={onPaneClick}
       colorMode="dark"
-      deleteKeyCode={null}
+      deleteKeyCode={['Delete', 'Backspace']}
       multiSelectionKeyCode="Shift"
       proOptions={{ hideAttribution: true }}
       className="h-full w-full bg-zinc-950"
