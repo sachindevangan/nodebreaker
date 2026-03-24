@@ -7,3 +7,7 @@ export { KnowledgePanel } from './KnowledgePanel';
 export { GlossaryModal } from './GlossaryModal';
 export { TutorialLauncher } from './TutorialLauncher';
 export { TutorialOverlay } from './TutorialOverlay';
+export { ChallengeLauncher } from './ChallengeLauncher';
+export { ChallengeBriefing } from './ChallengeBriefing';
+export { ChallengeHUD } from './ChallengeHUD';
+export { ChallengeResults } from './ChallengeResults';

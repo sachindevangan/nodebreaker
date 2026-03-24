@@ -2,6 +2,10 @@ import { useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react'
 import { FlowCanvas } from '@/components/canvas';
 import {
   ChaosOverlay,
+  ChallengeBriefing,
+  ChallengeHUD,
+  ChallengeLauncher,
+  ChallengeResults,
   GlossaryModal,
   KnowledgePanel,
   MetricsDashboard,
@@ -21,6 +25,8 @@ import { useHistoryStore } from '@/store/useHistoryStore';
 import { useSimStore } from '@/store/useSimStore';
 import { useToastStore } from '@/store/useToastStore';
 import { useKnowledgeStore } from '@/store/useKnowledgeStore';
+import { useChallengeStore } from '@/store/useChallengeStore';
+import { getChallengeById } from '@/constants/challenges';
 import {
   designToFlowGraph,
   downloadDesignJson,
@@ -31,9 +37,14 @@ import { Header } from './Header';
 
 export function AppShell() {
   const openGlossary = useKnowledgeStore((s) => s.openGlossary);
+  const startChallenge = useChallengeStore((s) => s.startChallenge);
+  const lastResult = useChallengeStore((s) => s.lastResult);
+  const closeResults = useChallengeStore((s) => s.closeResults);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [tutorialsOpen, setTutorialsOpen] = useState(false);
+  const [challengesOpen, setChallengesOpen] = useState(false);
+  const [briefingChallengeId, setBriefingChallengeId] = useState<string | null>(null);
   const [leftWidth, setLeftWidth] = useState(() => {
     return parseInt(localStorage.getItem('nb-left-w') || '260');
   });
@@ -123,12 +134,26 @@ export function AppShell() {
         onReopen={() => setTemplatesOpen(true)}
       />
       <TutorialLauncher isOpen={tutorialsOpen} onClose={() => setTutorialsOpen(false)} />
+      <ChallengeLauncher
+        isOpen={challengesOpen}
+        onClose={() => setChallengesOpen(false)}
+        onSelectChallenge={(challenge) => {
+          setBriefingChallengeId(challenge.id);
+          setChallengesOpen(false);
+        }}
+      />
+      <ChallengeBriefing
+        challenge={briefingChallengeId ? getChallengeById(briefingChallengeId) ?? null : null}
+        isOpen={briefingChallengeId !== null}
+        onClose={() => setBriefingChallengeId(null)}
+      />
       <div className="flex h-screen min-h-0 flex-col overflow-hidden bg-surface">
         <Header
           shortcutsOpen={shortcutsOpen}
           onShortcutsOpenChange={setShortcutsOpen}
           onTemplates={() => setTemplatesOpen(true)}
           onTutorials={() => setTutorialsOpen(true)}
+          onChallenges={() => setChallengesOpen(true)}
           onExport={handleExport}
           onImportClick={() => importInputRef.current?.click()}
           onResetCanvas={handleResetCanvas}
@@ -172,6 +197,7 @@ export function AppShell() {
             <MetricsDashboard />
             <KnowledgePanel />
             <TutorialOverlay />
+            <ChallengeHUD />
           </main>
           <PropertiesPanel
             panelWidth={rightWidth}
@@ -197,6 +223,17 @@ export function AppShell() {
         </div>
         <GlossaryModal />
         <ToastViewport />
+        <ChallengeResults
+          onRetry={() => {
+            if (lastResult) startChallenge(lastResult.challengeId);
+            closeResults();
+          }}
+          onNext={() => {
+            setChallengesOpen(true);
+            closeResults();
+          }}
+          onFreeBuild={closeResults}
+        />
       </div>
     </AppChromeContext.Provider>
   );

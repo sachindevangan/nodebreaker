@@ -5,6 +5,7 @@ import {
   Github,
   Keyboard,
   LayoutTemplate,
+  Trophy,
   Trash2,
   Undo2,
   Redo2,
@@ -40,6 +41,7 @@ export interface HeaderProps {
   onShortcutsOpenChange: (open: boolean) => void;
   onTemplates: () => void;
   onTutorials: () => void;
+  onChallenges: () => void;
   onExport: () => void;
   onImportClick: () => void;
   onResetCanvas: () => void;
@@ -52,6 +54,7 @@ export function Header({
   onShortcutsOpenChange,
   onTemplates,
   onTutorials,
+  onChallenges,
   onExport,
   onImportClick,
   onResetCanvas,
@@ -152,6 +155,10 @@ export function Header({
             <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Tutorials</span>
           </button>
+          <button type="button" className={ghostBtn} onClick={onChallenges} title="Challenges">
+            <Trophy className="h-4 w-4 shrink-0" strokeWidth={2} />
+            <span>Challenges</span>
+          </button>
           <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
             <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
             <span>Templates</span>
@@ -205,6 +212,9 @@ export function Header({
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials">
               <GraduationCap className="h-4 w-4" strokeWidth={2} />
+            </button>
+            <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges">
+              <Trophy className="h-4 w-4" strokeWidth={2} />
             </button>
             <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
               <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
