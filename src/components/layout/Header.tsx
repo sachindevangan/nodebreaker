@@ -31,6 +31,9 @@ const SHORTCUT_ROWS: { keys: string; description: string }[] = [
   { keys: 'R', description: 'Reset simulation' },
   { keys: '1 — 4', description: 'Speed 0.5x / 1x / 2x / 5x' },
   { keys: 'Escape', description: 'Deselect / close panels' },
+  { keys: 'P (Interview mode)', description: 'Pause / Resume interview timer' },
+  { keys: 'M (Interview mode)', description: 'Minimize / restore interview timer' },
+  { keys: 'Escape (Interview mode)', description: 'Prompt to end interview early' },
 ];
 
 const ghostBtn =
