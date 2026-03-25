@@ -7,6 +7,10 @@ import { CHAPTER_6_TOPICS } from '@/constants/content/chapter6';
 import { CHAPTER_7_TOPICS } from '@/constants/content/chapter7';
 import { CHAPTER_8_TOPICS } from '@/constants/content/chapter8';
 import { CHAPTER_9_TOPICS } from '@/constants/content/chapter9';
+import { CHAPTER_10_TOPICS } from '@/constants/content/chapter10';
+import { CHAPTER_11_TOPICS } from '@/constants/content/chapter11';
+import { CHAPTER_12_TOPICS } from '@/constants/content/chapter12';
+import { CHAPTER_13_TOPICS } from '@/constants/content/chapter13';
 import type { Chapter, QuizQuestion, Topic } from '@/constants/curriculumTypes';
 
 export type {
@@ -77,41 +81,10 @@ export const CURRICULUM: Chapter[] = [
   ch(7, 'chapter-7', 'Scaling Strategies', 'Growing systems without losing control.', 'TrendingUp', '#22c55e', CHAPTER_7_TOPICS),
   ch(8, 'chapter-8', 'Reliability & Failure', 'Designing for faults and recovery.', 'ShieldAlert', '#ef4444', CHAPTER_8_TOPICS),
   ch(9, 'chapter-9', 'Async Processing & Messaging', 'Queues, events, and loose coupling.', 'ListOrdered', '#f97316', CHAPTER_9_TOPICS),
-  ch(10, 'chapter-10', 'Networking & Communication', 'How services talk to each other.', 'Network', '#0ea5e9', [
-    topic({ id: 'service-to-service-communication', title: 'Service-to-Service Communication' }),
-    topic({ id: 'rest-grpc-graphql', title: 'REST, gRPC & GraphQL' }),
-    topic({ id: 'async-communication-patterns', title: 'Async Communication Patterns' }),
-    topic({ id: 'service-discovery', title: 'Service Discovery' }),
-    topic({ id: 'api-versioning', title: 'API Versioning' }),
-    topic({ id: 'rate-limiting-and-throttling', title: 'Rate Limiting & Throttling' }),
-    topic({ id: 'timeouts-and-connection-management', title: 'Timeouts & Connection Management' }),
-  ]),
-  ch(11, 'chapter-11', 'Security', 'Identity, boundaries, and safe defaults.', 'Lock', '#f59e0b', [
-    topic({ id: 'authentication-vs-authorization', title: 'Authentication vs Authorization' }),
-    topic({ id: 'oauth-and-jwt', title: 'OAuth & JWT' }),
-    topic({ id: 'api-gateway-the-front-door', title: 'API Gateway: The Front Door' }),
-    topic({ id: 'rate-limiting-protection', title: 'Rate Limiting for Protection' }),
-    topic({ id: 'waf-and-ddos-protection', title: 'WAF & DDoS Protection' }),
-    topic({ id: 'cors-and-https-tls', title: 'CORS & HTTPS/TLS' }),
-    topic({ id: 'secrets-management-encryption', title: 'Secrets Management & Encryption' }),
-  ]),
-  ch(12, 'chapter-12', 'Monitoring & Observability', 'See what your system is doing in production.', 'BarChart3', '#8b5cf6', [
-    topic({ id: 'three-pillars-metrics-logs-traces', title: 'The Three Pillars: Metrics, Logs & Traces' }),
-    topic({ id: 'monitoring-what-to-measure', title: 'Monitoring: What to Measure' }),
-    topic({ id: 'logging-structured-aggregation', title: 'Logging: Structured & Aggregation' }),
-    topic({ id: 'distributed-tracing', title: 'Distributed Tracing' }),
-    topic({ id: 'alerting-oncall', title: 'Alerting & On-Call' }),
-    topic({ id: 'sre-principles-error-budgets', title: 'SRE Principles & Error Budgets' }),
-  ]),
-  ch(13, 'chapter-13', 'Data Processing & Storage', 'Pipelines, warehouses, and large-scale data.', 'HardDrive', '#0ea5e9', [
-    topic({ id: 'blob-object-storage', title: 'Blob & Object Storage' }),
-    topic({ id: 'data-warehouses-oltp-vs-olap', title: 'Data Warehouses: OLTP vs OLAP' }),
-    topic({ id: 'etl-pipelines', title: 'ETL Pipelines' }),
-    topic({ id: 'batch-vs-stream-processing', title: 'Batch vs Stream Processing' }),
-    topic({ id: 'mapreduce-distributed-computation', title: 'MapReduce & Distributed Computation' }),
-    topic({ id: 'time-series-databases', title: 'Time-Series Databases' }),
-    topic({ id: 'data-lakes', title: 'Data Lakes' }),
-  ]),
+  ch(10, 'chapter-10', 'Networking & Communication', 'How services talk to each other.', 'Network', '#0ea5e9', CHAPTER_10_TOPICS),
+  ch(11, 'chapter-11', 'Security', 'Identity, boundaries, and safe defaults.', 'Lock', '#f59e0b', CHAPTER_11_TOPICS),
+  ch(12, 'chapter-12', 'Monitoring & Observability', 'See what your system is doing in production.', 'BarChart3', '#8b5cf6', CHAPTER_12_TOPICS),
+  ch(13, 'chapter-13', 'Data Processing & Storage', 'Pipelines, warehouses, and large-scale data.', 'HardDrive', '#0ea5e9', CHAPTER_13_TOPICS),
   ch(14, 'chapter-14', 'Architecture Patterns', 'Shapes that show up in real systems.', 'Blocks', '#ec4899', [
     topic({ id: 'monolith-vs-microservices', title: 'Monolith vs Microservices' }),
     topic({ id: 'api-gateway-pattern', title: 'API Gateway Pattern' }),
