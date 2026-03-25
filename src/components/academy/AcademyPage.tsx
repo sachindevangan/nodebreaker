@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import { Check, ChevronRight } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type ComponentType } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import {
   CURRICULUM,
   getTopicNavList,
@@ -80,12 +80,14 @@ export function AcademyPage({ onOpenTopic, onSkipToSandbox }: AcademyPageProps) 
   }, [firstIncomplete]);
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const didInitDefaultOpen = useRef(false);
 
   useEffect(() => {
-    if (defaultOpenChapterId && expandedIds.size === 0) {
+    if (!didInitDefaultOpen.current && defaultOpenChapterId) {
       setExpandedIds(new Set([defaultOpenChapterId]));
+      didInitDefaultOpen.current = true;
     }
-  }, [defaultOpenChapterId, expandedIds.size]);
+  }, [defaultOpenChapterId]);
 
   const toggleChapter = useCallback((id: string) => {
     setExpandedIds((prev) => {
