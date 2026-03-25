@@ -1,5 +1,7 @@
 import type { QuizQuestion } from '@/constants/curriculumTypes';
 import type { CodeExample, LLDChapter, LLDTopic, PracticeExercise, UMLDiagram } from './lldTypes';
+import { CHAPTER_L1_TOPICS } from './lld-content/chapterL1';
+import { CHAPTER_L2_TOPICS } from './lld-content/chapterL2';
 
 export const LLD_TOPIC_COUNT = 47;
 
@@ -62,15 +64,7 @@ export const LLD_CURRICULUM: LLDChapter[] = [
     icon: 'Coffee',
     color: '#f97316',
     part: 'foundations',
-    topics: [
-      mkTopic({ id: 'classes-objects-constructors', title: 'Classes, Objects, and Constructors' }),
-      mkTopic({ id: 'interfaces-vs-abstract-classes', title: 'Interfaces vs Abstract Classes' }),
-      mkTopic({ id: 'inheritance-is-a-relationship', title: 'Inheritance and the \'is-a\' Relationship' }),
-      mkTopic({ id: 'composition-has-a-relationship', title: 'Composition and the \'has-a\' Relationship' }),
-      mkTopic({ id: 'enums-in-design', title: 'Enums and When to Use Them' }),
-      mkTopic({ id: 'access-modifiers-encapsulation', title: 'Access Modifiers and Encapsulation' }),
-      mkTopic({ id: 'generics-basics', title: 'Generics for Design Flexibility' }),
-    ],
+    topics: CHAPTER_L1_TOPICS,
   }),
   mkChapter({
     id: 'L2',
@@ -80,13 +74,7 @@ export const LLD_CURRICULUM: LLDChapter[] = [
     icon: 'Shield',
     color: '#22c55e',
     part: 'foundations',
-    topics: [
-      mkTopic({ id: 'single-responsibility', title: 'Single Responsibility Principle' }),
-      mkTopic({ id: 'open-closed', title: 'Open/Closed Principle' }),
-      mkTopic({ id: 'liskov-substitution', title: 'Liskov Substitution Principle' }),
-      mkTopic({ id: 'interface-segregation', title: 'Interface Segregation Principle' }),
-      mkTopic({ id: 'dependency-inversion', title: 'Dependency Inversion Principle' }),
-    ],
+    topics: CHAPTER_L2_TOPICS,
   }),
   mkChapter({
     id: 'L3',
