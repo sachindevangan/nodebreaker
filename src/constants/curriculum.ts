@@ -4,6 +4,9 @@ import { CHAPTER_3_TOPICS } from '@/constants/content/chapter3';
 import { CHAPTER_4_TOPICS } from '@/constants/content/chapter4';
 import { CHAPTER_5_TOPICS } from '@/constants/content/chapter5';
 import { CHAPTER_6_TOPICS } from '@/constants/content/chapter6';
+import { CHAPTER_7_TOPICS } from '@/constants/content/chapter7';
+import { CHAPTER_8_TOPICS } from '@/constants/content/chapter8';
+import { CHAPTER_9_TOPICS } from '@/constants/content/chapter9';
 import type { Chapter, QuizQuestion, Topic } from '@/constants/curriculumTypes';
 
 export type {
@@ -71,36 +74,9 @@ export const CURRICULUM: Chapter[] = [
     '#06b6d4',
     CHAPTER_6_TOPICS
   ),
-  ch(7, 'chapter-7', 'Scaling Strategies', 'Growing systems without losing control.', 'TrendingUp', '#22c55e', [
-    topic({ id: 'vertical-vs-horizontal-scaling', title: 'Vertical vs Horizontal Scaling' }),
-    topic({ id: 'why-horizontal-requires-statelessness', title: 'Why Horizontal Scaling Requires Statelessness' }),
-    topic({ id: 'database-read-replicas', title: 'Database Read Replicas' }),
-    topic({ id: 'database-sharding', title: 'Database Sharding' }),
-    topic({ id: 'consistent-hashing', title: 'Consistent Hashing' }),
-    topic({ id: 'cdn-content-delivery', title: 'CDN & Content Delivery' }),
-    topic({ id: 'auto-scaling', title: 'Auto-Scaling' }),
-    topic({ id: 'back-of-envelope-estimation', title: 'Back-of-the-Envelope Estimation' }),
-  ]),
-  ch(8, 'chapter-8', 'Reliability & Failure', 'Designing for faults and recovery.', 'ShieldAlert', '#ef4444', [
-    topic({ id: 'single-point-of-failure', title: 'Single Point of Failure' }),
-    topic({ id: 'redundancy-active-active-passive', title: 'Redundancy: Active-Active & Active-Passive' }),
-    topic({ id: 'health-checks-and-failover', title: 'Health Checks & Failover' }),
-    topic({ id: 'nines-of-availability', title: 'Nines of Availability' }),
-    topic({ id: 'circuit-breaker-pattern', title: 'Circuit Breaker Pattern' }),
-    topic({ id: 'retry-strategies-exponential-backoff', title: 'Retry Strategies & Exponential Backoff' }),
-    topic({ id: 'graceful-degradation', title: 'Graceful Degradation' }),
-    topic({ id: 'chaos-engineering', title: 'Chaos Engineering' }),
-  ]),
-  ch(9, 'chapter-9', 'Async Processing & Messaging', 'Queues, events, and loose coupling.', 'ListOrdered', '#f97316', [
-    topic({ id: 'why-synchronous-is-slow', title: 'Why Synchronous Is Slow' }),
-    topic({ id: 'message-queues', title: 'Message Queues' }),
-    topic({ id: 'delivery-guarantees', title: 'Delivery Guarantees' }),
-    topic({ id: 'idempotency', title: 'Idempotency' }),
-    topic({ id: 'backpressure', title: 'Backpressure' }),
-    topic({ id: 'dead-letter-queues', title: 'Dead Letter Queues' }),
-    topic({ id: 'event-streaming-kafka', title: 'Event Streaming & Kafka' }),
-    topic({ id: 'pub-sub-pattern', title: 'Pub/Sub Pattern' }),
-  ]),
+  ch(7, 'chapter-7', 'Scaling Strategies', 'Growing systems without losing control.', 'TrendingUp', '#22c55e', CHAPTER_7_TOPICS),
+  ch(8, 'chapter-8', 'Reliability & Failure', 'Designing for faults and recovery.', 'ShieldAlert', '#ef4444', CHAPTER_8_TOPICS),
+  ch(9, 'chapter-9', 'Async Processing & Messaging', 'Queues, events, and loose coupling.', 'ListOrdered', '#f97316', CHAPTER_9_TOPICS),
   ch(10, 'chapter-10', 'Networking & Communication', 'How services talk to each other.', 'Network', '#0ea5e9', [
     topic({ id: 'service-to-service-communication', title: 'Service-to-Service Communication' }),
     topic({ id: 'rest-grpc-graphql', title: 'REST, gRPC & GraphQL' }),
