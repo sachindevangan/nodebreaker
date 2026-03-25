@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AcademyDemoOverlay, AcademyPage, InterviewTips, TopicPage } from '@/components/academy';
+import { CodeLabPage, LLDTopicPage } from '@/components/codelab';
 import { AppShell } from '@/components/layout';
 import { Header } from '@/components/layout/Header';
 import { GlobalConfirmDialog } from '@/components/ui';
@@ -53,8 +54,9 @@ const noop = (): void => {};
 
 export default function App() {
   const theme = useThemeStore((s) => s.theme);
-  const [view, setView] = useState<'academy' | 'sandbox'>('academy');
-  const [topicId, setTopicId] = useState<string | null>(null);
+  const [view, setView] = useState<'academy' | 'codelab' | 'sandbox'>('academy');
+  const [topicId, setTopicId] = useState<string | null>(null); // HLD topic id
+  const [lldTopicId, setLldTopicId] = useState<string | null>(null); // LLD topic id
   const [demoSession, setDemoSession] = useState<DemoSession | null>(null);
   const [tipsOpen, setTipsOpen] = useState(false);
 
@@ -117,13 +119,26 @@ export default function App() {
         setView('sandbox');
       }}
     />
+  ) : lldTopicId ? (
+    <LLDTopicPage
+      topicId={lldTopicId}
+      onBack={() => setLldTopicId(null)}
+      onGoToHldTopic={(hldTopicId) => {
+        setDemoSession(null);
+        setTopicId(hldTopicId);
+        setLldTopicId(null);
+        setView('academy');
+      }}
+    />
   ) : view === 'academy' ? (
     <div className="flex min-h-screen flex-col bg-[var(--bg)]">
       <Header
         currentView="academy"
         onSwitchView={(v) => {
           setView(v);
-          if (v === 'academy') setDemoSession(null);
+          setDemoSession(null);
+          if (v === 'academy') setLldTopicId(null);
+          if (v !== 'academy') setTopicId(null);
         }}
         onOpenTips={() => setTipsOpen(true)}
         hideCanvasTools
@@ -142,17 +157,55 @@ export default function App() {
       />
       <AcademyPage onOpenTopic={(id) => setTopicId(id)} onSkipToSandbox={() => setView('sandbox')} />
     </div>
+  ) : view === 'codelab' ? (
+    <div className="flex min-h-screen flex-col bg-[var(--bg)]">
+      <Header
+        currentView="codelab"
+        onSwitchView={(v) => {
+          setView(v);
+          setDemoSession(null);
+          if (v === 'codelab') setTopicId(null);
+          if (v !== 'codelab') setLldTopicId(null);
+        }}
+        onOpenTips={() => setTipsOpen(true)}
+        hideCanvasTools
+        shortcutsOpen={false}
+        onShortcutsOpenChange={noop}
+        onTemplates={noop}
+        onTutorials={noop}
+        onChallenges={noop}
+        onExportJson={noop}
+        onExportPng={noop}
+        onExportSvg={noop}
+        onShare={noop}
+        onImportClick={noop}
+        onResetCanvas={noop}
+        onOpenGlossary={openGlossary}
+      />
+      <CodeLabPage
+        onOpenTopic={(id) => setLldTopicId(id)}
+        onGoToHldTopic={(hldTopicId) => {
+          setDemoSession(null);
+          setTopicId(hldTopicId);
+          setLldTopicId(null);
+          setView('academy');
+        }}
+      />
+    </div>
   ) : (
     <AppShell
       currentView={view}
       onSwitchView={(v) => {
         setView(v);
-        if (v === 'academy') setDemoSession(null);
+        setDemoSession(null);
+        if (v !== 'academy') setTopicId(null);
+        if (v !== 'codelab') setLldTopicId(null);
       }}
       onOpenTips={() => setTipsOpen(true)}
       onBackToAcademy={() => {
         setView('academy');
         setDemoSession(null);
+        setLldTopicId(null);
       }}
       overlay={
         demoSession ? (

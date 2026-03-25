@@ -41,8 +41,8 @@ import { encodeDesignToShareUrl, isShareUrlTooLong } from '@/utils/sharing';
 import { Header } from './Header';
 
 interface AppShellProps {
-  currentView?: 'academy' | 'sandbox';
-  onSwitchView?: (view: 'academy' | 'sandbox') => void;
+  currentView?: 'academy' | 'codelab' | 'sandbox';
+  onSwitchView?: (view: 'academy' | 'codelab' | 'sandbox') => void;
   onOpenTips?: () => void;
   onBackToAcademy?: () => void;
   overlay?: ReactNode;

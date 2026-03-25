@@ -9,6 +9,7 @@ import {
   Sun,
   X,
   Zap,
+  Code2,
 } from 'lucide-react';
 import {
   Children,
@@ -55,8 +56,8 @@ function mergeActionBtnClass(node: ReactNode, extraClassName?: string): ReactNod
 }
 
 export interface HeaderProps {
-  currentView?: 'academy' | 'sandbox';
-  onSwitchView?: (view: 'academy' | 'sandbox') => void;
+  currentView?: 'academy' | 'codelab' | 'sandbox';
+  onSwitchView?: (view: 'academy' | 'codelab' | 'sandbox') => void;
   onOpenTips?: () => void;
   onBackToAcademy?: () => void;
   hideCanvasTools?: boolean;
@@ -141,6 +142,21 @@ export function Header({
                 title="Academy"
               >
                 <span>Academy</span>
+              </button>
+              <button
+                type="button"
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
+                  currentView === 'codelab'
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-gray-400 hover:text-gray-200'
+                }`}
+                onClick={() => onSwitchView('codelab')}
+                title="Code Lab"
+              >
+                <span className="inline-flex items-center gap-1">
+                  <Code2 className="h-4 w-4" strokeWidth={2} aria-hidden />
+                  <span>Code Lab</span>
+                </span>
               </button>
               <button
                 type="button"
