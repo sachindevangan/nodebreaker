@@ -1,26 +1,28 @@
 import {
-  BookOpen,
   Github,
-  GraduationCap,
   Keyboard,
   LayoutTemplate,
   Lightbulb,
   Moon,
-  PenTool,
-  Sun,
-  Trash2,
-  Undo2,
-  Redo2,
+  MoreHorizontal,
   Share2,
-  Upload,
+  Sun,
   X,
   Zap,
-  Trophy,
 } from 'lucide-react';
-import { useState, type ReactNode } from 'react';
-import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import {
+  Children,
+  cloneElement,
+  Fragment,
+  isValidElement,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
 import { ExportMenu } from '@/components/ui';
-import { useHistory } from '@/hooks/useHistory';
 import { useThemeStore } from '@/store/useThemeStore';
 
 const SHORTCUT_ROWS: { keys: string; description: string }[] = [
@@ -39,14 +41,18 @@ const SHORTCUT_ROWS: { keys: string; description: string }[] = [
   { keys: 'Escape (Interview mode)', description: 'Prompt to end interview early' },
 ];
 
-const ghostBtn =
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]';
+const actionBtn =
+  'flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-400 hover:text-white hover:bg-gray-800 transition-colors';
+const actionIcon = 'h-3.5 w-3.5 shrink-0';
 
-const ghostBtnRed =
-  'inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-transparent px-2.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-red-900/50 hover:bg-red-950/40 hover:text-red-200';
-
-const pillInner =
-  'inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors';
+function mergeActionBtnClass(node: ReactNode, extraClassName?: string): ReactNode {
+  if (!isValidElement(node)) return node;
+  const el = node as ReactElement<{ className?: string }>;
+  const prev = el.props.className;
+  return cloneElement(el, {
+    className: [actionBtn, extraClassName, typeof prev === 'string' ? prev : ''].filter(Boolean).join(' ').trim(),
+  });
+}
 
 export interface HeaderProps {
   currentView?: 'academy' | 'sandbox';
@@ -75,278 +81,216 @@ export function Header({
   currentView = 'sandbox',
   onSwitchView,
   onOpenTips,
-  onBackToAcademy,
   hideCanvasTools = false,
   shortcutsOpen,
   onShortcutsOpenChange,
   onTemplates,
-  onTutorials,
-  onChallenges,
   onExportJson,
   onExportPng,
   onExportSvg,
   onShare,
-  onImportClick,
-  onResetCanvas,
-  onOpenGlossary,
   extraActions,
-  interviewModeActive = false,
   githubHref = 'https://github.com/sachindevangan/nodebreaker',
 }: HeaderProps) {
-  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
-  const { undo, redo, canUndo, canRedo } = useHistory();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [compactActions, setCompactActions] = useState(() => window.innerWidth < 1400);
+  const moreRef = useRef<HTMLDivElement | null>(null);
   const theme = useThemeStore((s) => s.theme);
   const toggleTheme = useThemeStore((s) => s.toggleTheme);
 
   const showTools = !hideCanvasTools;
+  const extraActionItems = useMemo(() => Children.toArray(extraActions), [extraActions]);
+  const interviewAction = extraActionItems.length > 0 ? extraActionItems[extraActionItems.length - 1] : null;
+  const scoreAndCostActions = extraActionItems.slice(0, Math.max(0, extraActionItems.length - 1));
+
+  useEffect(() => {
+    const onResize = () => setCompactActions(window.innerWidth < 1400);
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (!moreOpen) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (!moreRef.current) return;
+      if (e.target instanceof Node && !moreRef.current.contains(e.target)) setMoreOpen(false);
+    };
+    window.addEventListener('mousedown', onMouseDown);
+    return () => window.removeEventListener('mousedown', onMouseDown);
+  }, [moreOpen]);
 
   return (
     <>
-      <ConfirmDialog
-        isOpen={resetConfirmOpen}
-        title="Clear everything?"
-        message="This will remove all nodes, connections, and reset the simulation."
-        confirmLabel="Clear"
-        onConfirm={() => {
-          onResetCanvas();
-          setResetConfirmOpen(false);
-        }}
-        onCancel={() => setResetConfirmOpen(false)}
-      />
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-[var(--border)] bg-[var(--header-bg)] px-3 sm:gap-4 sm:px-4">
-        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-[var(--border)] bg-[var(--header-bg)] px-3 sm:px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           <Zap className="h-5 w-5 shrink-0 text-cyan-400" strokeWidth={2} aria-hidden />
-          <div className="min-w-0">
-            <h1 className="truncate text-sm font-semibold tracking-tight text-[var(--text)]">NodeBreaker</h1>
-          </div>
+          <h1 className="truncate text-base font-bold tracking-tight text-[var(--text)]">NodeBreaker</h1>
         </div>
 
-        <nav className="hidden min-w-0 flex-[2] items-center justify-center gap-1 md:flex" aria-label="Main">
+        <nav className="hidden min-w-0 flex-none items-center justify-center md:flex" aria-label="Main">
           {onSwitchView ? (
-            <div className="inline-flex items-center rounded-full border border-[var(--border)] p-0.5">
+            <div className="inline-flex items-center rounded-full border border-gray-700 bg-gray-800 p-0.5">
               <button
                 type="button"
-                className={`${pillInner} ${
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   currentView === 'academy'
-                    ? 'bg-[var(--surface-hover)] text-[var(--text)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-gray-400 hover:text-gray-200'
                 }`}
                 onClick={() => onSwitchView('academy')}
                 title="Academy"
               >
-                <BookOpen className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 <span>Academy</span>
               </button>
               <button
                 type="button"
-                className={`${pillInner} ${
+                className={`rounded-full px-3 py-1 text-sm font-medium transition-colors ${
                   currentView === 'sandbox'
-                    ? 'bg-[var(--surface-hover)] text-[var(--text)]'
-                    : 'text-[var(--text-secondary)] hover:text-[var(--text)]'
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-gray-400 hover:text-gray-200'
                 }`}
                 onClick={() => onSwitchView('sandbox')}
                 title="Sandbox"
               >
-                <PenTool className="h-3.5 w-3.5 shrink-0" strokeWidth={2} />
                 <span>Sandbox</span>
               </button>
             </div>
           ) : null}
-          {showTools ? (
-            <>
-              <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
-              <button
-                type="button"
-                className={ghostBtn}
-                onClick={undo}
-                disabled={!canUndo}
-                title="Undo"
-                aria-label="Undo"
-              >
-                <Undo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span className="hidden lg:inline">Undo</span>
-              </button>
-              <button
-                type="button"
-                className={ghostBtn}
-                onClick={redo}
-                disabled={!canRedo}
-                title="Redo"
-                aria-label="Redo"
-              >
-                <Redo2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span className="hidden lg:inline">Redo</span>
-              </button>
-              <div className="mx-0.5 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
-              <button type="button" className={ghostBtn} onClick={onImportClick} title="Import design">
-                <Upload className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Import</span>
-              </button>
-              <ExportMenu onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
-              <button
-                type="button"
-                className={ghostBtnRed}
-                onClick={() => setResetConfirmOpen(true)}
-                title="Reset canvas"
-                aria-label="Reset canvas"
-              >
-                <Trash2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span className="hidden lg:inline">Reset</span>
-              </button>
-              <div className="mx-1 h-5 w-px shrink-0 bg-[var(--border)]" aria-hidden />
-              <button
-                type="button"
-                className={ghostBtn}
-                onClick={() => onShortcutsOpenChange(true)}
-                title="Keyboard shortcuts"
-              >
-                <Keyboard className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Shortcuts</span>
-              </button>
-              <button
-                type="button"
-                className={ghostBtn}
-                onClick={onTutorials}
-                title="Tutorials"
-                disabled={interviewModeActive}
-              >
-                <GraduationCap className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Tutorials</span>
-              </button>
-              <button
-                type="button"
-                className={ghostBtn}
-                onClick={onChallenges}
-                title="Challenges"
-                disabled={interviewModeActive}
-              >
-                <Trophy className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Challenges</span>
-              </button>
-              <button type="button" className={ghostBtn} onClick={onTemplates} title="Templates">
-                <LayoutTemplate className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Templates</span>
-              </button>
-              <button type="button" className={ghostBtn} onClick={onShare} title="Share design">
-                <Share2 className="h-4 w-4 shrink-0" strokeWidth={2} />
-                <span>Share</span>
-              </button>
-              {extraActions}
-            </>
-          ) : null}
         </nav>
 
-        <div className="flex flex-1 items-center justify-end gap-1 sm:gap-2">
-          {currentView === 'sandbox' && onBackToAcademy ? (
-            <button
-              type="button"
-              onClick={onBackToAcademy}
-              className="mr-1 hidden text-xs font-medium text-[var(--text-secondary)] hover:text-[var(--text)] sm:inline"
-            >
-              Back to Academy
-            </button>
-          ) : null}
-          {onOpenTips ? (
-            <button type="button" className={ghostBtn} onClick={onOpenTips} title="Interview tips">
-              <Lightbulb className="h-4 w-4 shrink-0" strokeWidth={2} />
-              <span className="hidden lg:inline">Tips</span>
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className={`${ghostBtn} px-2`}
-            onClick={onOpenGlossary}
-            title="Glossary"
-            aria-label="Glossary"
-          >
-            <BookOpen className="h-4 w-4 shrink-0" strokeWidth={2} />
-          </button>
-
-          <div className="flex items-center gap-0.5 md:hidden">
-            {showTools ? (
-              <>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={undo} disabled={!canUndo} aria-label="Undo">
-                  <Undo2 className="h-4 w-4" strokeWidth={2} />
+        <div className="flex flex-1 items-center justify-end gap-2">
+          {showTools ? (
+            <>
+              <div className="flex items-center gap-1">
+                <button type="button" className={actionBtn} onClick={onTemplates} title="Templates" aria-label="Templates">
+                  <LayoutTemplate className={actionIcon} strokeWidth={2} />
+                  <span>Templates</span>
                 </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={redo} disabled={!canRedo} aria-label="Redo">
-                  <Redo2 className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onImportClick} aria-label="Import">
-                  <Upload className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <ExportMenu compact onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
-                <button
-                  type="button"
-                  className={`${ghostBtnRed} px-2`}
-                  onClick={() => setResetConfirmOpen(true)}
-                  aria-label="Reset canvas"
-                >
-                  <Trash2 className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  className={`${ghostBtn} px-2`}
-                  onClick={() => onShortcutsOpenChange(true)}
-                  aria-label="Shortcuts"
-                >
-                  <Keyboard className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onTutorials} aria-label="Tutorials" disabled={interviewModeActive}>
-                  <GraduationCap className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onChallenges} aria-label="Challenges" disabled={interviewModeActive}>
-                  <Trophy className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onTemplates} aria-label="Templates">
-                  <LayoutTemplate className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button type="button" className={`${ghostBtn} px-2`} onClick={onShare} aria-label="Share design">
-                  <Share2 className="h-4 w-4" strokeWidth={2} />
-                </button>
-              </>
-            ) : null}
-            {onSwitchView ? (
-              <div className="inline-flex rounded-full border border-[var(--border)] p-0.5">
-                <button
-                  type="button"
-                  className={`${pillInner} px-2 ${currentView === 'academy' ? 'bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
-                  onClick={() => onSwitchView('academy')}
-                  aria-label="Academy"
-                >
-                  <BookOpen className="h-4 w-4" strokeWidth={2} />
-                </button>
-                <button
-                  type="button"
-                  className={`${pillInner} px-2 ${currentView === 'sandbox' ? 'bg-[var(--surface-hover)] text-[var(--text)]' : ''}`}
-                  onClick={() => onSwitchView('sandbox')}
-                  aria-label="Sandbox"
-                >
-                  <PenTool className="h-4 w-4" strokeWidth={2} />
-                </button>
+                <ExportMenu onExportJson={onExportJson} onExportPng={onExportPng} onExportSvg={onExportSvg} />
+                {!compactActions ? (
+                  <button type="button" className={actionBtn} onClick={onShare} title="Share" aria-label="Share">
+                    <Share2 className={actionIcon} strokeWidth={2} />
+                    <span>Share</span>
+                  </button>
+                ) : null}
               </div>
-            ) : null}
-            {extraActions}
-          </div>
-          <button
-            type="button"
-            className={`${ghostBtn} border-[var(--border)] px-2 sm:px-2.5`}
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-          >
-            {theme === 'dark' ? <Sun className="h-4 w-4 shrink-0" strokeWidth={2} /> : <Moon className="h-4 w-4 shrink-0" strokeWidth={2} />}
-          </button>
-          <a
-            href={githubHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${ghostBtn} border-[var(--border)] px-2 sm:px-2.5`}
-            title="View on GitHub"
-            aria-label="GitHub repository"
-          >
-            <Github className="h-4 w-4 shrink-0" strokeWidth={2} />
-            <span className="hidden lg:inline">GitHub</span>
-          </a>
+
+              {!compactActions ? <div className="mx-1 h-4 w-px shrink-0 bg-gray-700" aria-hidden /> : null}
+
+              {!compactActions ? (
+                <div className="flex items-center gap-1" aria-label="Score and cost group">
+                  {scoreAndCostActions.map((child, i) => (
+                    <Fragment key={i}>{mergeActionBtnClass(child)}</Fragment>
+                  ))}
+                </div>
+              ) : null}
+
+              {!compactActions ? <div className="mx-1 h-4 w-px shrink-0 bg-gray-700" aria-hidden /> : null}
+
+              <div className="flex items-center gap-1" aria-label="Interview and tips group">
+                {mergeActionBtnClass(interviewAction)}
+                {onOpenTips ? (
+                  <button type="button" className={actionBtn} onClick={onOpenTips} title="Tips" aria-label="Tips">
+                    <Lightbulb className={actionIcon} strokeWidth={2} />
+                    <span>Tips</span>
+                  </button>
+                ) : null}
+              </div>
+
+              {!compactActions ? <div className="mx-1 h-4 w-px shrink-0 bg-gray-700" aria-hidden /> : null}
+
+              <div className="flex items-center gap-1">
+                {!compactActions ? (
+                  <button
+                    type="button"
+                    className={actionBtn}
+                    onClick={() => onShortcutsOpenChange(true)}
+                    title="Shortcuts"
+                    aria-label="Shortcuts"
+                  >
+                    <Keyboard className={actionIcon} strokeWidth={2} />
+                    <span>Shortcuts</span>
+                  </button>
+                ) : null}
+                <button type="button" className={actionBtn} onClick={toggleTheme} title="Theme" aria-label="Theme">
+                  {theme === 'dark' ? <Sun className={actionIcon} strokeWidth={2} /> : <Moon className={actionIcon} strokeWidth={2} />}
+                  <span>Theme</span>
+                </button>
+                {!compactActions ? (
+                  <a
+                    href={githubHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={actionBtn}
+                    title="GitHub"
+                    aria-label="GitHub"
+                  >
+                    <Github className={actionIcon} strokeWidth={2} />
+                    <span>GitHub</span>
+                  </a>
+                ) : null}
+              </div>
+
+              {compactActions ? (
+                <div className="relative" ref={moreRef}>
+                  <button
+                    type="button"
+                    className={actionBtn}
+                    onClick={() => setMoreOpen((v) => !v)}
+                    title="More"
+                    aria-label="More"
+                  >
+                    <MoreHorizontal className={actionIcon} strokeWidth={2} />
+                    <span>More</span>
+                  </button>
+                  {moreOpen ? (
+                    <div className="absolute right-0 top-9 z-[120] min-w-48 rounded-md border border-[var(--border)] bg-[var(--surface)] p-1 shadow-xl">
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs font-medium text-gray-300 hover:bg-gray-800 hover:text-white"
+                        onClick={() => {
+                          onShare();
+                          setMoreOpen(false);
+                        }}
+                        title="Share"
+                      >
+                        <Share2 className={actionIcon} strokeWidth={2} />
+                        <span>Share</span>
+                      </button>
+                      <div className="flex flex-col gap-0.5">
+                        {scoreAndCostActions.map((child, i) => (
+                          <Fragment key={i}>{mergeActionBtnClass(child, 'w-full justify-start gap-2')}</Fragment>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs font-medium text-gray-300 hover:bg-gray-800 hover:text-white"
+                        onClick={() => {
+                          onShortcutsOpenChange(true);
+                          setMoreOpen(false);
+                        }}
+                        title="Shortcuts"
+                      >
+                        <Keyboard className={actionIcon} strokeWidth={2} />
+                        <span>Shortcuts</span>
+                      </button>
+                      <a
+                        href={githubHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs font-medium text-gray-300 hover:bg-gray-800 hover:text-white"
+                        onClick={() => setMoreOpen(false)}
+                        title="GitHub"
+                      >
+                        <Github className={actionIcon} strokeWidth={2} />
+                        <span>GitHub</span>
+                      </a>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
+          ) : null}
         </div>
 
         {shortcutsOpen ? (
