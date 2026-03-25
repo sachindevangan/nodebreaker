@@ -11,7 +11,10 @@ import { CHAPTER_10_TOPICS } from '@/constants/content/chapter10';
 import { CHAPTER_11_TOPICS } from '@/constants/content/chapter11';
 import { CHAPTER_12_TOPICS } from '@/constants/content/chapter12';
 import { CHAPTER_13_TOPICS } from '@/constants/content/chapter13';
-import type { Chapter, QuizQuestion, Topic } from '@/constants/curriculumTypes';
+import { CHAPTER_14_TOPICS } from '@/constants/content/chapter14';
+import { CHAPTER_15_TOPICS } from '@/constants/content/chapter15';
+import { CHAPTER_16_TOPICS } from '@/constants/content/chapter16';
+import type { Chapter, Topic } from '@/constants/curriculumTypes';
 
 export type {
   Chapter,
@@ -21,19 +24,6 @@ export type {
   SimulatorDemoSetupNode,
   Topic,
 } from '@/constants/curriculumTypes';
-
-function topic(
-  partial: Omit<Topic, 'readContent' | 'quizQuestions'> & { readContent?: string; quizQuestions?: QuizQuestion[] }
-): Topic {
-  return {
-    readContent: partial.readContent ?? `Content coming soon. This topic covers ${partial.title}.`,
-    quizQuestions: partial.quizQuestions ?? [],
-    id: partial.id,
-    title: partial.title,
-    simulatorDemo: partial.simulatorDemo,
-    interviewTip: partial.interviewTip,
-  };
-}
 
 function ch(
   number: number,
@@ -85,36 +75,9 @@ export const CURRICULUM: Chapter[] = [
   ch(11, 'chapter-11', 'Security', 'Identity, boundaries, and safe defaults.', 'Lock', '#f59e0b', CHAPTER_11_TOPICS),
   ch(12, 'chapter-12', 'Monitoring & Observability', 'See what your system is doing in production.', 'BarChart3', '#8b5cf6', CHAPTER_12_TOPICS),
   ch(13, 'chapter-13', 'Data Processing & Storage', 'Pipelines, warehouses, and large-scale data.', 'HardDrive', '#0ea5e9', CHAPTER_13_TOPICS),
-  ch(14, 'chapter-14', 'Architecture Patterns', 'Shapes that show up in real systems.', 'Blocks', '#ec4899', [
-    topic({ id: 'monolith-vs-microservices', title: 'Monolith vs Microservices' }),
-    topic({ id: 'api-gateway-pattern', title: 'API Gateway Pattern' }),
-    topic({ id: 'service-mesh', title: 'Service Mesh' }),
-    topic({ id: 'cqrs', title: 'CQRS' }),
-    topic({ id: 'event-sourcing', title: 'Event Sourcing' }),
-    topic({ id: 'saga-pattern', title: 'Saga Pattern' }),
-    topic({ id: 'strangler-fig-migration', title: 'Strangler Fig Migration' }),
-    topic({ id: 'domain-driven-design', title: 'Domain-Driven Design' }),
-  ]),
-  ch(15, 'chapter-15', 'The Interview Framework', 'How to run a system design interview.', 'Target', '#6366f1', [
-    topic({ id: 'clarify-requirements', title: 'Clarify Requirements' }),
-    topic({ id: 'back-of-envelope-estimation-framework', title: 'Back-of-the-Envelope Estimation Framework' }),
-    topic({ id: 'high-level-design', title: 'High-Level Design' }),
-    topic({ id: 'deep-dive', title: 'Deep Dive' }),
-    topic({ id: 'trade-offs-and-bottlenecks', title: 'Trade-offs & Bottlenecks' }),
-    topic({ id: 'common-mistakes', title: 'Common Mistakes' }),
-  ]),
-  ch(16, 'chapter-16', 'Real-World System Designs', 'End-to-end design exercises.', 'Rocket', '#dc2626', [
-    topic({ id: 'design-url-shortener', title: 'Design a URL Shortener' }),
-    topic({ id: 'design-chat-app', title: 'Design a Chat App' }),
-    topic({ id: 'design-social-feed', title: 'Design a Social Feed' }),
-    topic({ id: 'design-payment-system', title: 'Design a Payment System' }),
-    topic({ id: 'design-video-platform', title: 'Design a Video Platform' }),
-    topic({ id: 'design-ride-sharing', title: 'Design Ride Sharing' }),
-    topic({ id: 'design-search-engine', title: 'Design a Search Engine' }),
-    topic({ id: 'design-file-storage', title: 'Design File Storage' }),
-    topic({ id: 'design-notification-system', title: 'Design a Notification System' }),
-    topic({ id: 'design-rate-limiter', title: 'Design a Rate Limiter' }),
-  ]),
+  ch(14, 'chapter-14', 'Architecture Patterns', 'Shapes that show up in real systems.', 'Blocks', '#ec4899', CHAPTER_14_TOPICS),
+  ch(15, 'chapter-15', 'The Interview Framework', 'How to run a system design interview.', 'Target', '#6366f1', CHAPTER_15_TOPICS),
+  ch(16, 'chapter-16', 'Real-World System Designs', 'End-to-end design exercises.', 'Rocket', '#dc2626', CHAPTER_16_TOPICS),
 ];
 
 export const CURRICULUM_TOPIC_COUNT = CURRICULUM.reduce((n, c) => n + c.topics.length, 0);
