@@ -2,6 +2,9 @@ import type { QuizQuestion } from '@/constants/curriculumTypes';
 import type { CodeExample, LLDChapter, LLDTopic, PracticeExercise, UMLDiagram } from './lldTypes';
 import { CHAPTER_L1_TOPICS } from './lld-content/chapterL1';
 import { CHAPTER_L2_TOPICS } from './lld-content/chapterL2';
+import { CHAPTER_L3_TOPICS } from './lld-content/chapterL3';
+import { CHAPTER_L4_TOPICS } from './lld-content/chapterL4';
+import { CHAPTER_L5_TOPICS } from './lld-content/chapterL5';
 
 export const LLD_TOPIC_COUNT = 47;
 
@@ -84,13 +87,7 @@ export const LLD_CURRICULUM: LLDChapter[] = [
     icon: 'Hammer',
     color: '#3b82f6',
     part: 'foundations',
-    topics: [
-      mkTopic({ id: 'factory-method', title: 'Factory Method Pattern' }),
-      mkTopic({ id: 'abstract-factory', title: 'Abstract Factory Pattern' }),
-      mkTopic({ id: 'builder-pattern', title: 'Builder Pattern' }),
-      mkTopic({ id: 'singleton-pattern', title: 'Singleton Pattern (and Its Problems)' }),
-      mkTopic({ id: 'prototype-pattern', title: 'Prototype Pattern' }),
-    ],
+    topics: CHAPTER_L3_TOPICS,
   }),
   mkChapter({
     id: 'L4',
@@ -100,13 +97,7 @@ export const LLD_CURRICULUM: LLDChapter[] = [
     icon: 'Layers',
     color: '#8b5cf6',
     part: 'foundations',
-    topics: [
-      mkTopic({ id: 'adapter-pattern', title: 'Adapter Pattern' }),
-      mkTopic({ id: 'decorator-pattern', title: 'Decorator Pattern' }),
-      mkTopic({ id: 'facade-pattern', title: 'Facade Pattern' }),
-      mkTopic({ id: 'proxy-pattern', title: 'Proxy Pattern' }),
-      mkTopic({ id: 'composite-pattern', title: 'Composite Pattern' }),
-    ],
+    topics: CHAPTER_L4_TOPICS,
   }),
   mkChapter({
     id: 'L5',
@@ -116,14 +107,7 @@ export const LLD_CURRICULUM: LLDChapter[] = [
     icon: 'Workflow',
     color: '#ec4899',
     part: 'foundations',
-    topics: [
-      mkTopic({ id: 'strategy-pattern', title: 'Strategy Pattern' }),
-      mkTopic({ id: 'observer-pattern', title: 'Observer Pattern' }),
-      mkTopic({ id: 'state-pattern', title: 'State Pattern' }),
-      mkTopic({ id: 'command-pattern', title: 'Command Pattern' }),
-      mkTopic({ id: 'chain-of-responsibility', title: 'Chain of Responsibility Pattern' }),
-      mkTopic({ id: 'template-method', title: 'Template Method Pattern' }),
-    ],
+    topics: CHAPTER_L5_TOPICS,
   }),
   mkChapter({
     id: 'L6',
